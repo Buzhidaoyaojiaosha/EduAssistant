@@ -7,6 +7,49 @@
     <div id="recommend-history"></div>
 {% endblock %}
 
+{% block extra_css %}
+<style>
+    .recommend-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+    }
+
+    .recommendation-item {
+        background-color: #f9f9f9;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+    }
+
+    .recommendation-item:hover {
+        transform: translateY(-5px);
+    }
+
+    .recommendation-item h3 {
+        margin-top: 0;
+        margin-bottom: 10px;
+    }
+
+    .recommendation-item h3 a {
+        color: #007BFF;
+        text-decoration: none;
+    }
+
+    .recommendation-item h3 a:hover {
+        text-decoration: underline;
+    }
+
+    .recommendation-item p {
+        margin-bottom: 0;
+        color: #666;
+    }
+</style>
+{% endblock %}
+
 {% block extra_js %}
     <script>
         // 渲染到 HTML 页面
@@ -52,21 +95,26 @@
             .finally(()=>statusElement.textContent = '');
         }
 
-        // 页面打开时自动更新资源推荐
         window.onload = () => {
             // 以上次的推荐结果暂时填充
             const recommendContent = window.localStorage.getItem("recommend-content");
-            renderRecommendations(JSON.parse(recommendContent.replaceAll("'", '"'))["recommendations"]);
-
+            if (recommendContent) {
+                try {
+                    renderRecommendations(JSON.parse(recommendContent.replaceAll("'", '"'))["recommendations"]);
+                } catch (error) {
+                    console.error('Error parsing local storage data:', error);
+                }
+            }
+        
             // 上次加载时间
             const lastLoadTime = window.localStorage.getItem("recommend-load-time");
             // 现在时间
             const nowTime = new Date().getTime();
-
+        
             if (lastLoadTime) {
                 const distance = nowTime - parseInt(lastLoadTime, 10);
                 // 如果时间间隔小于10分钟（600000），则不加载
-                if (distance < 600000) {
+                if (distance < 6) {
                     console.log("资源推荐已在10分钟内加载过，不自动重复加载");
                     return;
                 }
