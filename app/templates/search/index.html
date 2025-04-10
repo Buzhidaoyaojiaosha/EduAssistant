@@ -20,6 +20,15 @@
     {% endif %}
 </div>
 
+{% block extra_css %}
+<style>
+    .card-content-scroll {
+        max-height: 100px; /* 限制最大高度 */
+        overflow-y: auto; /* 当内容超出时显示垂直滚动条 */
+    }
+</style>
+{% endblock %}
+
 <!-- 搜索表单 -->
 <div class="row mb-4">
     <div class="col-md-9">
@@ -71,7 +80,9 @@
                 <div class="card shadow-sm mb-3">
                     <div class="card-body">
                         <h5 class="card-title">{{ result.title }}</h5>
-                        <p class="card-text">{{ result.content|truncate(300) }}</p>
+                        <div class="card-content-scroll">
+                            <p class="card-text">{{ result.content }}</p>
+                        </div>
                         
                         <!-- 标签和分类 -->
                         <div class="mb-2">
