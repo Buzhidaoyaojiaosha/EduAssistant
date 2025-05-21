@@ -17,7 +17,7 @@ class StudentAssignment(BaseModel):
     assignment = ForeignKeyField(Assignment, backref='student_assignments')
     student = ForeignKeyField(User, backref='assignments')
     course = ForeignKeyField(Course, backref='student_assignments', null=True)
-    status = IntegerField(default=0)  # 0:待完成, 1:待批改, 2:已批改, 3:有评语
+    status = IntegerField(default=0)  # 0:未提交, 1:已提交, 2:已批改
     total_score = FloatField(null=True)  # 总分
     final_score = FloatField(null=True)  # 最终得分
     work_time = DateTimeField(null=True)  # 提交时间

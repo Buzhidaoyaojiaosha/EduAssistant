@@ -28,6 +28,7 @@ def create_app(config_class=Config):
     from app.views.ai_assistant import ai_assistant_bp
     from app.views.recommend import recommend_bp
     from app.views.homework_api import homework_api_bp  # 添加这一行
+
     
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
@@ -38,5 +39,6 @@ def create_app(config_class=Config):
     app.register_blueprint(ai_assistant_bp)
     app.register_blueprint(recommend_bp)
     app.register_blueprint(homework_api_bp)  # 添加这一行
+
     
     return app

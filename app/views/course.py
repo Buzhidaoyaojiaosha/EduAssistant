@@ -1,10 +1,13 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session
+from peewee import JOIN
+
 from app.services.course_service import CourseService
 from app.services.assignment_service import AssignmentService
 from app.services.user_service import UserService
 from app.services.knowledge_point_service import KnowledgePointService
 from app.models.user import User
 from app.models.course import Course
+from app.models.NewAdd import Question
 from datetime import datetime
 
 course_bp = Blueprint('course', __name__, url_prefix='/course')
@@ -90,9 +93,53 @@ def view(course_id):
     
     # 如果是学生，获取个人作业情况
     student_assignments = None
+    wrong_questions = []
     if is_student:
         student_assignments = AssignmentService.get_student_assignments(user_id, course_id)
-    
+        # 新增错题数据查询
+        from app.models.NewAdd import StudentAnswer,Question
+        from app.models.assignment import Assignment
+        
+        # 查询当前课程所有作业及关联题目
+        course_assignments = (Assignment
+                             .select()
+                             .where(Assignment.course == course)
+                             .order_by(Assignment.due_date.desc()))
+        
+        for assignment in course_assignments:
+            # 查询该作业的错题（答案错误或得分低于题目分值）
+            wrong_answers = (StudentAnswer
+                            .select()
+                            .join(Question)
+                            .where(
+                                (StudentAnswer.student == user) &
+                                (Question.assignment == assignment) &
+                                (
+                                    (Question.answer != StudentAnswer.commit_answer) |
+                                    (StudentAnswer.earned_score < Question.score) |
+                                    (StudentAnswer.earned_score.is_null())
+                                )
+                            ))
+            
+            if wrong_answers:
+                question_data = []
+                for answer in wrong_answers:
+                    question_data.append({
+                        'id': answer.question.question_id,
+                        'question_name': answer.question.question_name,
+                        'context': answer.question.context,
+                        'answer': answer.question.answer,
+                        'student_answer': answer.commit_answer,
+                        'score': answer.earned_score or 0,
+                        'total_points': answer.question.score,
+                        'created_at': answer.work_time or datetime.now()
+                    })
+                
+                wrong_questions.append({
+                    'assignment': assignment,
+                    'questions': question_data
+                })
+
     return render_template('course/view.html',
                          course=course,
                          is_teacher=is_teacher,
@@ -100,7 +147,8 @@ def view(course_id):
                          assignments=assignments,
                          students=students,
                          student_assignments=student_assignments,
-                         knowledge_points=knowledge_points)
+                         knowledge_points=knowledge_points,
+                         wrong_questions=wrong_questions)
 
 @course_bp.route('/<int:course_id>/enroll', methods=['GET', 'POST'])
 def enroll(course_id):
@@ -194,6 +242,14 @@ def view_assignment(assignment_id):
     is_teacher = assignment.course.teacher_id == user_id
     student_assignment = None
     
+    # 获取作业关联的所有题目
+    questions = Question.select(
+        Question.question_name,
+        Question.context,
+        Question.answer,
+        Question.score,
+        Question.status).where(Question.assignment == assignment).order_by(Question.status)
+    # 如果是学生，获取学生作业状态
     if not is_teacher:
         student_assignment = StudentAssignment.get_or_none(
             StudentAssignment.student_id == user_id,
@@ -215,6 +271,7 @@ def view_assignment(assignment_id):
     
     return render_template('course/view_assignment.html',
                          assignment=assignment,
+                         questions=questions,
                          is_teacher=is_teacher,
                          student_assignment=student_assignment,
                          submissions=submissions,
@@ -463,3 +520,59 @@ def assignment_knowledge_points(assignment_id):
                           assignment=assignment,
                           course_knowledge_points=course_knowledge_points,
                           assignment_knowledge_points=assignment_knowledge_points)
+
+@course_bp.route('/assignment/<int:assignment_id>/add-question', methods=['GET', 'POST'])
+def add_question(assignment_id):
+    from app.models.assignment import Assignment
+    from app.models.course import Course
+    assignment = Assignment.get_by_id(assignment_id)
+    course=assignment.course
+    # 验证权限
+    user_id = session['user_id']
+    if assignment.course.teacher_id != user_id:
+        flash('只有课程教师可以添加题目', 'warning')
+        return redirect(url_for('course.view_assignment', assignment_id=assignment_id))
+    if request.method == 'POST':
+        try:
+            question = Question.create(
+                assignment=assignment,
+                course=course,
+                question_name=request.form.get('name'),
+                context=request.form.get('context'),
+                answer=request.form.get('answer'),
+                analysis=request.form.get('analysis'),
+                score=float(request.form.get('score', 10.0)),
+                status=int(request.form.get('type', 0))
+            )
+            flash('题目添加成功', 'success')
+            return redirect(url_for('course.view_assignment', assignment_id=assignment_id))
+        except Exception as e:
+            flash(f'添加题目失败: {str(e)}', 'danger')
+    
+    return render_template('course/add_question.html', assignment=assignment)
+
+@course_bp.route('/question/<int:question_id>/edit', methods=['GET', 'POST'])
+def edit_question(question_id):
+
+    question = Question.get_by_id(question_id)
+    user_id = session['user_id']
+    # 验证权限
+    if question.assignment.course.teacher_id != user_id:
+        flash('只有课程教师可以更新题目', 'warning')
+        return redirect(url_for('course.view_assignment', assignment_id=question.assignment_id))
+    
+    if request.method == 'POST':
+        try:
+            question.question_name = request.form.get('name')
+            question.context = request.form.get('context')
+            question.answer = request.form.get('answer')
+            question.score = float(request.form.get('score'))
+            question.status = int(request.form.get('type'))
+            question.save()
+            
+            flash('题目更新成功', 'success')
+            return redirect(url_for('course.view_assignment', assignment_id=question.assignment.id))
+        except Exception as e:
+            flash(f'更新题目失败: {str(e)}', 'danger')
+    
+    return render_template('course/edit_question.html', question=question)

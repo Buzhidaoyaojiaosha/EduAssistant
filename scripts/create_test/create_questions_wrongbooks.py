@@ -67,7 +67,7 @@ def create_questions():
     questions = []
     
     # 题目类型
-    question_types = [0, 1, 2, 3]  # 0:主观题, 1:选择题, 2:判断题, 3:填空题
+    question_types = [1, 2, 3, 4]  # 1:选择题, 2:判断题, 3:填空题 others:主观题
     
     print("\n创建试题数据...")
     
@@ -97,14 +97,7 @@ def create_questions():
             )
             
             # 根据题目类型生成题目内容和答案
-            if question_type == 0:  # 主观题
-                question_name = f"{assignment.course.name}主观题{i+1}"
-                context = f"请详细阐述{assignment.course.name}中的{random.choice(assignment_kps).knowledge_point.name}概念及其应用。"
-                answer = "标准答案应包含以下要点：\n1. 概念定义\n2. 主要特性\n3. 应用场景\n4. 优缺点分析"
-                analysis = "评分要点：\n- 概念理解准确性\n- 论述逻辑性\n- 例子恰当性\n- 见解深度"
-                score = random.choice([10, 15, 20])
-            
-            elif question_type == 1:  # 选择题
+            if question_type == 1:  # 选择题
                 question_name = f"{assignment.course.name}选择题{i+1}"
                 context = f"在{assignment.course.name}中，关于{random.choice(assignment_kps).knowledge_point.name}，下列说法正确的是：\n"
                 context += "A. 选项A描述\nB. 选项B描述\nC. 选项C描述\nD. 选项D描述"
@@ -119,12 +112,18 @@ def create_questions():
                 analysis = f"解析：该说法{answer}，因为..."
                 score = random.choice([2, 3])
             
-            else:  # 填空题
+            elif question_type == 3:  # 填空题
                 question_name = f"{assignment.course.name}填空题{i+1}"
                 context = f"在{assignment.course.name}中，_____是{random.choice(assignment_kps).knowledge_point.name}的重要特性。"
                 answer = "填空答案"
                 analysis = "解析：这个特性很重要是因为..."
                 score = random.choice([3, 5])
+            else:  # 主观题
+                question_name = f"{assignment.course.name}主观题{i+1}"
+                context = f"请详细阐述{assignment.course.name}中的{random.choice(assignment_kps).knowledge_point.name}概念及其应用。"
+                answer = "标准答案应包含以下要点：\n1. 概念定义\n2. 主要特性\n3. 应用场景\n4. 优缺点分析"
+                analysis = "评分要点：\n- 概念理解准确性\n- 论述逻辑性\n- 例子恰当性\n- 见解深度"
+                score = random.choice([10, 15, 20])
             
             try:
                 # 创建题目

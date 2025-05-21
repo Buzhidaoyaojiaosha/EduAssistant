@@ -10,11 +10,11 @@ class Question(BaseModel):
     question_name = CharField(max_length=255)
     assignment = ForeignKeyField(Assignment, backref='questions')
     course = ForeignKeyField(Course, backref='questions')
-    context = TextField()
-    answer = TextField()
+    context = TextField(null=False)
+    answer = TextField(null=False)
     analysis = TextField()
     score = FloatField()
-    status = IntegerField()  # 0:主观题, 1:选择题, 2:判断题, 3:填空题
+    status = IntegerField()  #  1:选择题, 2:判断题, 3:填空题,others主观题,
     created_time = DateTimeField(default=datetime.now)
 
     class Meta:
@@ -57,6 +57,7 @@ class QuestionWrongBook(BaseModel):
     wrong_book = ForeignKeyField(WrongBook, backref='question_wrong_books')
     question = ForeignKeyField(Question, backref='wrong_books')
     created_time = DateTimeField(default=datetime.now)
+    student_answer = ForeignKeyField(StudentAnswer, backref='question_wrong')
 
     class Meta:
         table_name = 'questionwrongbook'

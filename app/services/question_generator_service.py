@@ -24,7 +24,7 @@ class QuestionGeneratorService:
         """
         return generate_by_knowledge_point(knowledge_point_id, difficulty, num_questions)
     
-    @register_as_tool(roles=["teacher"])
+    @register_as_tool(roles=["student","teacher"])
     @staticmethod
     def generate_exam(course_id: int, exam_type: str = "unit") -> Dict:
         """生成试卷

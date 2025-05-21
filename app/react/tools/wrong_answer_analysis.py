@@ -22,7 +22,7 @@ def get_wrong_answers(student_id, course_id=None):
              .join(QuestionWrongBook, on=(WrongBook.wrong_book_id == QuestionWrongBook.wrong_book))
              .join(Question, on=(QuestionWrongBook.question == Question.question_id))
              .join(StudentAnswer, on=(Question.question_id == StudentAnswer.question))
-             .join(Assignment, on=(Question.assignment == Assignment.assignment_id))
+             .join(Assignment, on=(Question.assignment == Assignment.id))
              .where(
                  (StudentAnswer.student_id == student_id)
              ))
@@ -33,12 +33,12 @@ def get_wrong_answers(student_id, course_id=None):
     wrong_answers = []
     for wb in query:
         wrong_answers.append({
-            'assignment_id': wb.question.assignment_id,
-            'title': wb.question.assignment.title,
-            'question': wb.question.context,
-            'answer': wb.studentanswer.commit_answer,
-            'correct_answer': wb.question.answer,
-            'knowledge_point_id': wb.question.assignment.knowledge_point_id
+            'assignment_id': wb.questionwrongbook.question.assignment.id,
+            'title': wb.questionwrongbook.question.assignment.title,
+            'question': wb.questionwrongbook.question.context,
+            'answer': wb.questionwrongbook.student_answer.commit_answer,
+            'correct_answer': wb.questionwrongbook.question.answer,
+            'knowledge_point_id': wb.questionwrongbook.question.assignment.knowledge_point_id
         })
 
     return wrong_answers

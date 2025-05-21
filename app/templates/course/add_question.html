@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}添加题目 - {{ assignment.title }} - 教学分析助手{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">添加题目</h4>
+                <p class="mb-0 text-white-50">作业: {{ assignment.title }}</p>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">题目名称</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="type" class="form-label">题目类型</label>
+                        <select class="form-select" id="type" name="type" required>
+                            <option value="0">主观题</option>
+                            <option value="1">选择题</option>
+                            <option value="2">判断题</option>
+                            <option value="3">简答题</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="context" class="form-label">题目内容</label>
+                        <textarea class="form-control" id="context" name="context" rows="4" required></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="answer" class="form-label">正确答案</label>
+                        <textarea class="form-control" id="answer" name="answer" rows="2" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="analysis" class="form-label">答案解析</label>
+                        <textarea class="form-control" id="analysis" name="analysis" rows="2" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="score" class="form-label">分值</label>
+                        <input type="number" class="form-control" id="score" name="score" min="0" step="0.5" value="10.0" required>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">保存题目</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
