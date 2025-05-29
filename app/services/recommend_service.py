@@ -45,7 +45,7 @@ class RecommendService:
             answer: list of recommendations
         """
         prompt = "根据我的历史学习情况，给出学习资源推荐。你可以推荐一个或多个学科。"
-        answer = run(basic_prompt+prompt, 'student')
+        answer = run(basic_prompt+prompt, 'student', history=[])
         return answer
 
     @staticmethod
@@ -56,7 +56,7 @@ class RecommendService:
             answer: list of recommendations
         """
         prompt = f"请给出{subject}学科，{chapter}章节的知识推荐"
-        answer = run(basic_prompt + prompt, 'student')
+        answer = run(basic_prompt + prompt, 'student', history=[])
         return answer
 
     @register_as_tool(roles=['student', 'teacher'])

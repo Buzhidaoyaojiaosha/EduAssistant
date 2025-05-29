@@ -6,7 +6,6 @@
 <meta name="course-id" content="{{ assignment.course.id }}">
 {% endblock %}
 
-
 {% block title %}{{ assignment.title }} - 教学分析助手{% endblock %}
 
 {% block content %}
@@ -36,99 +35,6 @@
                 <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>作业内容</h5>
             </div>
             <div class="card-body">
-                <div class="mb-4">
-                    <!-- 显示题目 -->
-                    <div class="card-header bg-light">
-                        <h5 class="mb-0"><i class="fas fa-question-circle me-2"></i>作业题目</h5>
-                    </div>
-                    <div class="card-body">
-                        {% if questions %}
-                        <div class="list-group">
-                            {% for question in questions %}
-                            <div class="list-group-item">
-                                <div class="d-flex w-100 justify-content-between">
-                                    <h6 class="mb-1">{{ loop.index }}. {{ question.question_name }}</h6>
-                                    <span class="badge bg-secondary">分值: {{ question.score }}</span>
-                                    <span class="badge bg-{{ 'success' if question.status == 1 else 'primary' }}">
-                                        {{ '选择题' if question.status == 1 
-                                        else '判断题' if question.status == 2 
-                                        else '简答题' if question.status == 3 
-                                        else '主观题'  }}
-                                    </span>
-
-                                </div>
-                                <!-- 题目内容 -->
-                                <div class="mt-2">
-                                    <div class="card bg-light mb-2">
-                                        <div class="card-body p-3">
-                                            {% if question.status == 1 %}  <!-- 选择题 -->
-                                                <p class="mb-2">{{ question.context.split('\n')[0] }}</p>
-                                                <div class="options">
-                                                    {% for option in question.context.split('\n')[1:] if option.strip() %}
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="radio" 
-                                                            name="question_{{ question.id }}" 
-                                                            id="option_{{ question.id }}_{{ loop.index }}"
-                                                            value="{{ loop.index }}">
-                                                        <label class="form-check-label" for="option_{{ question.id }}_{{ loop.index }}">
-                                                            {{ option }}
-                                                        </label>
-                                                    </div>
-                                                    {% endfor %}
-                                                </div>
-                                            {% elif question.status == 2 %}  <!-- 判断题 -->
-                                                <p class="mb-2">{{ question.context }}</p>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="radio" 
-                                                        name="question_{{ question.id }}" 
-                                                        id="true_{{ question.id }}" value="1">
-                                                    <label class="form-check-label" for="true_{{ question.id }}">正确</label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="radio" 
-                                                        name="question_{{ question.id }}" 
-                                                        id="false_{{ question.id }}" value="0">
-                                                    <label class="form-check-label" for="false_{{ question.id }}">错误</label>
-                                                </div>
-                                            {% else %}  <!-- 简答题和主观题 -->
-                                                <p class="mb-2">{{ question.context }}</p>
-                                                <textarea class="form-control" 
-                                                        name="question_{{ question.id }}" 
-                                                        rows="{{ 3 if question.status == 3 else 5 }}"
-                                                        placeholder="请输入您的答案..."></textarea>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                {% if is_teacher %}
-                                <div class="mt-2">
-                                    <small class="text-muted">正确答案: {{ question.answer }}</small>
-                                    {% if question.id %}
-                                        <a href="{{ url_for('course.edit_question', question_id=question.id) }}" class="btn btn-sm btn-outline-secondary ms-2">编辑</a>
-                                    {% else %}
-                                        <span class="text-danger"> </span>
-                                    {% endif %}
-                                </div>
-                                {% endif %}
-                            </div>
-                            {% endfor %}
-                        </div>
-                        {% else %}
-                        <p class="text-center py-4">该作业暂无题目</p>
-                        {% endif %}
-                        
-                        {% if is_teacher %}
-                        <div class="mt-3">
-                            <a href="{{ url_for('course.add_question', assignment_id=assignment.id) }}" 
-                               class="btn btn-primary">
-                               <i class="fas fa-plus me-1"></i>添加题目
-                            </a>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-                
                 <!-- 显示关联知识点 -->
                 {% if knowledge_points %}
                 <div class="mb-4">
@@ -153,35 +59,166 @@
                         <p><strong>总分:</strong> <span id="total-points">{{ assignment.total_points }}</span></p>
                     </div>
                 </div>
+
+                <!-- 题目显示和答题区域 -->
+                {% if questions %}
+                {% if not is_teacher %}
+                <!-- 学生答题表单 -->
+                <form method="post" action="{{ url_for('course.submit_assignment', assignment_id=assignment.id) }}" id="assignmentForm">
+                    <!-- 添加CSRF保护或其他必要的隐藏字段 -->
+                    <input type="hidden" name="assignment_id" value="{{ assignment.id }}">
+                {% endif %}
+                    <div class="mb-4">
+                        <h5 class="mb-3"><i class="fas fa-question-circle me-2"></i>作业题目</h5>
+                        <div class="list-group">
+                            {% for question in questions %}
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ loop.index }}. {{ question.question_name }}</h6>
+                                    <div>
+                                        <span class="badge bg-secondary">分值: {{ question.score }}</span>
+                                        <span class="badge bg-{{ 'success' if question.status == 1 else 'primary' }}">
+                                            {{ '选择题' if question.status == 1 
+                                            else '判断题' if question.status == 2 
+                                            else '简答题' if question.status == 3 
+                                            else '主观题'  }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <!-- 题目内容 -->
+                                <div class="mt-2">
+                                    <div class="card bg-light mb-2">
+                                        <div class="card-body p-3">
+                                            {% if question.status == 1 %}  <!-- 选择题 -->
+                                                <p class="mb-2">{{ question.context.split('\n')[0] }}</p>
+                                                {% if not is_teacher %}
+                                                <div class="options">
+                                                    {% for option in question.context.split('\n')[1:] if option.strip() %}
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="radio" 
+                                                            name="answer_{{ question.question_id }}" 
+                                                            id="option_{{ question.question_id }}_{{ loop.index }}"
+                                                            value="{{ option[0] }}"
+                                                            required>
+                                                        <label class="form-check-label" for="option_{{ question.question_id }}_{{ loop.index }}">
+                                                            {{ option }}
+                                                        </label>
+                                                    </div>
+                                                    {% endfor %}
+                                                </div>
+                                                {% else %}
+                                                <!-- 教师查看选项 -->
+                                                <div class="options">
+                                                    {% for option in question.context.split('\n')[1:] if option.strip() %}
+                                                    <div class="text-muted">{{ option }}</div>
+                                                    {% endfor %}
+                                                </div>
+                                                {% endif %}
+                                            {% elif question.status == 2 %}  <!-- 判断题 -->
+                                                <p class="mb-2">{{ question.context }}</p>
+                                                {% if not is_teacher %}
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="radio" 
+                                                        name="answer_{{ question.question_id }}" 
+                                                        id="true_{{ question.question_id }}" value="1" required>
+                                                    <label class="form-check-label" for="true_{{ question.question_id }}">正确</label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="radio" 
+                                                        name="answer_{{ question.question_id }}" 
+                                                        id="false_{{ question.question_id }}" value="0">
+                                                    <label class="form-check-label" for="false_{{ question.question_id }}">错误</label>
+                                                </div>
+                                                {% endif %}
+                                            {% else %}  <!-- 简答题和主观题 -->
+                                                <p class="mb-2">{{ question.context }}</p>
+                                                {% if not is_teacher %}
+                                                <textarea class="form-control" 
+                                                        name="answer_{{ question.question_id }}" 
+                                                        rows="{{ 3 if question.status == 3 else 5 }}"
+                                                        placeholder="请输入您的答案..." required></textarea>
+                                                {% endif %}
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                {% if is_teacher %}
+                                <div class="mt-2">
+                                    <small class="text-muted">正确答案: {{ question.answer }}</small>
+                                    {% if question.question_id %}
+                                        <a href="{{ url_for('course.edit_question', question_id=question.question_id) }}" class="btn btn-sm btn-outline-secondary ms-2">编辑</a>
+                                        <form method="post" action="{{ url_for('course.delete_question', question_id=question.question_id) }}" class="d-inline" 
+                                              onsubmit="return confirm('确定要删除这个题目吗？此操作不可恢复。');">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger ms-1">删除</button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
                 
                 {% if not is_teacher %}
-                <div class="mt-4">
-                    <div class="card border-light bg-light">
-                        <form method="post" action="{{ url_for('course.submit_assignment', assignment_id=assignment.id) }}">
-                                <div class="d-grid">
-                                    <button type="submit" class="btn btn-primary">提交作业</button>
+                    <div class="d-grid mb-4">
+                        <button type="submit" class="btn btn-primary btn-lg">提交作业</button>
+                    </div>
+                </form>
+                {% endif %}
+                {% else %}
+                <p class="text-center py-4">该作业暂无题目</p>
+                {% endif %}
+                
+                {% if is_teacher %}
+                <div class="mt-3">
+                    <a href="{{ url_for('course.add_question', assignment_id=assignment.id) }}" 
+                       class="btn btn-primary">
+                       <i class="fas fa-plus me-1"></i>添加题目
+                    </a>
+                </div>
+                {% endif %}
+                
+                {% if not is_teacher %}
+                <!-- 提交状态显示 -->
+                <div class="card border-light bg-light">
+                    <div class="card-body">
+                        <h5>提交状态</h5>
+                        {% if student_assignment %}
+                            {% if student_assignment.status == 2 %}
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle me-2"></i>您已完成此作业
+                                <p class="mb-0 mt-2"><strong>得分:</strong> {{ student_assignment.final_score or 0 }} / {{ assignment.total_points }}</p>
+                                {% if student_assignment.feedback %}
+                                <hr>
+                                <p class="mb-0"><strong>教师评语:</strong> {{ student_assignment.feedback }}</p>
+                                {% endif %}
+                                <div class="mt-3">
+                                    <a href="{{ url_for('course.view_submission', assignment_id=assignment.id, student_id=session['user_id']) }}" class="btn btn-info btn-sm">
+                                        <i class="fas fa-eye me-1"></i>查看批改详情
+                                    </a>
                                 </div>
-                            </form>
-                        <div class="card-body">
-                            <h5>提交状态</h5>
-                            {% if student_assignment.answer %}
-                                {% if student_assignment.completed %}
-                                <div class="alert alert-success">
-                                    <i class="fas fa-check-circle me-2"></i>您已完成此作业
-                                    <p class="mb-0 mt-2"><strong>得分:</strong> {{ student_assignment.score }} / {{ assignment.total_points }}</p>
-                                </div>
-                                {% elif student_assignment.submitted_at %}
-                                <div class="alert alert-warning">
-                                    <i class="fas fa-clock me-2"></i>已提交，等待评分
-                                    <p class="mb-0 mt-2"><strong>提交时间:</strong> {{ student_assignment.submitted_at.strftime('%Y-%m-%d %H:%M') }}</p>
-                                </div>
-                            {% endif %}
+                            </div>
+                            {% elif student_assignment.status == 1 %}
+                            <div class="alert alert-warning">
+                                <i class="fas fa-clock me-2"></i>已提交，等待评分
+                                <p class="mb-0 mt-2"><strong>提交时间:</strong> {{ student_assignment.work_time.strftime('%Y-%m-%d %H:%M') }}</p>
+                            </div>
                             {% else %}
                             <div class="alert alert-danger">
                                 <i class="fas fa-exclamation-circle me-2"></i>尚未提交
+                                {% if assignment.due_date < now %}
+                                <p class="mb-0 mt-2 text-danger"><strong>截止日期已过:</strong> {{ assignment.due_date.strftime('%Y-%m-%d %H:%M') }}</p>
+                                {% else %}
+                                <p class="mb-0 mt-2"><strong>截止日期:</strong> {{ assignment.due_date.strftime('%Y-%m-%d %H:%M') }}</p>
+                                {% endif %}
                             </div>
                             {% endif %}
+                        {% else %}
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle me-2"></i>尚未提交
                         </div>
+                        {% endif %}
                     </div>
                 </div>
                 {% endif %}
@@ -201,32 +238,36 @@
                     <div class="list-group-item">
                         <div class="d-flex w-100 justify-content-between">
                             <h6 class="mb-1">{{ submission.student.name }}</h6>
-                            {% if student_assignment.status==2 or student_assignment.work_time %}
-                            <span class="badge bg-success">已提交</span>
+                            {% if submission.status == 2 %}
+                            <span class="badge bg-success">已批改</span>
+                            {% elif submission.status == 1 %}
+                            <span class="badge bg-warning">已提交</span>
                             {% else %}
                             <span class="badge bg-danger">未提交</span>
                             {% endif %}
                         </div>
                         
-                        {% if submission.submitted_at %}
-                        <small class="text-muted">提交时间: {{ submission.submitted_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                        {% if submission.work_time %}
+                        <small class="text-muted">提交时间: {{ submission.work_time.strftime('%Y-%m-%d %H:%M') }}</small>
                         
-                        {% if submission.completed %}
-                        <p class="mb-1">得分: {{ submission.score }} / {{ assignment.total_points }}</p>
-                        <div class="mt-2">
-                            <a href="{{ url_for('course.view_submission', assignment_id=assignment.id, student_id=submission.student.id) }}" class="btn btn-sm btn-primary">
-                                <i class="fas fa-file-alt me-1"></i>查看详情
-                            </a>
-                        </div>
-                        {% else %}
-                        <!-- 替换原有的评分表单为查看详情按钮 -->
-                        <div class="mt-2">
-                            <a href="{{ url_for('course.view_submission', assignment_id=assignment.id, student_id=submission.student.id) }}" class="btn btn-sm btn-primary">
-                                <i class="fas fa-file-alt me-1"></i>查看详情
-                            </a>
+                        {% if submission.status == 2 %}
+                        <div class="mt-2 d-flex justify-content-between align-items-center">
+                            <span class="text-{{ 'success' if submission.final_score is not none and submission.final_score >= assignment.total_points * 0.6 else 'danger' }} fw-bold">
+                                得分: {{ submission.final_score or 0 }} / {{ assignment.total_points }}
+                            </span>
                         </div>
                         {% endif %}
                         
+                        <div class="mt-2">
+                            <a href="{{ url_for('course.view_submission', assignment_id=assignment.id, student_id=submission.student.id) }}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-file-alt me-1"></i>查看详情
+                            </a>
+                            {% if submission.status == 1 %}
+                            <a href="{{ url_for('course.grade_student_assignment', assignment_id=assignment.id, student_id=submission.student.id) }}" class="btn btn-sm btn-success">
+                                <i class="fas fa-check me-1"></i>评分
+                            </a>
+                            {% endif %}
+                        </div>
                         {% endif %}
                     </div>
                     {% endfor %}
@@ -270,23 +311,25 @@
         var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
             return new bootstrap.Tooltip(tooltipTriggerEl)
         });
-    });
-    document.addEventListener('DOMContentLoaded', function() {
-        // 获取所有题目的分值元素
+        
+        // 验证题目总分与作业总分是否一致 - 仅用于开发调试
         const scoreElements = document.querySelectorAll('.badge.bg-secondary');
-        let totalPoints = 0;
-
+        let calculatedTotal = 0;
+        
         // 遍历所有分值元素并累加
         scoreElements.forEach((element) => {
             const scoreText = element.textContent;
-            const score = parseInt(scoreText.replace('分值: ', ''), 10);
+            const score = parseFloat(scoreText.replace('分值: ', ''));
             if (!isNaN(score)) {
-                totalPoints += score;
+                calculatedTotal += score;
             }
         });
-
-        // 更新总分显示
-        document.getElementById('total-points').textContent = totalPoints;
+        
+        // 比较计算总分与设置总分，如果差异大于0.1则在控制台提示
+        const assignmentTotal = parseFloat(document.getElementById('total-points').textContent);
+        if (Math.abs(calculatedTotal - assignmentTotal) > 0.1 && calculatedTotal > 0) {
+            console.log(`注意: 题目分值总和(${calculatedTotal})与作业总分(${assignmentTotal})不一致`);
+        }
     });
 </script>
 {% endblock %}

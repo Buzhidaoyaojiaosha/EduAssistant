@@ -1,9 +1,10 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List, Dict, Any
 from app.models.assignment import Assignment, StudentAssignment
 from app.models.course import Course, StudentCourse
+from app.models.NewAdd import Question, StudentAnswer
 from app.react.tools_register import register_as_tool
-from peewee import DoesNotExist
+from peewee import DoesNotExist, fn
 
 class AssignmentService:
     """作业服务类，处理作业管理和学生作业提交。
@@ -190,5 +191,398 @@ class AssignmentService:
             list: 作业对象列表
         """
         return list(Assignment.select().where(Assignment.course_id == course_id))
-
     
+    @register_as_tool(roles=["teacher", "student"])
+    @staticmethod
+    def get_student_answers(student_id: int, assignment_id: int) -> List[Dict[str, Any]]:
+        """获取学生对特定作业的所有答案。
+        
+        获取指定学生对指定作业的所有题目回答，包含题目信息、学生回答内容和得分情况。
+        适用于教师查看学生作业详情或进行自动评分。
+        
+        Args:
+            student_id: 学生用户ID。
+            assignment_id: 作业ID。
+            
+        Returns:
+            包含学生答案信息的字典列表，每个答案包含以下字段：
+                - submission_id (int): 提交ID
+                - question_id (int): 题目ID
+                - question_name (str): 题目名称
+                - question_type (int): 题目类型(1:选择题, 2:判断题, 3:简答题, 其他:主观题)
+                - context (str): 题目内容
+                - answer (str): 正确答案
+                - commit_answer (str): 学生提交的答案
+                - earned_score (float): 已获得分数
+                - max_score (float): 题目满分
+                - analysis (str): 题目解析
+                
+        Raises:
+            ValueError: 如果找不到相关记录。
+        """
+        try:
+            # 验证作业存在
+            assignment = Assignment.get_by_id(assignment_id)
+            
+            # 查询学生对该作业的所有答案
+            answers = (StudentAnswer
+                      .select(StudentAnswer, Question)
+                      .join(Question)
+                      .where(
+                          (StudentAnswer.student_id == student_id) &
+                          (Question.assignment_id == assignment_id)
+                      ))
+            
+            if not answers.exists():
+                return []
+            
+            result = []
+            for answer in answers:
+                result.append({
+                    'submission_id': answer.submission_id,
+                    'question_id': answer.question.question_id,
+                    'question_name': answer.question.question_name,
+                    'question_type': answer.question.status,
+                    'context': answer.question.context,
+                    'answer': answer.question.answer,
+                    'commit_answer': answer.commit_answer,
+                    'earned_score': answer.earned_score if answer.earned_score is not None else 0,
+                    'max_score': answer.question.score,
+                    'analysis': answer.question.analysis or ""
+                })
+            
+            return result
+        
+        except DoesNotExist:
+            raise ValueError(f"找不到作业ID {assignment_id} 或学生ID {student_id}")
+    
+    @register_as_tool(roles=["teacher"])
+    @staticmethod
+    def auto_grade_assignment(student_id: int, assignment_id: int) -> Dict[str, Any]:
+        """自动为学生作业评分。
+        
+        根据题目类型和预设答案自动为学生作业评分。对于客观题(选择题、判断题)完全自动评分，
+        对于主观题提供初步评分建议，最终评分仍需教师确认。完成评分后更新学生作业状态。
+        
+        Args:
+            student_id: 学生用户ID。
+            assignment_id: 作业ID。
+            
+        Returns:
+            包含评分结果的字典，包含以下字段：
+                - total_score (float): 总得分
+                - max_score (float): 满分
+                - percentage (float): 得分百分比
+                - feedback (str): 自动生成的评语
+                - questions (List[Dict]): 各题目评分明细列表，每个元素包含：
+                    - question_id (int): 题目ID
+                    - question_name (str): 题目名称
+                    - score (float): 获得分数
+                    - max_score (float): 题目满分
+                    - feedback (str): 题目评语
+                
+        Raises:
+            ValueError: 如果作业不存在或尚未提交。
+        """
+        try:
+            # 获取作业和学生提交
+            assignment = Assignment.get_by_id(assignment_id)
+            student_assignment = StudentAssignment.get(
+                StudentAssignment.student_id == student_id,
+                StudentAssignment.assignment_id == assignment_id
+            )
+            
+            # 检查作业是否已提交
+            if student_assignment.status == 0:
+                raise ValueError("该作业尚未提交，无法评分")
+            
+            # 获取所有答案
+            answers = AssignmentService.get_student_answers(student_id, assignment_id)
+            
+            total_score = 0
+            max_score = 0
+            graded_questions = []
+            
+            # 评分每个问题
+            for answer in answers:
+                question_type = answer['question_type']
+                score = 0
+                
+                # 客观题自动评分
+                if question_type in [1, 2]:  # 选择题或判断题
+                    if answer['commit_answer'].strip() == answer['answer'].strip():
+                        score = answer['max_score']
+                        feedback = "答案正确"
+                    else:
+                        score = 0
+                        feedback = f"答案错误，正确答案是: {answer['answer']}"
+                else:
+                    # 主观题建议分值(暂时给一半分)
+                    score = answer['max_score'] * 0.5
+                    feedback = "需要教师进一步评分"
+                
+                # 更新分数
+                student_answer = StudentAnswer.get_by_id(answer['submission_id'])
+                student_answer.earned_score = score
+                student_answer.save()
+                
+                total_score += score
+                max_score += answer['max_score']
+                
+                graded_questions.append({
+                    'question_id': answer['question_id'],
+                    'question_name': answer['question_name'],
+                    'score': score,
+                    'max_score': answer['max_score'],
+                    'feedback': feedback
+                })
+            
+            # 生成评语
+            percentage = (total_score / max_score * 100) if max_score > 0 else 0
+            if percentage >= 80:
+                feedback = "表现优秀，继续保持！"
+            elif percentage >= 60:
+                feedback = "整体情况良好，还有进步空间。"
+            else:
+                feedback = "需要加强练习，建议复习相关知识点。"
+            
+            # 更新学生作业状态
+            student_assignment.final_score = total_score
+            student_assignment.feedback = feedback
+            student_assignment.status = 2  # 已批改
+            student_assignment.save()
+            
+            return {
+                'total_score': total_score,
+                'max_score': max_score,
+                'percentage': round(percentage, 2),
+                'feedback': feedback,
+                'questions': graded_questions
+            }
+            
+        except DoesNotExist:
+            raise ValueError(f"找不到作业ID {assignment_id} 或学生ID {student_id} 的提交记录")
+    
+    @register_as_tool(roles=["teacher"])
+    @staticmethod
+    def grade_assignment(student_id: int, assignment_id: int, score: float, feedback: str = None):
+        """为学生作业评分。
+
+        为指定的学生作业设置总分和评语，将作业状态更新为已批改。
+        当教师完成作业评分后，学生将能够在系统中查看自己的成绩和反馈。
+
+        Args:
+            student_id: 学生用户ID。
+            assignment_id: 作业ID。
+            score: 评分分数，应为非负数值。
+            feedback: 教师评语，可选。提供具体反馈以帮助学生了解自己的表现。
+
+        Returns:
+            StudentAssignment: 更新后的学生作业对象，包含最新的评分和反馈信息。
+
+        Raises:
+            DoesNotExist: 如果找不到对应的作业对象。
+            ValueError: 如果分数为负数或作业尚未提交。
+        """
+        if score < 0:
+            raise ValueError("分数不能为负数")
+            
+        student_assignment = StudentAssignment.get(
+            StudentAssignment.student_id == student_id,
+            StudentAssignment.assignment_id == assignment_id
+        )
+        
+        if student_assignment.status == 0:
+            raise ValueError("该作业尚未提交，无法评分")
+            
+        student_assignment.final_score = score
+        student_assignment.feedback = feedback
+        student_assignment.status = 2  # 已批改状态
+        student_assignment.save()
+        return student_assignment
+    
+    @register_as_tool(roles=["teacher"])
+    @staticmethod
+    def grade_student_answer(submission_id: int, score: float, feedback: str = None) -> Dict[str, Any]:
+        """为学生的单个题目评分。
+        
+        为指定的学生答案设置分数和评语，适用于教师对主观题进行单独评分。
+        评分后会自动重新计算并更新学生作业的总分。
+        
+        Args:
+            submission_id: 学生答案提交ID。
+            score: 评分分数，应为非负数值。
+            feedback: 针对该题的评语，可选。
+            
+        Returns:
+            包含更新后答案信息的字典，包含以下字段：
+                - submission_id (int): 提交ID
+                - question_id (int): 题目ID
+                - earned_score (float): 获得的分数
+                - max_score (float): 题目满分
+                - feedback (str): 评语
+                
+        Raises:
+            DoesNotExist: 如果找不到对应的答案记录。
+            ValueError: 如果分数为负数或超过题目满分。
+        """
+        if score < 0:
+            raise ValueError("分数不能为负数")
+            
+        answer = StudentAnswer.get_by_id(submission_id)
+        
+        if score > answer.question.score:
+            raise ValueError(f"评分 {score} 超过题目满分 {answer.question.score}")
+            
+        answer.earned_score = score
+        answer.save()
+        
+        # 更新总分
+        student_id = answer.student_id
+        question = answer.question
+        assignment_id = question.assignment_id
+        
+        # 重新计算总分
+        total_score_query = (StudentAnswer
+                           .select(fn.SUM(StudentAnswer.earned_score))
+                           .join(Question)
+                           .where(
+                               (StudentAnswer.student_id == student_id) &
+                               (Question.assignment_id == assignment_id)
+                           ))
+        
+        total_score = total_score_query.scalar()
+        
+        # 更新学生作业表中的总分
+        student_assignment = StudentAssignment.get(
+            StudentAssignment.student_id == student_id,
+            StudentAssignment.assignment_id == assignment_id
+        )
+        student_assignment.final_score = total_score if total_score is not None else 0
+        student_assignment.save()
+        
+        return {
+            'submission_id': answer.submission_id,
+            'question_id': answer.question.question_id,
+            'earned_score': answer.earned_score,
+            'max_score': answer.question.score,
+            'feedback': feedback
+        }
+    
+    @register_as_tool(roles=["teacher", "student"])
+    @staticmethod
+    def get_assignment_statistics(assignment_id: int) -> Dict[str, Any]:
+        """获取作业统计信息。
+        
+        获取指定作业的统计数据，包括提交情况、分数分布等信息。
+        适用于教师分析作业完成情况和学生了解整体表现。
+        
+        Args:
+            assignment_id: 作业ID。
+            
+        Returns:
+            包含作业统计信息的字典，包含以下字段：
+                - assignment_id (int): 作业ID
+                - assignment_title (str): 作业标题
+                - total_students (int): 总学生数
+                - submitted_count (int): 已提交数量
+                - graded_count (int): 已批改数量
+                - submission_rate (float): 提交率百分比
+                - average_score (float): 平均分
+                - max_score (float): 最高分
+                - min_score (float): 最低分
+                - score_distribution (Dict): 分数段分布
+                
+        Raises:
+            ValueError: 如果作业不存在。
+        """
+        try:
+            assignment = Assignment.get_by_id(assignment_id)
+            
+            # 获取所有学生作业记录
+            submissions = StudentAssignment.select().where(
+                StudentAssignment.assignment_id == assignment_id
+            )
+            
+            total_students = submissions.count()
+            submitted_count = submissions.where(StudentAssignment.status >= 1).count()
+            graded_count = submissions.where(StudentAssignment.status == 2).count()
+            
+            # 计算提交率
+            submission_rate = (submitted_count / total_students * 100) if total_students > 0 else 0
+            
+            # 获取已批改作业的分数统计
+            graded_submissions = submissions.where(
+                (StudentAssignment.status == 2) & 
+                (StudentAssignment.final_score.is_null(False))
+            )
+            
+            scores = [s.final_score for s in graded_submissions if s.final_score is not None]
+            
+            if scores:
+                average_score = sum(scores) / len(scores)
+                max_score = max(scores)
+                min_score = min(scores)
+                
+                # 分数段分布（优秀、良好、及格、不及格）
+                total_points = assignment.total_points
+                excellent = sum(1 for s in scores if s >= total_points * 0.9)
+                good = sum(1 for s in scores if total_points * 0.8 <= s < total_points * 0.9)
+                pass_score = sum(1 for s in scores if total_points * 0.6 <= s < total_points * 0.8)
+                fail = sum(1 for s in scores if s < total_points * 0.6)
+                
+                score_distribution = {
+                    'excellent': excellent,
+                    'good': good,
+                    'pass': pass_score,
+                    'fail': fail
+                }
+            else:
+                average_score = 0
+                max_score = 0
+                min_score = 0
+                score_distribution = {'excellent': 0, 'good': 0, 'pass': 0, 'fail': 0}
+            
+            return {
+                'assignment_id': assignment_id,
+                'assignment_title': assignment.title,
+                'total_students': total_students,
+                'submitted_count': submitted_count,
+                'graded_count': graded_count,
+                'submission_rate': round(submission_rate, 2),
+                'average_score': round(average_score, 2) if scores else 0,
+                'max_score': max_score,
+                'min_score': min_score,
+                'score_distribution': score_distribution
+            }
+            
+        except DoesNotExist:
+            raise ValueError(f"作业ID {assignment_id} 不存在")
+
+    @staticmethod
+    def update_assignment_total_points(assignment_id):
+        """根据题目分值更新作业的总分。
+        
+        Args:
+            assignment_id (int): 作业ID
+            
+        Returns:
+            float: 更新后的总分
+        """
+        from app.models.NewAdd import Question
+        from app.models.assignment import Assignment
+        
+        # 获取作业的所有题目
+        questions = Question.select().where(Question.assignment_id == assignment_id)
+        
+        # 计算总分
+        total_points = sum(q.score for q in questions)
+        
+        # 更新作业总分
+        assignment = Assignment.get_by_id(assignment_id)
+        assignment.total_points = total_points
+        assignment.save()
+        
+        return total_points
+
+

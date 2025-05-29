@@ -11,7 +11,7 @@
                 <p class="mb-0 text-white-50">作业: {{ assignment.title }}</p>
             </div>
             <div class="card-body">
-                <form method="post">
+                <form method="post" id="questionForm">
                     <div class="mb-3">
                         <label for="name" class="form-label">题目名称</label>
                         <input type="text" class="form-control" id="name" name="name" required>
@@ -32,14 +32,43 @@
                         <textarea class="form-control" id="context" name="context" rows="4" required></textarea>
                     </div>
                     
+                    <!-- 选择题选项区域 -->
+                    <div id="optionsContainer" class="mb-3 d-none">
+                        <label class="form-label">选项</label>
+                        <div id="optionsList">
+                            <!-- 选项将通过JavaScript动态添加 -->
+                        </div>
+                        <button type="button" id="addOption" class="btn btn-sm btn-outline-primary mt-2">
+                            <i class="fas fa-plus"></i> 添加选项
+                        </button>
+                    </div>
+                    
+                    <!-- 判断题答案区域 -->
+                    <div id="judgmentContainer" class="mb-3 d-none">
+                        <label class="form-label">题目正误</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="judgmentAnswer" id="judgmentTrue" value="1" checked>
+                            <label class="form-check-label" for="judgmentTrue">正确</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="judgmentAnswer" id="judgmentFalse" value="0">
+                            <label class="form-check-label" for="judgmentFalse">错误</label>
+                        </div>
+                    </div>
+                    
                     <div class="mb-3">
                         <label for="answer" class="form-label">正确答案</label>
                         <textarea class="form-control" id="answer" name="answer" rows="2" required></textarea>
+                        <small id="answerHelp" class="form-text text-muted">
+                            对于选择题，请输入正确选项的字母或编号；对于判断题，输入"1"表示正确，"0"表示错误。
+                        </small>
                     </div>
+                    
                     <div class="mb-3">
                         <label for="analysis" class="form-label">答案解析</label>
                         <textarea class="form-control" id="analysis" name="analysis" rows="2" required></textarea>
                     </div>
+                    
                     <div class="mb-3">
                         <label for="score" class="form-label">分值</label>
                         <input type="number" class="form-control" id="score" name="score" min="0" step="0.5" value="10.0" required>
@@ -53,4 +82,155 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const typeSelect = document.getElementById('type');
+        const optionsContainer = document.getElementById('optionsContainer');
+        const judgmentContainer = document.getElementById('judgmentContainer');
+        const addOptionBtn = document.getElementById('addOption');
+        const optionsList = document.getElementById('optionsList');
+        const answerField = document.getElementById('answer');
+        const contextField = document.getElementById('context');
+        const questionForm = document.getElementById('questionForm');
+        
+        // 选项字母数组
+        const optionLetters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+        
+        // 题目类型变化时显示/隐藏相应区域
+        typeSelect.addEventListener('change', function() {
+            const selectedType = parseInt(this.value);
+            
+            // 隐藏所有特殊区域
+            optionsContainer.classList.add('d-none');
+            judgmentContainer.classList.add('d-none');
+            
+            // 根据题型显示相应区域
+            if (selectedType === 1) { // 选择题
+                optionsContainer.classList.remove('d-none');
+                // 清空选项并添加初始选项
+                optionsList.innerHTML = '';
+                addOptionElement();
+                addOptionElement();
+            } else if (selectedType === 2) { // 判断题
+                judgmentContainer.classList.remove('d-none');
+                // 设置判断题的默认答案
+                answerField.value = '1';
+            }
+        });
+        
+        // 添加选项按钮点击事件
+        addOptionBtn.addEventListener('click', function() {
+            addOptionElement();
+        });
+        
+        // 添加选项元素
+        function addOptionElement() {
+            const optionsCount = optionsList.children.length;
+            const optionLetter = optionLetters[optionsCount];
+            
+            const optionDiv = document.createElement('div');
+            optionDiv.className = 'input-group mb-2';
+            optionDiv.innerHTML = `
+                <span class="input-group-text">${optionLetter}</span>
+                <input type="text" class="form-control option-input" placeholder="选项${optionLetter}内容">
+                <div class="input-group-text">
+                    <input class="form-check-input option-correct" type="radio" name="correctOption" value="${optionLetter}">
+                    <label class="form-check-label ms-1">正确答案</label>
+                </div>
+                <button type="button" class="btn btn-outline-danger remove-option">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            optionsList.appendChild(optionDiv);
+            
+            // 删除选项按钮事件
+            optionDiv.querySelector('.remove-option').addEventListener('click', function() {
+                optionDiv.remove();
+                updateOptionsInContext();
+                updateCorrectAnswer();
+            });
+            
+            // 选项内容变化事件
+            optionDiv.querySelector('.option-input').addEventListener('input', function() {
+                updateOptionsInContext();
+            });
+            
+            // 正确答案选择事件
+            optionDiv.querySelector('.option-correct').addEventListener('change', function() {
+                updateCorrectAnswer();
+            });
+            
+            updateOptionsInContext();
+        }
+        
+        // 更新题目内容中的选项
+        function updateOptionsInContext() {
+            const optionInputs = document.querySelectorAll('.option-input');
+            const contextContent = contextField.value.split('\n')[0] || '';
+            let optionsText = '';
+            
+            optionInputs.forEach((input, index) => {
+                const letter = optionLetters[index];
+                if (input.value.trim()) {
+                    optionsText += `\n${letter}. ${input.value}`;
+                }
+            });
+            
+            contextField.value = contextContent + optionsText;
+        }
+        
+        // 更新正确答案
+        function updateCorrectAnswer() {
+            const selectedOption = document.querySelector('.option-correct:checked');
+            if (selectedOption) {
+                answerField.value = selectedOption.value;
+            }
+        }
+        
+        // 判断题答案变化事件
+        document.querySelectorAll('input[name="judgmentAnswer"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                answerField.value = this.value;
+            });
+        });
+        
+        // 表单提交前处理
+        questionForm.addEventListener('submit', function(e) {
+            const selectedType = parseInt(typeSelect.value);
+            
+            if (selectedType === 1) { // 选择题
+                // 检查是否有选项
+                if (optionsList.children.length < 2) {
+                    e.preventDefault();
+                    alert('选择题至少需要2个选项');
+                    return;
+                }
+                
+                // 检查是否选择了正确答案
+                if (!document.querySelector('.option-correct:checked')) {
+                    e.preventDefault();
+                    alert('请选择一个正确答案');
+                    return;
+                }
+                
+                // 检查所有选项是否都有内容
+                const optionInputs = document.querySelectorAll('.option-input');
+                let hasEmptyOption = false;
+                optionInputs.forEach(input => {
+                    if (!input.value.trim()) {
+                        hasEmptyOption = true;
+                    }
+                });
+                
+                if (hasEmptyOption) {
+                    e.preventDefault();
+                    alert('请填写所有选项内容');
+                    return;
+                }
+            }
+        });
+    });
+</script>
 {% endblock %}
