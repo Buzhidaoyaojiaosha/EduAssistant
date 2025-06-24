@@ -98,28 +98,34 @@ class CourseService:
 
         return student_course.delete_instance()
 
-    @register_as_tool(roles=["student", "teacher"])
     @staticmethod
-    def get_all_courses():
-        """获取所有的课程
-
-        Returns:
-            list: 课程对象列表
-        """
-        return list(Course.select())
-    
-    @register_as_tool(roles=["teacher"])
-    @staticmethod
-    def get_courses_by_teacher(teacher_id):
-        """获取教师所教授的所有课程。
+    def get_courses_by_teacher(teacher_id, search_query=None):
+        """获取教师创建的课程，支持模糊搜索"""
+        query = Course.select().where(Course.teacher_id == teacher_id)
         
-        Args:
-            teacher_id (int): 教师用户ID
-            
-        Returns:
-            list: 课程对象列表
-        """
-        return list(Course.select().where(Course.teacher_id == teacher_id))
+        if search_query:
+            # 使用 OR 连接多个字段的模糊匹配
+            query = query.where(
+                (Course.name.contains(search_query)) |
+                (Course.code.contains(search_query)) |
+                (Course.description.contains(search_query))
+            )
+        
+        return query.order_by(Course.created_at.desc())
+    
+    @staticmethod
+    def get_all_courses(search_query=None):
+        """获取所有课程，支持模糊搜索"""
+        query = Course.select()
+        
+        if search_query:
+            query = query.where(
+                (Course.name.contains(search_query)) |
+                (Course.code.contains(search_query)) |
+                (Course.description.contains(search_query))
+            )
+        
+        return query.order_by(Course.created_at.desc())
     
     @register_as_tool(roles=["student", "teacher"])
     @staticmethod
