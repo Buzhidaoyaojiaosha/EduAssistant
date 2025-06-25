@@ -5,6 +5,7 @@ from pydantic_ai.providers.deepseek import DeepSeekProvider
 from pydantic_ai.providers.openai import OpenAIProvider
 from dataclasses import dataclass
 
+
 import os
 import pandas as pd
 import peewee

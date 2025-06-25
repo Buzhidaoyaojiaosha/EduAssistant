@@ -48,6 +48,7 @@ def api_search():
     query = request.args.get('q', '')
     course_id = request.args.get('course_id')
     limit = int(request.args.get('limit', 5))
+    keyword_weight = int(request.args.get('keyword_weight', 0.3))
     
     if course_id:
         try:
@@ -57,7 +58,7 @@ def api_search():
     
     results = []
     if query:
-        results = KnowledgeBaseService.search_knowledge(query, course_id, limit)
+        results = KnowledgeBaseService.search_knowledge(query, course_id, limit, keyword_weight)
         
     # 将结果转换为简单的JSON结构
     simplified_results = []
