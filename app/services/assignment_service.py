@@ -5,6 +5,8 @@ from app.models.course import Course, StudentCourse
 from app.models.NewAdd import Question, StudentAnswer
 from app.react.tools_register import register_as_tool
 from peewee import DoesNotExist, fn
+from app.utils.logging import logger
+from app.utils.llm.deepseek import chat_deepseek
 
 class AssignmentService:
     """作业服务类，处理作业管理和学生作业提交。
@@ -585,4 +587,123 @@ class AssignmentService:
         
         return total_points
 
+    @staticmethod
+    def grade_short_answer_with_deepseek(question: str, student_answer: str, max_score: float, model="deepseek-chat") -> float:
+        """使用DeepSeek API对简答题进行自动评分
+        
+        Args:
+            question (str): 题目内容
+            student_answer (str): 学生答案
+            max_score (float): 该题最高分值
+            model (str): 使用的模型名称，默认为deepseek-chat
+            
+        Returns:
+            float: 评分结果(0到max_score之间)
+            
+        Raises:
+            ValueError: 如果API调用失败或返回无效结果
+        """
+        try:
+            # 构造评分提示词
+            prompt = f"""
+            请根据以下题目和参考答案，对学生的答案进行评分。
+            评分标准应基于答案的准确性、完整性和相关性。
+            
+            题目: {question}
+            参考答案: 请根据题目内容自行判断
+            学生答案: {student_answer}
+            
+            请按照以下要求评分:
+            1. 评分范围: 0-{max_score}分
+            2. 给出具体评分(只能是数字)
+            3. 简要说明评分理由(50字以内)
+            
+            返回格式必须严格遵循:
+            评分: [分数]
+            理由: [评分理由]
+            """
+            
+            messages = [
+                {"role": "system", "content": "你是一个专业的教学助理，负责对学生的简答题答案进行评分。"},
+                {"role": "user", "content": prompt}
+            ]
+            
+            # 调用DeepSeek API
+            response_text = chat_deepseek(messages)
+            if not response_text:
+                raise ValueError("DeepSeek API返回空响应")
+            
+            # 解析API响应
+            score_line = next((line for line in response_text.split('\n') if line.startswith('评分:')), None)
+            if not score_line:
+                raise ValueError("无法从响应中解析评分")
+            
+            try:
+                score = float(score_line.split(':')[1].strip())
+            except (IndexError, ValueError):
+                raise ValueError("评分格式无效")
+                
+            # 确保分数在合理范围内
+            score = max(0, min(max_score, score))
+            
+            logger.info(f"简答题评分完成 - 题目: {question[:50]}... | 得分: {score}/{max_score}")
+            return score
+            
+        except Exception as e:
+            logger.error(f"简答题自动评分失败: {str(e)}")
+            raise ValueError(f"自动评分失败: {str(e)}")
+ 
 
+    @staticmethod
+    def generate_feedback_with_deepseek(student_answers: list, total_score: float, max_score: float) -> str:
+        """使用DeepSeek API生成总体评语
+        
+        Args:
+            student_answers: 学生答案列表（包含题目和得分信息）
+            total_score: 学生获得的总分
+            max_score: 作业总分
+            
+        Returns:
+            str: 生成的评语内容
+        """
+        try:
+            # 构造提示词
+            prompt = f"""
+            你是一位经验丰富的教师，需要为学生的作业撰写总体评语。
+            
+            作业情况：
+            - 总分：{total_score}/{max_score}
+            - 各题得分情况：
+            {chr(10).join(f"题目 {i+1}: {ans['question'][:50]}... | 得分: {ans['score']}/{ans['max_score']}" for i, ans in enumerate(student_answers))}
+            
+            请根据以下要求撰写评语：
+            1. 首先指出整体表现
+            2. 分析优点和需要改进的地方
+            3. 给出具体的学习建议
+            4. 语言简洁专业，200字左右
+            5. 使用中文
+            
+            评语格式：
+            【整体评价】...
+            【优点】...
+            【改进建议】...
+            """
+            
+            messages = [
+                {"role": "system", "content": "你是一位专业教师，擅长撰写作业评语。"},
+                {"role": "user", "content": prompt}
+            ]
+            
+            # 调用DeepSeek API
+            response_text = chat_deepseek(messages)
+            if not response_text:
+                raise ValueError("DeepSeek API返回空响应")
+            
+            return response_text.strip()
+            
+        except Exception as e:
+            logger.error(f"生成评语失败: {str(e)}")
+            # 返回默认评语
+            return f"""【整体评价】作业已完成，获得{total_score}/{max_score}分。
+            【优点】完成了所有题目。
+            【改进建议】请继续努力，加强对知识点的理解。"""
