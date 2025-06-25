@@ -12,8 +12,13 @@ def login():
         user = UserService.authenticate_user(username, password)
         
         if user:
+            # 获取用户角色名称列表
+            user_roles = []
+            for user_role in user.roles:  # 使用 backref 'roles'
+                user_roles.append(user_role.role.name)
             session['user_id'] = user.id
             session['username'] = user.username
+            session['roles'] = user_roles  # 添加角色信息
             flash('登录成功!', 'success')
             return redirect(url_for('dashboard.index'))
         else:
