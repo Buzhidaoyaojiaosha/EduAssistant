@@ -1,3 +1,5 @@
+import pandas as pd
+
 from app.models.learning_data import (
     KnowledgePoint,
     AssignmentKnowledgePoint,
@@ -9,6 +11,7 @@ from app.models.knowledge_base import KnowledgeBase
 from typing import List, Dict, Optional
 from peewee import DoesNotExist
 from app.react.tools_register import register_as_tool
+
 
 class KnowledgePointService:
 
@@ -260,6 +263,7 @@ class KnowledgePointService:
                 knowledge_base_id=knowledge_base_id,
                 knowledge_point_id=knowledge_point_id
             )
+            
             relation.delete_instance()
             return True
         except DoesNotExist:
@@ -330,3 +334,58 @@ class KnowledgePointService:
             
         except DoesNotExist:
             raise ValueError(f"知识库条目ID {knowledge_base_id} 不存在")
+
+    @staticmethod
+    def import_excel_to_knowledge_points(file_path: str, course_id: int):
+        """
+        将 Excel 中的知识点导入 PostgreSQL数据库（基于父子层级结构）。
+
+        参数:
+            file_path: Excel 文件路径。
+            course_id: 所属课程的 ID。
+        """
+
+        # 读取表格
+        df = pd.read_excel(file_path, header=None)
+
+        LEVEL_COLS = [0, 1, 2]  # 知识点列：0 - 一级，1 - 二级，2 - 三级
+        DESCRIPTION_COL = 14  # 描述列
+        id_cache = {}  # 缓存已创建知识点：{name: id}
+        latest_level_1_id = None
+        latest_level_2_id = None
+
+        for _, row in df.iterrows():
+            name_lvl1 = str(row[0]).strip() if pd.notna(row[0]) else None
+            name_lvl2 = str(row[1]).strip() if pd.notna(row[1]) else None
+            name_lvl3 = str(row[2]).strip() if pd.notna(row[2]) else None
+            description = str(row[DESCRIPTION_COL]).strip() if pd.notna(row[DESCRIPTION_COL]) else None
+
+            try:
+                if name_lvl1:
+                    # 创建一级知识点（无父）
+                    kp1 = KnowledgePointService.create_knowledge_point(name=name_lvl1, course_id=course_id, description=None, parent_id=None)
+                    id_cache[name_lvl1] = kp1.name
+                    latest_level_1_id = kp1.name
+                    latest_level_2_id = None  # 清空二级缓存
+
+                elif name_lvl2 and latest_level_1_id:
+                    # 创建二级知识点，父为最近一级
+                    kp2 = KnowledgePointService.create_knowledge_point(name=name_lvl2, course_id=course_id, description=None,
+                                                 parent_id=latest_level_1_id)
+                    id_cache[name_lvl2] = kp2.name
+                    latest_level_2_id = kp2.name
+
+                elif name_lvl3 and latest_level_2_id:
+                    # 创建三级知识点，父为最近二级
+                    kp3 = KnowledgePointService.create_knowledge_point(name=name_lvl3, course_id=course_id, description=description,
+                                                 parent_id=latest_level_2_id)
+                    id_cache[name_lvl3] = kp3.name
+
+            except ValueError as e:
+                print(f"[跳过] 创建失败：{e}")
+                continue
+
+        print(f"✅ 课程 {course_id} 的知识点导入 PostgreSQL 完成，共导入 {len(id_cache)} 个节点。")
+
+
+
