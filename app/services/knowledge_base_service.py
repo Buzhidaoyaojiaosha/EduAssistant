@@ -53,51 +53,131 @@ class KnowledgeBaseService:
         return knowledge
     
     @staticmethod
-    def search_knowledge(query, course_id=None, limit=5):
-        """搜索知识库。
+    def search_knowledge(query, course_id=None, limit=5, keyword_weight=0.3):
+        """
+        升级版知识库搜索：结合语义搜索和关键字全文搜索
         
         Args:
             query (str): 查询文本
             course_id (int, optional): 课程ID，用于筛选指定课程的知识
             limit (int): 返回结果数量限制
+            keyword_weight (float): 关键字搜索结果的权重系数 (0-1之间)
             
         Returns:
-            list: 匹配结果列表
+            list: 匹配结果列表，按综合相关性排序
         """
-        # 使用ChromaDB搜索
-        search_results = knowledge_base_collection.query(
+        # 1. 执行语义搜索（向量搜索）
+        vector_results = []
+        vector_search = knowledge_base_collection.query(
             query_texts=[query],
-            n_results=limit
+            n_results=limit * 3  # 获取更多结果用于后续融合
         )
         
-        results = []
-        if len(search_results["ids"]) > 0:
-            for i, vector_id in enumerate(search_results["ids"][0]):
-                metadata = search_results["metadatas"][0][i]
-                document = search_results["documents"][0][i]
-                distance = None
-                if "distances" in search_results:
-                    distance = search_results["distances"][0][i]
-                
-                # 如果指定了课程筛选，检查是否匹配
-                if course_id is not None and metadata["course_id"] != course_id:
-                    continue
+        if len(vector_search["ids"]) > 0:
+            for i, vector_id in enumerate(vector_search["ids"][0]):
+                metadata = vector_search["metadatas"][0][i]
+                document = vector_search["documents"][0][i]
+                distance = vector_search["distances"][0][i] if "distances" in vector_search else None
                 
                 # 获取完整记录
                 db_record = KnowledgeBase.get_or_none(KnowledgeBase.vector_id == vector_id)
-                
-                results.append({
+                if not db_record:
+                    continue
+                    
+                vector_results.append({
                     "id": metadata["id"],
+                    "vector_id": vector_id,
                     "title": metadata["title"],
                     "content": document,
-                    "distance": distance,
+                    "vector_distance": distance,
                     "category": metadata["category"],
                     "course_id": metadata["course_id"],
                     "tags": metadata["tags"].split(",") if metadata["tags"] else [],
-                    "full_record": db_record
+                    "full_record": db_record,
+                    "score": 1 - (distance if distance is not None else 1)  # 距离转换为相似度分数
                 })
+
+        # 2. 执行关键字全文搜索（基于标题和内容）
+        keyword_results = []
+        # 使用Peewee的SQL函数进行关键字匹配
+        keyword_query = KnowledgeBase.select().where(
+            (KnowledgeBase.title.contains(query)) |
+            (KnowledgeBase.content.contains(query))
+        )
+        
+        if course_id is not None:
+            keyword_query = keyword_query.where(KnowledgeBase.course_id == course_id)
+            
+        keyword_query = keyword_query.limit(limit * 3)  # 获取更多结果用于后续融合
+        
+        for knowledge in keyword_query:
+            # 计算关键字匹配分数（简单实现：匹配次数越多分数越高）
+            title_matches = knowledge.title.lower().count(query.lower())
+            content_matches = knowledge.content.lower().count(query.lower())
+            keyword_score = min(1.0, 0.1 * title_matches + 0.01 * content_matches)
+            
+            keyword_results.append({
+                "id": knowledge.id,
+                "vector_id": knowledge.vector_id,
+                "title": knowledge.title,
+                "content": knowledge.content,
+                "vector_distance": None,
+                "category": knowledge.category,
+                "course_id": knowledge.course_id,
+                "tags": knowledge.tags,
+                "full_record": knowledge,
+                "score": keyword_score
+            })
+
+        # 3. 融合两种搜索结果
+        all_results = {}
+        
+        # 添加向量搜索结果
+        for result in vector_results:
+            all_results[result["id"]] = {
+                **result,
+                "combined_score": result["score"]
+            }
+        
+        # 添加关键字搜索结果并融合分数
+        for result in keyword_results:
+            if result["id"] in all_results:
+                # 如果结果已在向量搜索中，则融合分数
+                existing = all_results[result["id"]]
+                combined_score = (1 - keyword_weight) * existing["score"] + keyword_weight * result["score"]
+                all_results[result["id"]]["combined_score"] = combined_score
+            else:
+                # 新结果，只使用关键字分数
+                all_results[result["id"]] = {
+                    **result,
+                    "combined_score": result["score"] * keyword_weight
+                }
+
+        # 4. 按融合分数排序并限制结果数量
+        sorted_results = sorted(
+            all_results.values(), 
+            key=lambda x: x["combined_score"], 
+            reverse=True
+        )[:limit]
+        
+        # 5. 添加额外的元数据并返回
+        final_results = []
+        for result in sorted_results:
+            # 计算匹配类型标签
+            match_types = []
+            if result.get("vector_distance") is not None:
+                match_types.append("语义匹配")
                 
-        return results
+            if "score" in result and result["score"] > 0:
+                match_types.append("关键词匹配")
+                
+            final_results.append({
+                **result,
+                "match_types": match_types,
+                "combined_score": round(result["combined_score"], 4)  # 保留4位小数
+            })
+        
+        return final_results
     
     @staticmethod
     def delete_knowledge(knowledge_id):

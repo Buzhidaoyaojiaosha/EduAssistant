@@ -69,7 +69,7 @@
 
                 <div class="mb-3">
                     <label for="feedback" class="form-label">总体评语:</label>
-                    <textarea class="form-control" id="feedback" name="feedback" rows="3">{{ student_assignment.feedback or '' }}</textarea>
+                    <textarea class="form-control" id="feedback" name="feedback" rows="8">{% if feedback %}{{ feedback.comment }}{% endif %}</textarea>
                 </div>
 
                 <div class="d-grid">

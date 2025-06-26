@@ -81,7 +81,7 @@
                                             {{ '选择题' if question.status == 1 
                                             else '判断题' if question.status == 2 
                                             else '简答题' if question.status == 3 
-                                            else '主观题'  }}
+                                            }}
                                         </span>
                                     </div>
                                 </div>
@@ -130,7 +130,7 @@
                                                     <label class="form-check-label" for="false_{{ question.question_id }}">错误</label>
                                                 </div>
                                                 {% endif %}
-                                            {% else %}  <!-- 简答题和主观题 -->
+                                            {% else %}  <!-- 简答题 -->
                                                 <p class="mb-2">{{ question.context }}</p>
                                                 {% if not is_teacher %}
                                                 <textarea class="form-control" 
@@ -189,9 +189,9 @@
                             <div class="alert alert-success">
                                 <i class="fas fa-check-circle me-2"></i>您已完成此作业
                                 <p class="mb-0 mt-2"><strong>得分:</strong> {{ student_assignment.final_score or 0 }} / {{ assignment.total_points }}</p>
-                                {% if student_assignment.feedback %}
+                                {% if feedback and feedback.comment %}
                                 <hr>
-                                <p class="mb-0"><strong>教师评语:</strong> {{ student_assignment.feedback }}</p>
+                                <p class="mb-0"><strong>总体评语:</strong> {{ feedback.comment }}</p>
                                 {% endif %}
                                 <div class="mt-3">
                                     <a href="{{ url_for('course.view_submission', assignment_id=assignment.id, student_id=session['user_id']) }}" class="btn btn-info btn-sm">

@@ -44,10 +44,10 @@
                         {% endif %}
                     </div>
                     
-                    {% if submission.status == 2 and submission.feedback %}
+                    {% if submission.status == 2 and feedback %}
                     <div class="alert alert-info">
-                        <h6><i class="fas fa-comment me-2"></i>教师评语</h6>
-                        <p class="mb-0">{{ submission.feedback }}</p>
+                        <h6><i class="fas fa-comment me-2"></i>总体评语</h6>
+                        <p class="mb-0">{{ feedback.comment }}</p>
                     </div>
                     {% endif %}
                 </div>

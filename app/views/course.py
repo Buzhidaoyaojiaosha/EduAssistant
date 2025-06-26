@@ -377,13 +377,14 @@ def create_assignment(course_id):
         return redirect(url_for('course.view', course_id=course_id))
     
     return render_template('course/create_assignment.html', course=course)
-
+#查看作业详情页
 @course_bp.route('/assignment/<int:assignment_id>')
 def view_assignment(assignment_id):
     if 'user_id' not in session:
         return redirect(url_for('auth.login'))
     
     from app.models.assignment import Assignment, StudentAssignment
+    from app.models.NewAdd import Question, Feedback
     
     assignment = Assignment.get_by_id(assignment_id)
     user_id = session['user_id']
@@ -391,32 +392,36 @@ def view_assignment(assignment_id):
     # 检查权限
     is_teacher = assignment.course.teacher_id == user_id
     student_assignment = None
+    feedback = None  # 新增feedback变量
     
-    # 获取作业关联的所有题目 - 修改查询以包含question_id
+    # 获取作业关联的所有题目
     questions = Question.select(
-        Question.question_id,  # 确保包含题目ID
+        Question.question_id,
         Question.question_name,
         Question.context,
         Question.answer,
         Question.score,
         Question.status).where(Question.assignment == assignment).order_by(Question.status)
         
-    # 如果是学生，获取学生作业状态
+    # 如果是学生，获取学生作业状态和评语
     if not is_teacher:
         student_assignment = StudentAssignment.get_or_none(
             StudentAssignment.student_id == user_id,
             StudentAssignment.assignment_id == assignment_id
         )
-        '''if not student_assignment:
-            flash('您没有访问该作业的权限。', 'warning')
-            return redirect(url_for('course.index'))'''
+        
+        # 获取该学生的评语
+        if student_assignment:
+            feedback = Feedback.get_or_none(
+                (Feedback.assignment == assignment) &
+                (Feedback.student_id == user_id))
     
     # 如果是教师，获取所有学生提交情况
     submissions = None
     if is_teacher:
-        submissions = StudentAssignment.select().where(
-            StudentAssignment.assignment_id == assignment_id
-        )
+        submissions = (StudentAssignment
+                      .select()
+                      .where(StudentAssignment.assignment_id == assignment_id))
     
     # 获取作业关联的知识点
     knowledge_points = KnowledgePointService.get_assignment_knowledge_points(assignment_id)
@@ -431,8 +436,10 @@ def view_assignment(assignment_id):
                          student_assignment=student_assignment,
                          submissions=submissions,
                          knowledge_points=knowledge_points,
-                         now=now)  # 传递当前时间到模板
+                         now=now,
+                         feedback=feedback)  # 直接传递feedback对象
 
+#学生提交作业
 @course_bp.route('/assignment/<int:assignment_id>/submit', methods=['POST'])
 def submit_assignment(assignment_id):
     if 'user_id' not in session:
@@ -441,9 +448,10 @@ def submit_assignment(assignment_id):
     user_id = session['user_id']
     
     try:
-        from app.models.NewAdd import StudentAnswer, Question
+        from app.models.NewAdd import StudentAnswer, Question, Feedback  # 添加Feedback导入
         from app.models.assignment import Assignment, StudentAssignment
         from app.models.course import StudentCourse
+        from app.services.assignment_service import AssignmentService  # 导入AssignmentService
         
         # 获取作业
         assignment = Assignment.get_by_id(assignment_id)
@@ -476,61 +484,64 @@ def submit_assignment(assignment_id):
             flash('此作业暂无题目，无法提交。', 'warning')
             return redirect(url_for('course.view_assignment', assignment_id=assignment_id))
         
-        # 记录表单数据，用于调试
-        form_data = dict(request.form)
-        print(f"提交的表单数据: {form_data}")
-        
-        # 删除该学生之前可能存在的答案记录（防止重复）
-        try:
-            StudentAnswer.delete().where(
-                (StudentAnswer.student_id == user_id) &
-                (StudentAnswer.question_id.in_([q.question_id for q in questions]))
-            ).execute()
-        except Exception as e:
-            print(f"删除旧答案时出错: {str(e)}")
-            # 继续处理，不中断
-        
         # 处理每个题目的答案
         total_score = 0
         answered_count = 0
+        answer_details = []  # 用于收集答案详情供AI生成评语
         
         for question in questions:
             answer_key = f'answer_{question.question_id}'
-            print(f"检查题目 {question.question_id} 的答案，键名: {answer_key}")
             
             if answer_key in request.form:
                 student_answer = request.form.get(answer_key, '').strip()
-                print(f"题目 {question.question_id} 的答案: {student_answer}")
                 
                 if not student_answer:
-                    print(f"题目 {question.question_id} 的答案为空，跳过")
                     continue  # 跳过空答案
                 
                 answered_count += 1
-                
                 # 计算得分（选择题和判断题可以自动评分）
                 earned_score = 0
-                if question.status in [1, 2]:  # 选择题或判断题
+                if question.status == 1:  # 选择题
                     correct_answer = question.answer.strip()
-                    print(f"题目 {question.question_id} 的正确答案: {correct_answer}")
                     if student_answer == correct_answer:
                         earned_score = question.score
+                elif question.status == 2:  # 判断题
+                    # 转换存储格式：1->"对", 0->"错"
+                    stored_answer = "对" if student_answer == "1" or student_answer == "对" else "错"
+                    correct_answer = question.answer.strip()
+                   
+                    print(f"Correct answer for question {question.question_id}: {correct_answer}\n")
+                    print(f"Student answer for question {question.question_id}: {stored_answer}\n")
+                    if stored_answer == correct_answer:
+                        earned_score = question.score
+                    student_answer = stored_answer  # 使用转换后的答案进行存储
+                else:  # 简答题
+                    try:
+                        earned_score = AssignmentService.grade_short_answer_with_deepseek(
+                            question=question.context,
+                            student_answer=student_answer,
+                            max_score=question.score
+                        )
+                    except Exception as e:
+                        print(f"AI评分失败: {str(e)}")
+                        earned_score = 0
                 
                 # 存储学生回答
-                try:
-                    StudentAnswer.create(
-                        student_id=user_id,
-                        question_id=question.question_id,
-                        commit_answer=student_answer,
-                        earned_score=earned_score
-                    )
-                    print(f"已保存题目 {question.question_id} 的答案")
-                except Exception as e:
-                    print(f"保存题目 {question.question_id} 的答案时出错: {str(e)}")
+                StudentAnswer.create(
+                    student_id=user_id,
+                    question_id=question.question_id,
+                    commit_answer=student_answer,
+                    earned_score=earned_score
+                )
                 
                 total_score += earned_score
+                answer_details.append({
+                    'question': question.context,  
+                    'score': earned_score,
+                    'max_score': question.score,
+                    'answer': student_answer  
+                })
         
-        print(f"总共回答了 {answered_count} 道题目")
         if answered_count == 0:
             flash('请至少回答一道题目。', 'warning')
             return redirect(url_for('course.view_assignment', assignment_id=assignment_id))
@@ -538,10 +549,28 @@ def submit_assignment(assignment_id):
         # 更新学生作业状态
         student_assignment.work_time = datetime.now()
         student_assignment.status = 1  # 已提交
-        student_assignment.final_score = total_score if total_score > 0 else None  # 使用final_score而不是score
+        student_assignment.final_score = total_score if total_score > 0 else None
         student_assignment.save()
         
-        flash(f'作业已成功提交！回答了 {answered_count} 道题目。', 'success')
+        # 调用AI生成评语
+        try:
+            feedback_content = AssignmentService.generate_feedback_with_deepseek(
+                student_answers=answer_details,
+                total_score=total_score,
+                max_score=assignment.total_points
+            )
+            
+            # 存储评语到Feedback表
+            Feedback.create(
+                assignment=assignment,
+                student_id=user_id,
+                comment=feedback_content
+            )
+        except Exception as e:
+            print(f"生成评语失败: {str(e)}")
+            # 即使评语生成失败也不影响作业提交
+        
+        flash(f'作业已成功提交！回答了 {answered_count} 道题目，得分: {total_score}/{assignment.total_points}', 'success')
         
     except Exception as e:
         import traceback
@@ -550,6 +579,7 @@ def submit_assignment(assignment_id):
     
     return redirect(url_for('course.view_assignment', assignment_id=assignment_id))
 
+#查看提交的作业的作业详情
 @course_bp.route('/assignment/<int:assignment_id>/submission/<int:student_id>', methods=['GET'])
 def view_submission(assignment_id, student_id):
     if 'user_id' not in session:
@@ -590,12 +620,19 @@ def view_submission(assignment_id, student_id):
                       )
                       .order_by(Question.question_id))
 
+    # 获取评语
+    from app.models.NewAdd import Feedback
+    feedback = Feedback.get_or_none(
+        (Feedback.assignment == assignment) &
+        (Feedback.student_id == student_id))
+    
     return render_template('course/view_submission.html', 
                           assignment=assignment, 
                           student=student,
                           submission=submission,
                           student_answers=student_answers,
-                          is_teacher=is_teacher)
+                          is_teacher=is_teacher,
+                          feedback=feedback)  # 添加feedback参数
 
 @course_bp.route('/assignment/<int:assignment_id>/grade/<int:student_id>', methods=['POST'])
 def grade_assignment(assignment_id, student_id):
@@ -822,23 +859,41 @@ def add_question(assignment_id):
     from app.models.assignment import Assignment
     from app.models.course import Course
     assignment = Assignment.get_by_id(assignment_id)
-    course=assignment.course
+    course = assignment.course
+    
     # 验证权限
     user_id = session['user_id']
     if assignment.course.teacher_id != user_id:
         flash('只有课程教师可以添加题目', 'warning')
         return redirect(url_for('course.view_assignment', assignment_id=assignment_id))
+    
     if request.method == 'POST':
         try:
+            # 获取表单数据
+            question_type = int(request.form.get('type', 0))
+            answer = request.form.get('answer', '').strip()
+            
+            # 如果是判断题，转换答案格式
+            if question_type == 2:  # 判断题
+                if answer == '1':
+                    answer = '对'
+                elif answer == '0':
+                    answer = '对'
+                else:
+                    # 如果输入的不是1或0，但题目类型是判断题，给出错误提示
+                    flash('判断题答案只能是1(对)或0(错)', 'danger')
+                    return render_template('course/add_question.html', assignment=assignment)
+            print(f"Processed answer for question type {question_type}: {answer}\n")
+            # 创建题目
             question = Question.create(
                 assignment=assignment,
                 course=course,
                 question_name=request.form.get('name'),
                 context=request.form.get('context'),
-                answer=request.form.get('answer'),
+                answer=answer,  # 使用转换后的答案
                 analysis=request.form.get('analysis'),
                 score=float(request.form.get('score', 10.0)),
-                status=int(request.form.get('type', 0))
+                status=question_type
             )
             
             # 更新作业总分
@@ -948,12 +1003,20 @@ def grade_student_assignment(assignment_id, student_id):
         (Question.assignment_id == assignment_id)
     )
     
+    # 获取评语
+    feedback = Feedback.get_or_none(
+        (Feedback.assignment_id == assignment_id) &
+        (Feedback.student_id == student_id)
+    )
+    
     return render_template('course/grade_assignment.html', 
                           assignment=assignment,
                           student=student,
                           student_assignment=student_assignment,
-                          student_answers=student_answers)
+                          student_answers=student_answers,
+                          feedback=feedback)  # 传递feedback对象到模板
 
+# 老师再次评分和写评语
 @course_bp.route('/assignment/<int:assignment_id>/grade_student/<int:student_id>', methods=['POST'])
 def grade_student_answers(assignment_id, student_id):
     if 'user_id' not in session:
@@ -962,7 +1025,7 @@ def grade_student_answers(assignment_id, student_id):
     user_id = session['user_id']
     
     from app.models.assignment import Assignment, StudentAssignment
-    from app.models.NewAdd import StudentAnswer, Question
+    from app.models.NewAdd import StudentAnswer, Question, Feedback  # 添加Feedback导入
     
     assignment = Assignment.get_by_id(assignment_id)
     
@@ -972,7 +1035,7 @@ def grade_student_answers(assignment_id, student_id):
         return redirect(url_for('dashboard.index'))
     
     try:
-        # 修正查询方式：使用JOIN来正确关联Question表
+        # 1. 处理每道题的评分
         student_answers = (StudentAnswer
                           .select(StudentAnswer, Question)
                           .join(Question)
@@ -990,18 +1053,36 @@ def grade_student_answers(assignment_id, student_id):
                 answer.save()
                 total_score += score
         
-        # 更新学生作业记录
+        # 2. 更新学生作业记录
         student_assignment = StudentAssignment.get(
             StudentAssignment.student_id == student_id,
             StudentAssignment.assignment_id == assignment_id
         )
-        
-        student_assignment.final_score = total_score  # 使用final_score而不是score
-        student_assignment.feedback = request.form.get('feedback', '')
+        student_assignment.final_score = total_score
         student_assignment.status = 2  # 已批改
         student_assignment.save()
         
-        flash('评分已保存。', 'success')
+        # 3. 处理评语（使用Feedback类）
+        feedback_text = request.form.get('feedback', '').strip()
+        if feedback_text:  # 只有评语不为空时才处理
+            # 查找是否已有评语记录
+            try:
+                feedback = Feedback.get(
+                    (Feedback.assignment == assignment) &
+                    (Feedback.student_id == student_id)
+                )
+                # 更新现有评语
+                feedback.comment = feedback_text
+                feedback.save()
+            except Feedback.DoesNotExist:
+                # 创建新评语记录
+                Feedback.create(
+                    assignment=assignment,
+                    student_id=student_id,
+                    comment=feedback_text
+                )
+        
+        flash('评分和评语已保存。', 'success')
     except Exception as e:
         flash(f'评分失败: {str(e)}', 'danger')
     
