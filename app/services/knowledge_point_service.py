@@ -374,6 +374,13 @@ class KnowledgePointService:
 
             try:
                 if name_lvl1:
+                    
+                    # 检查名称是否已存在
+                    if name_lvl1 in id_cache:
+                        latest_level_1_id = id_cache[name_lvl1]
+                        latest_level_2_id = None
+                        continue
+                    
                     # 创建一级知识点（无父）
                     kp1 = KnowledgePointService.create_knowledge_point(name=name_lvl1, course_id=course_id, description=None, parent_id=None)
                     id_cache[name_lvl1] = kp1.get_id()
@@ -381,6 +388,13 @@ class KnowledgePointService:
                     latest_level_2_id = None  # 清空二级缓存
 
                 elif name_lvl2 and latest_level_1_id:
+                    
+                    # 检查二级名称是否已存在
+                    if name_lvl2 in id_cache:
+                        latest_level_2_id = id_cache[name_lvl2]
+                        continue
+                    
+                    
                     # 创建二级知识点，父为最近一级
                     kp2 = KnowledgePointService.create_knowledge_point(name=name_lvl2, course_id=course_id, description=None,
                                                  parent_id=latest_level_1_id)
@@ -388,6 +402,11 @@ class KnowledgePointService:
                     latest_level_2_id = kp2.get_id()
 
                 elif name_lvl3 and latest_level_2_id:
+                    
+                     # 检查三级名称是否已存在
+                    if name_lvl3 in id_cache:
+                        continue
+                    
                     # 创建三级知识点，父为最近二级
                     kp3 = KnowledgePointService.create_knowledge_point(name=name_lvl3, course_id=course_id, description=description,
                                                  parent_id=latest_level_2_id)
@@ -400,10 +419,8 @@ class KnowledgePointService:
         print(f"✅ 课程 {course_id} 的知识点导入 PostgreSQL 完成，共导入 {len(id_cache)} 个节点。")
 
 
-
-
     @staticmethod
-    def excel_to_knowledge_point_graph(file, course_id):
+    def excel_to_knowledge_point_graph(file, course_id,id_cache):
         '''
         将Excel文件中的知识点导入到Neo4j图数据库中。
 
@@ -412,7 +429,6 @@ class KnowledgePointService:
         file: Excel文件流。
         course_id: 所属课程的ID。
         '''
-        
         
         LEVEL_COLS = [0, 1, 2]  # 三级知识点列
         DESCRIPTION_COL = 14  # 描述列
@@ -518,14 +534,15 @@ class KnowledgePointService:
         # 批量写入数据库
         tx = graph.begin()
 
-        # 创建所有 Knowledge 节点
+        # 创建所有 Knowledge 节点，添加pg_id属性
         tx.run("""
                 UNWIND $nodes AS n
                 MERGE (k:Knowledge {name: n.name})
                 SET k.level = coalesce(n.level, k.level),
-                    k.description = coalesce(n.description, k.description)
-            """, nodes=[{"name": n[0], "level": n[1], "description": n[2]} for n in nodes])
-
+                    k.description = coalesce(n.description, k.description),
+                    k.pg_id = $id_cache[n.name]  
+            """, nodes=[{"name": n[0], "level": n[1], "description": n[2]} for n in nodes], id_cache=id_cache)
+        
         # 创建 BELONGS_TO 关系
         tx.run("""
                 UNWIND $rels AS r
@@ -560,25 +577,7 @@ class KnowledgePointService:
 
         tx.commit()
     
-    @staticmethod
-    def import_excel(file:str,course_id:int):
-        
-        '''
-        Excel文件导入到neo4j图数据库和postgreSQL数据库。
-
-
-        Args:
-        file: Excel文件流。
-        course_id: 所属课程的ID。
-        '''
-                
-        try:
-            KnowledgePointService.excel_to_knowledge_point_graph(file, course_id)
-            KnowledgePointService.import_excel_to_knowledge_points(file,course_id)
-        except Exception as e:
-            print(f"构建失败：{e}")
-
-        
+          
     @staticmethod
     def add_knowledge_to_graph(name: str, course_id: int, description: str = None, parent_id: int = None) -> KnowledgePoint:
 

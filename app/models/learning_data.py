@@ -12,6 +12,11 @@ class KnowledgePoint(BaseModel):
     course = ForeignKeyField(Course, backref='knowledge_points')
     parent = ForeignKeyField('self', backref='children', null=True)
     
+    class Meta:
+        indexes = (
+            (('course', 'name'), True),
+        )
+    
     def __repr__(self):
         return f'<KnowledgePoint {self.name}>'
 

@@ -841,10 +841,19 @@ def import_knowledge_points(course_id):
     
     if file:
         try:
-            # 使用 io.BytesIO 将文件内容读入内存
-            file_stream = io.BytesIO(file.read())
-            KnowledgePointService.import_excel(file_stream,course_id)
-
+            # 读取文件内容到内存
+            file_content = file.read()
+            file_stream = io.BytesIO(file_content)
+        
+        # 先导入到PostgreSQL，获取名称到ID的映射
+            id_cache = KnowledgePointService.import_excel_to_knowledge_points(file_stream, course_id)
+        
+        # 重置文件流指针
+            file_stream.seek(0)
+        
+        # 再导入到Neo4j，传递ID映射
+            KnowledgePointService.excel_to_knowledge_point_graph(file_stream, course_id, id_cache)
+           
             flash('知识点导入成功。', 'success')
         except Exception as e:
             flash(f'知识点导入失败: {str(e)}', 'danger')

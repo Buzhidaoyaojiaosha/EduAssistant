@@ -30,6 +30,5 @@ def initialize_extensions():
         os.getenv("NEO4J_URI"),
         auth=(os.getenv("NEO4J_USERNAME"), os.getenv("NEO4J_PASSWORD"))
     )
-    graph.run("CREATE CONSTRAINT unique_knowledge_name_per_course FOR (k:Knowledge) REQUIRE (k.name, k.course_id) IS UNIQUE;")
 
 
