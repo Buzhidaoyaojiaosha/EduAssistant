@@ -3,7 +3,7 @@
 from playhouse.postgres_ext import PostgresqlExtDatabase
 from chromadb import PersistentClient
 import os
-from neo4j import GraphDatabase
+from py2neo import Graph
 
 db = PostgresqlExtDatabase(None)
 
@@ -26,9 +26,10 @@ def initialize_extensions():
     knowledge_base_collection = chroma_client.get_or_create_collection("knowledge_base")
     
     global graph
-    graph = GraphDatabase.driver(
+    graph =Graph(
         os.getenv("NEO4J_URI"),
         auth=(os.getenv("NEO4J_USERNAME"), os.getenv("NEO4J_PASSWORD"))
     )
+    graph.run("CREATE CONSTRAINT unique_knowledge_name_per_course FOR (k:Knowledge) REQUIRE (k.name, k.course_id) IS UNIQUE;")
 
 

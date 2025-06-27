@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session
 from peewee import JOIN
+import io 
 
 from app.services.course_service import CourseService
 from app.services.assignment_service import AssignmentService
@@ -695,7 +696,7 @@ def add_knowledge_point(course_id):
         parent_id = int(parent_id)
     
     try:
-        knowledge_point = KnowledgePointService.create_knowledge_point(
+        KnowledgePointService.add_knowledge_to_graph(
             name=name,
             course_id=course_id,
             description=description,
@@ -749,6 +750,17 @@ def edit_knowledge_point(course_id):
         knowledge_point.description = description
         knowledge_point.parent_id = parent_id
         knowledge_point.save()
+
+        try:
+            KnowledgePointService.update_knowledge_point_node(
+                kp_id=knowledge_point.id,
+                name=name,
+                description=description,
+                parent_id=parent_id,
+                course_id=course_id
+            )
+        except Exception as e:
+            flash(f'图数据库同步失败：{e}', 'warning')
         
         flash(f'知识点 "{name}" 更新成功!', 'success')
     except ValueError as e:
@@ -791,12 +803,57 @@ def delete_knowledge_point(course_id):
         
         # 删除知识点
         knowledge_point.delete_instance()
-        
         flash(f'知识点 "{kp_name}" 已删除', 'success')
+
+        try:
+            KnowledgePointService.delete_knowledge_point_node_from_graph(knowledge_point_id)
+        except Exception as e:
+            flash(f'图数据库同步失败（删除知识点）: {e}', 'warning')
+        
+
     except ValueError as e:
         flash(str(e), 'danger')
     
     return redirect(url_for('course.view', course_id=course_id))
+
+
+@course_bp.route('/<int:course_id>/import_knowledge_points', methods=['POST'])
+def import_knowledge_points(course_id):
+    if 'user_id' not in session:
+        return redirect(url_for('auth.login'))
+    
+    user = User.get_by_id(session['user_id'])
+    course = Course.get_by_id(course_id)
+    
+    # 验证用户是否为该课程的教师
+    if course.teacher_id != user.id:
+        flash('只有课程教师可以导入知识点。', 'warning')
+        return redirect(url_for('course.view', course_id=course_id))
+    
+    if 'excel_file' not in request.files:
+        flash('未选择文件。', 'warning')
+        return redirect(url_for('course.view', course_id=course_id))
+    
+    file = request.files['excel_file']
+    if file.filename == '':
+        flash('未选择文件。', 'warning')
+        return redirect(url_for('course.view', course_id=course_id))
+    
+    if file:
+        try:
+            # 使用 io.BytesIO 将文件内容读入内存
+            file_stream = io.BytesIO(file.read())
+            KnowledgePointService.import_excel(file_stream,course_id)
+
+            flash('知识点导入成功。', 'success')
+        except Exception as e:
+            flash(f'知识点导入失败: {str(e)}', 'danger')
+        
+        return redirect(url_for('course.view', course_id=course_id))
+
+
+
+
 
 @course_bp.route('/assignment/<int:assignment_id>/knowledge_points', methods=['GET', 'POST'])
 def assignment_knowledge_points(assignment_id):

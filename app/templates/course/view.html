@@ -63,9 +63,10 @@
             <div class="card-header bg-light">
                 <h5 class="mb-0"><i class="fas fa-lightbulb me-2"></i>知识点</h5>
             </div>
+            
             <div class="card-body">
-                {% if knowledge_points %}
-                <div class="table-responsive">
+            {% if knowledge_points %}
+                <div class="table-responsive" style="max-height: 416px; overflow-y: auto;">
                     <table class="table table-hover">
                         <thead>
                             <tr>
@@ -79,8 +80,14 @@
                             {% for kp in knowledge_points %}
                             <tr>
                                 <td>{{ kp.name }}</td>
-                                <td>{{ kp.description|truncate(50) }}</td>
-                                <td>{% if kp.parent %}{{ kp.parent.name }}{% else %}<span class="text-muted">顶级</span>{% endif %}</td>
+                                <td>{{ kp.description|string|default('无')|truncate(50) }}</td>
+                                <td>
+                                    {% if kp.parent %}
+                                        {{ kp.parent.name }}
+                                    {% else %}
+                                        <span class="text-muted">顶级</span>
+                                    {% endif %}
+                                </td>
                                 <td>
                                     <button type="button" class="btn btn-sm btn-outline-primary"
                                             onclick="editKnowledgePoint({{ kp.id }}, '{{ kp.name }}', '{{ kp.description }}', {% if kp.parent %}{{ kp.parent.id }}{% else %}null{% endif %})">
@@ -101,7 +108,7 @@
                 {% endif %}
             </div>
         </div>
-        {% endif %}
+            {% endif %}
         
         <!-- 作业列表 -->
         <div class="card shadow-sm mb-4">
@@ -273,34 +280,72 @@
                 <h5 class="modal-title" id="addKnowledgePointModalLabel">新增知识点</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="addKnowledgePointForm" action="{{ url_for('course.add_knowledge_point', course_id=course.id) }}" method="post">
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="kp_name" class="form-label">知识点名称</label>
-                        <input type="text" class="form-control" id="kp_name" name="name" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="kp_description" class="form-label">描述</label>
-                        <textarea class="form-control" id="kp_description" name="description" rows="3"></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label for="kp_parent" class="form-label">父级知识点（可选）</label>
-                        <select class="form-select" id="kp_parent" name="parent_id">
-                            <option value="">-- 无父级（顶级知识点）--</option>
-                            {% for kp in knowledge_points %}
-                            <option value="{{ kp.id }}">{{ kp.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
+
+             <ul class="nav nav-tabs" id="addKPTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="manual-tab-modal" data-bs-toggle="tab" data-bs-target="#manual-modal" type="button" role="tab" aria-controls="manual-modal" aria-selected="true">手动输入</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="excel-tab-modal" data-bs-toggle="tab" data-bs-target="#excel-modal" type="button" role="tab" aria-controls="excel-modal" aria-selected="false">Excel 导入</button>
+                </li>
+            </ul>
+            <!-- 标签页内容 -->
+            <div class="tab-content" id="addKPTabContent">
+                <!-- 手动输入页 -->
+                <div class="tab-pane fade show active" id="manual-modal" role="tabpanel" aria-labelledby="manual-tab-modal">
+                    <form id="addKnowledgePointForm" action="{{ url_for('course.add_knowledge_point', course_id=course.id) }}" method="post">
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="kp_name" class="form-label">知识点名称</label>
+                                <input type="text" class="form-control" id="kp_name" name="name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="kp_description" class="form-label">描述</label>
+                                <textarea class="form-control" id="kp_description" name="description" rows="3"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="kp_parent" class="form-label">父级知识点（可选）</label>
+                                <select class="form-select" id="kp_parent" name="parent_id">
+                                    <option value="">-- 无父级（顶级知识点）--</option>
+                                    {% for kp in knowledge_points %}
+                                    <option value="{{ kp.id }}">{{ kp.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                            <button type="submit" class="btn btn-primary">保存</button>
+                        </div>
+                    </form>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                    <button type="submit" class="btn btn-primary">保存</button>
+                <!-- 新增 Excel 导入页 -->
+                <div class="tab-pane fade" id="excel-modal" role="tabpanel" aria-labelledby="excel-tab-modal">                 
+                    <form id="importExcelForm" action="{{ url_for('course.import_knowledge_points', course_id=course.id) }}" method="post" enctype="multipart/form-data" >
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="excelFile" class="form-label">选择 Excel 文件</label>
+                                <input class="form-control" type="file" id="excelFile" name="excel_file" accept=".xlsx, .xls" required>
+                            </div>
+                            <div class="alert alert-info">
+                                <p>Excel 文件格式要求：</p>
+                                <ul>
+                                    <li>第一行必须为表头：名称，描述，父级知识点 ID</li>
+                                    <li>父级知识点 ID 列为可选</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                            <button type="submit" class="btn btn-primary">导入</button>
+                        </div>
+                    </form>
                 </div>
-            </form>
+            </div>
         </div>
     </div>
 </div>
+
 
 <!-- 编辑知识点模态框 -->
 <div class="modal fade" id="editKnowledgePointModal" tabindex="-1" aria-labelledby="editKnowledgePointModalLabel" aria-hidden="true">
@@ -362,6 +407,15 @@
         </div>
     </div>
 </div>
+
+<style>
+.nav-tabs .nav-link {
+  color: #000 !important; 
+}
+.nav-tabs .nav-link.active {
+  color: #0d6efd !important;
+}
+</style>
 
 <script>
     function editKnowledgePoint(id, name, description, parentId) {

@@ -1,4 +1,4 @@
-import pandas as pd
+from werkzeug.exceptions import HTTPException
 
 from app.models.learning_data import (
     KnowledgePoint,
@@ -11,6 +11,12 @@ from app.models.knowledge_base import KnowledgeBase
 from typing import List, Dict, Optional
 from peewee import DoesNotExist
 from app.react.tools_register import register_as_tool
+
+#和图数据库相关的操作
+from app.ext import graph
+import pandas as pd
+from py2neo import Graph, Node, Relationship
+from app.models.course import Course
 
 
 class KnowledgePointService:
@@ -335,13 +341,14 @@ class KnowledgePointService:
         except DoesNotExist:
             raise ValueError(f"知识库条目ID {knowledge_base_id} 不存在")
 
+    @register_as_tool(roles=["teacher"])
     @staticmethod
     def import_excel_to_knowledge_points(file_path: str, course_id: int):
         """
-        将 Excel 中的知识点导入 PostgreSQL数据库（基于父子层级结构）。
+        将 Excel 中的知识点导入PostgreSQL数据库(基于父子层级结构)。
 
         参数:
-            file_path: Excel 文件路径。
+            file_path: Excel文件流。
             course_id: 所属课程的 ID。
         """
 
@@ -349,7 +356,6 @@ class KnowledgePointService:
         df = pd.read_excel(file_path, header=None)
 
         LEVEL_COLS = [0, 1, 2]  # 知识点列：0 - 一级，1 - 二级，2 - 三级
-        DESCRIPTION_COL = 14  # 描述列
         id_cache = {}  # 缓存已创建知识点：{name: id}
         latest_level_1_id = None
         latest_level_2_id = None
@@ -358,28 +364,34 @@ class KnowledgePointService:
             name_lvl1 = str(row[0]).strip() if pd.notna(row[0]) else None
             name_lvl2 = str(row[1]).strip() if pd.notna(row[1]) else None
             name_lvl3 = str(row[2]).strip() if pd.notna(row[2]) else None
-            description = str(row[DESCRIPTION_COL]).strip() if pd.notna(row[DESCRIPTION_COL]) else None
+            
+            description_parts = []
+            for col in [13, 14]:
+                if pd.notna(row[col]):
+                    description_parts.append(str(row[col]).strip())
+            description = ';'.join(description_parts) if description_parts else None
+
 
             try:
                 if name_lvl1:
                     # 创建一级知识点（无父）
                     kp1 = KnowledgePointService.create_knowledge_point(name=name_lvl1, course_id=course_id, description=None, parent_id=None)
-                    id_cache[name_lvl1] = kp1.name
-                    latest_level_1_id = kp1.name
+                    id_cache[name_lvl1] = kp1.get_id()
+                    latest_level_1_id = kp1.get_id()
                     latest_level_2_id = None  # 清空二级缓存
 
                 elif name_lvl2 and latest_level_1_id:
                     # 创建二级知识点，父为最近一级
                     kp2 = KnowledgePointService.create_knowledge_point(name=name_lvl2, course_id=course_id, description=None,
                                                  parent_id=latest_level_1_id)
-                    id_cache[name_lvl2] = kp2.name
-                    latest_level_2_id = kp2.name
+                    id_cache[name_lvl2] = kp2.get_id()
+                    latest_level_2_id = kp2.get_id()
 
                 elif name_lvl3 and latest_level_2_id:
                     # 创建三级知识点，父为最近二级
                     kp3 = KnowledgePointService.create_knowledge_point(name=name_lvl3, course_id=course_id, description=description,
                                                  parent_id=latest_level_2_id)
-                    id_cache[name_lvl3] = kp3.name
+                    id_cache[name_lvl3] = kp3.get_id()
 
             except ValueError as e:
                 print(f"[跳过] 创建失败：{e}")
@@ -389,3 +401,298 @@ class KnowledgePointService:
 
 
 
+
+    @staticmethod
+    def excel_to_knowledge_point_graph(file, course_id):
+        '''
+        将Excel文件中的知识点导入到Neo4j图数据库中。
+
+
+        Args:
+        file: Excel文件流。
+        course_id: 所属课程的ID。
+        '''
+        
+        
+        LEVEL_COLS = [0, 1, 2]  # 三级知识点列
+        DESCRIPTION_COL = 14  # 描述列
+        PREREQ_COL = 8  # 前置知识点列
+        POSTREQ_COL = 9  # 后置知识点列
+        RELATED_COL = 10  # 关联知识点列
+
+        #获取课程名称
+        course_name = Course.get_by_id(course_id).name
+
+        # 清空旧数据（当前课程下的知识点）
+        graph.run("""
+                MATCH (c:Course {id: $course_id})<-[:BELONGS_TO]-(k:Knowledge)
+                DETACH DELETE k,c
+            """, course_id=course_id)
+        
+
+        df = pd.read_excel(file, header=None)
+
+        # 创建或获取课程节点
+        course_exists = graph.run("""
+                MATCH (c:Course {id: $course_id}) RETURN c
+            """, course_id=course_id).data()
+
+        if course_exists:
+            course_node = course_exists[0]['c']
+            print(f"课程 [{course_id}] 已存在，使用原有节点")
+        else:
+            course_node = Node("Course", id=course_id, name=course_name or course_id)
+            graph.create(course_node)
+            print(f"课程 [{course_id}] 不存在，已新建")
+
+        node_cache = {}
+        latest_level_1 = None
+        latest_level_2 = None
+
+        # 用于批量处理
+        nodes = set()
+        rel_belongs = set()
+        rel_sub = set()
+        rel_precedes = set()
+        rel_related = set()
+
+        def cache_node(name, level=None, description=None):
+            name = str(name).strip()
+            if not name:
+                return None
+            nodes.add((name, level, description))
+            return name
+
+        for _, row in df.iterrows():
+            level_1 = row[0] if pd.notna(row[0]) else None
+            level_2 = row[1] if pd.notna(row[1]) else None
+            level_3 = row[2] if pd.notna(row[2]) else None
+
+            description = str(row[DESCRIPTION_COL]).strip() if pd.notna(row[DESCRIPTION_COL]) else None
+
+            if level_1:
+                latest_level_1 = str(level_1).strip()
+                latest_level_2 = None
+                cache_node(latest_level_1, 1)
+                rel_belongs.add((latest_level_1, course_id))
+
+            elif level_2:
+                latest_level_2 = str(level_2).strip()
+                cache_node(latest_level_2, 2)
+                if latest_level_1:
+                    rel_sub.add((latest_level_2, latest_level_1))
+
+            elif level_3:
+                level_3_name = str(level_3).strip()
+                cache_node(level_3_name, 3, description)
+                if latest_level_2:
+                    rel_sub.add((level_3_name, latest_level_2))
+
+                # 当前行的知识点就是第3层
+                current_node = level_3_name
+
+                # 前置知识点
+                if pd.notna(row[PREREQ_COL]):
+                    for item in str(row[PREREQ_COL]).split(';'):
+                        item = item.strip()
+                        if item:
+                            cache_node(item)
+                            rel_precedes.add((item, current_node))
+
+                # 后置知识点
+                if pd.notna(row[POSTREQ_COL]):
+                    for item in str(row[POSTREQ_COL]).split(';'):
+                        item = item.strip()
+                        if item:
+                            cache_node(item)
+                            rel_precedes.add((current_node, item))
+
+                # 关联知识点
+                if pd.notna(row[RELATED_COL]):
+                    for item in str(row[RELATED_COL]).split(';'):
+                        item = item.strip()
+                        if item:
+                            cache_node(item)
+                            rel_related.add((current_node, item))
+
+        # 批量写入数据库
+        tx = graph.begin()
+
+        # 创建所有 Knowledge 节点
+        tx.run("""
+                UNWIND $nodes AS n
+                MERGE (k:Knowledge {name: n.name})
+                SET k.level = coalesce(n.level, k.level),
+                    k.description = coalesce(n.description, k.description)
+            """, nodes=[{"name": n[0], "level": n[1], "description": n[2]} for n in nodes])
+
+        # 创建 BELONGS_TO 关系
+        tx.run("""
+                UNWIND $rels AS r
+                MATCH (k:Knowledge {name: r.knowledge})
+                MATCH (c:Course {id: r.course})
+                MERGE (k)-[:BELONGS_TO]->(c)
+            """, rels=[{"knowledge": r[0], "course": r[1]} for r in rel_belongs])
+
+        # 创建 SUB_KNOWLEDGE_OF 关系
+        tx.run("""
+                UNWIND $rels AS r
+                MATCH (a:Knowledge {name: r.child})
+                MATCH (b:Knowledge {name: r.parent})
+                MERGE (a)-[:SUB_KNOWLEDGE_OF]->(b)
+            """, rels=[{"child": r[0], "parent": r[1]} for r in rel_sub])
+
+        # 创建 PRECEDES 关系
+        tx.run("""
+                UNWIND $rels AS r
+                MATCH (a:Knowledge {name: r.from})
+                MATCH (b:Knowledge {name: r.to})
+                MERGE (a)-[:PRECEDES]->(b)
+            """, rels=[{"from": r[0], "to": r[1]} for r in rel_precedes])
+
+        # 创建 RELATED_TO 关系
+        tx.run("""
+                UNWIND $rels AS r
+                MATCH (a:Knowledge {name: r.from})
+                MATCH (b:Knowledge {name: r.to})
+                MERGE (a)-[:RELATED_TO]->(b)
+            """, rels=[{"from": r[0], "to": r[1]} for r in rel_related])
+
+        tx.commit()
+    
+    @staticmethod
+    def import_excel(file:str,course_id:int):
+        
+        '''
+        Excel文件导入到neo4j图数据库和postgreSQL数据库。
+
+
+        Args:
+        file: Excel文件流。
+        course_id: 所属课程的ID。
+        '''
+                
+        try:
+            KnowledgePointService.excel_to_knowledge_point_graph(file, course_id)
+            KnowledgePointService.import_excel_to_knowledge_points(file,course_id)
+        except Exception as e:
+            print(f"构建失败：{e}")
+
+        
+    @staticmethod
+    def add_knowledge_to_graph(name: str, course_id: int, description: str = None, parent_id: int = None) -> KnowledgePoint:
+
+        '''
+        把手动加的知识点添加到neo4j图数据库和postgreSQL数据库。
+        Args:
+        name: 知识点名称。
+        course_id: 所属课程的ID。
+        description: 知识点描述。
+        parent_id: 父知识点ID。
+
+        Returns:
+        KnowledgePoint: 创建的知识点对象。
+
+        Raises:
+        ValueError: 如果课程ID不存在。
+        ValueError: 如果父知识点ID不存在。
+        ValueError: 如果父知识点必须属于同一课程。
+        '''
+
+        try:
+            course = Course.get_by_id(course_id)
+
+            # 检查父知识点是否存在
+            parent = None
+            if parent_id:
+                try:
+                    parent = KnowledgePoint.get_by_id(parent_id)
+                    if parent.course_id != course_id:
+                        raise ValueError("父知识点必须属于同一课程")
+                except DoesNotExist:
+                    raise ValueError(f"父知识点ID {parent_id} 不存在")
+
+            # === 创建 PostgreSQL 中的知识点 ===
+            knowledge_point = KnowledgePoint.create(
+                name=name,
+                description=description,
+                course=course,
+                parent=parent
+            )
+
+            # === 同步到 Neo4j ===
+            name = name.strip()
+            description = description.strip() if description else None
+
+            # 创建知识点节点
+            graph.run("""
+                    MERGE (k:Knowledge {name: $name})
+                    SET k.description = coalesce($description, k.description)
+                """, name=name, description=description)
+
+            if parent:
+                # 检查父节点是否在图中存在
+                parent_exists = graph.evaluate("MATCH (p:Knowledge {name: $name}) RETURN p", name=parent.name.strip())
+                if parent_exists:
+                    # 父节点存在，建立父子关系
+                    graph.run("""
+                            MATCH (p:Knowledge {name: $parent_name})
+                            MATCH (k:Knowledge {name: $child_name})
+                            MERGE (k)-[:SUB_KNOWLEDGE_OF]->(p)
+                        """, parent_name=parent.name.strip(), child_name=name)
+                else:
+                    print(f"[跳过图更新] 父节点 '{parent.name}' 不在图中，未建立父子关系")
+            else:
+                # 无父节点，建立属于课程的关系
+                graph.run("""
+                        MERGE (c:Course {id: $course_id})
+                        SET c.name = $course_name
+                    """, course_id=course.id, course_name=course.name)
+
+                graph.run("""
+                        MATCH (k:Knowledge {name: $name})
+                        MATCH (c:Course {id: $course_id})
+                        MERGE (k)-[:BELONGS_TO]->(c)
+                    """, name=name, course_id=course.id)
+
+            return knowledge_point
+
+        except DoesNotExist:
+            raise ValueError(f"课程ID {course_id} 不存在")
+
+
+    @staticmethod
+    def update_knowledge_point_node(kp_id: int, name: str, description: str, parent_id: int, course_id: int):
+        # 删除原来的 Knowledge 节点（按 id 匹配）并重建
+        graph.run("""
+                MATCH (k:Knowledge {id: $id}) DETACH DELETE k
+            """, id=kp_id)
+
+        # 重建 Knowledge 节点
+        graph.run("""
+                MERGE (k:Knowledge {id: $id})
+                SET k.name = $name,
+                    k.description = $description
+            """, id=kp_id, name=name, description=description or "")
+
+        # 建立 BELONGS_TO 关系（如果没有父节点）
+        if parent_id is None:
+            graph.run("""
+                    MATCH (k:Knowledge {id: $id})
+                    MATCH (c:Course {id: $course_id})
+                    MERGE (k)-[:BELONGS_TO]->(c)
+                """, id=kp_id, course_id=course_id)
+        else:
+            # 建立 SUB_KNOWLEDGE_OF 关系（父子关系）
+            graph.run("""
+                    MATCH (k:Knowledge {id: $id})
+                    MATCH (p:Knowledge {id: $parent_id})
+                    MERGE (k)-[:SUB_KNOWLEDGE_OF]->(p)
+                """, id=kp_id, parent_id=parent_id)
+
+    @staticmethod
+    def delete_knowledge_point_node_from_graph(kp_id:int):
+        graph.run("""
+            MATCH (k:Knowledge {id: $id})
+            DETACH DELETE k
+        """, id=kp_id)
