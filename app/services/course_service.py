@@ -2,6 +2,7 @@ from app.models.course import Course, StudentCourse
 from app.models.assignment import *
 from app.models.user import User
 from app.react.tools_register import register_as_tool
+from app.models.knowledge_base import KnowledgeBase
 
 class CourseService:
     """课程服务类，处理课程管理和学生课程关联。
@@ -156,3 +157,24 @@ class CourseService:
         return list(User.select()
                    .join(StudentCourse)
                    .where(StudentCourse.course_id == course_id))
+
+    @staticmethod
+    def get_knowledge_base_by_course(course_id, search_query=None):
+        """获取与课程相关的知识库条目。
+        
+        Args:
+            course_id (int): 课程ID
+            search_query (str, optional): 搜索关键词. Defaults to None.
+            
+        Returns:
+            list: 知识库条目列表
+        """
+        query = KnowledgeBase.select().where(KnowledgeBase.course_id == course_id)
+        
+        if search_query:
+            query = query.where(
+                (KnowledgeBase.title.contains(search_query)) |
+                (KnowledgeBase.content.contains(search_query)) |
+                (KnowledgeBase.keywords.contains(search_query)))
+        
+        return query.order_by(KnowledgeBase.created_at.desc())

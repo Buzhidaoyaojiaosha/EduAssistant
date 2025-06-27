@@ -5,10 +5,12 @@ from app.services.course_service import CourseService
 from app.services.assignment_service import AssignmentService
 from app.services.user_service import UserService
 from app.services.knowledge_point_service import KnowledgePointService
+from app.services.knowledge_base_service import KnowledgeBaseService
 from app.models.user import User
 from app.models.course import Course
 from datetime import datetime
 from peewee import DoesNotExist
+from app.models.knowledge_base import KnowledgeBase
 from app.models.course import StudentCourse
 from app.models.assignment import Assignment, StudentAssignment
 from app.models.NewAdd import Question, StudentAnswer, Feedback, WrongBook, QuestionWrongBook
@@ -289,6 +291,10 @@ def view(course_id):
                     'assignment': assignment,
                     'questions': question_data
                 })
+    course = Course.get_by_id(course_id)
+
+    # 获取与该课程相关的知识库条目
+    knowledge_entries = CourseService.get_knowledge_base_by_course(course_id)
 
     return render_template('course/view.html',
                          course=course,
@@ -298,7 +304,8 @@ def view(course_id):
                          students=students,
                          student_assignments=student_assignments,
                          knowledge_points=knowledge_points,
-                         wrong_questions=wrong_questions)
+                         wrong_questions=wrong_questions,
+                         knowledge_entries=knowledge_entries)
 
 @course_bp.route('/<int:course_id>/enroll', methods=['GET', 'POST'])
 def enroll(course_id):

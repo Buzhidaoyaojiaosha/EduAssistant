@@ -1,7 +1,10 @@
 from app.models.knowledge_base import KnowledgeBase
 from app.ext import knowledge_base_collection
 import uuid
-
+import oss2
+from pathlib import Path
+import os
+from urllib.parse import urlparse
 class KnowledgeBaseService:
     """知识库服务, 处理FAQ和知识内容的存储、检索。
     
@@ -10,11 +13,12 @@ class KnowledgeBaseService:
     """
     
     @staticmethod
-    def add_knowledge(title, content, course_id=None, category=None, tags=None):
+    def add_knowledge(title, type,content, course_id=None, category=None, tags=None):
         """添加知识条目到知识库。
         
         Args:
             title (str): 标题
+            type(str): 类型（1:纯文字，2:pdf,3:pptx,4:其他）
             content (str): 内容
             course_id (int, optional): 关联的课程ID
             category (str, optional): 分类
@@ -26,6 +30,7 @@ class KnowledgeBaseService:
         # 创建数据库记录
         knowledge = KnowledgeBase.create(
             title=title,
+            type=type,
             content=content,
             course_id=course_id,
             category=category,
@@ -88,6 +93,7 @@ class KnowledgeBaseService:
                     "id": metadata["id"],
                     "vector_id": vector_id,
                     "title": metadata["title"],
+                    "type": db_record.type,
                     "content": document,
                     "vector_distance": distance,
                     "category": metadata["category"],
@@ -96,6 +102,7 @@ class KnowledgeBaseService:
                     "full_record": db_record,
                     "score": 1 - (distance if distance is not None else 1)  # 距离转换为相似度分数
                 })
+             
 
         # 2. 执行关键字全文搜索（基于标题和内容）
         keyword_results = []
@@ -120,6 +127,7 @@ class KnowledgeBaseService:
                 "id": knowledge.id,
                 "vector_id": knowledge.vector_id,
                 "title": knowledge.title,
+                "type": knowledge.type,
                 "content": knowledge.content,
                 "vector_distance": None,
                 "category": knowledge.category,
@@ -260,3 +268,74 @@ class KnowledgeBaseService:
                 )
                 
         return knowledge
+
+    @staticmethod
+    def upload_file_to_oss(local_file_path):
+        """上传文件到OSS并返回可直接显示中文的URL"""
+      
+        
+        # 初始化OSS
+        auth = oss2.Auth(
+            os.getenv('OSS_ACCESS_KEY_ID'),
+            os.getenv('OSS_ACCESS_KEY_SECRET')
+        )
+
+        """上传文件并设置为公共读"""
+        endpoint = os.getenv('OSS_ENDPOINT')
+        bucket_name = os.getenv('OSS_BUCKET_NAME')
+        if not os.path.isfile(local_file_path):
+            raise FileNotFoundError(f"文件不存在: {local_file_path}")
+
+        bucket = oss2.Bucket(auth, f'https://{endpoint}', bucket_name)
+        object_name = Path(local_file_path).name
+        print(f"开始上传文件:local_file_path {local_file_path} 到 OSS 存储桶:bucket_name {bucket_name}  object_name {object_name}")
+        try:
+            # 上传文件
+            result = bucket.put_object_from_file(
+                object_name,
+                local_file_path,
+                headers={'Content-Type': 'application/pdf'}
+            )
+            
+            if result.status == 200:
+                # 只设置这个文件为公共读
+                bucket.put_object_acl(object_name, oss2.OBJECT_ACL_PUBLIC_READ)
+                file_url = f"https://{bucket_name}.{endpoint}/{object_name}"
+                print(f"文件上传成功: {file_url}")
+                return file_url
+            else:
+                raise Exception(f"上传失败，状态码: {result.status}")
+        except Exception as e:
+            raise Exception(f"上传出错: {str(e)}")
+        
+    @staticmethod
+    def delete_file_from_oss(file_url):
+        """从OSS中删除文件"""
+        try:
+            # 从URL中提取对象名
+            parsed_url = urlparse(file_url)
+            object_name = parsed_url.path.lstrip('/')
+            
+            # 初始化OSS
+            auth = oss2.Auth(
+                os.getenv('OSS_ACCESS_KEY_ID'),
+                os.getenv('OSS_ACCESS_KEY_SECRET')
+            )
+            endpoint = os.getenv('OSS_ENDPOINT')
+            bucket_name = os.getenv('OSS_BUCKET_NAME')
+            
+            bucket = oss2.Bucket(auth, f'https://{endpoint}', bucket_name)
+            
+            # 删除文件
+            result = bucket.delete_object(object_name)
+            
+            if result.status == 204:
+                print(f"文件删除成功: {object_name}")
+                return True
+            else:
+                print(f"文件删除失败，状态码: {result.status}")
+                return False
+                
+        except Exception as e:
+            print(f"删除文件出错: {str(e)}")
+            return False
