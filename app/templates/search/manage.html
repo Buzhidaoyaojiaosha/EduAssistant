@@ -46,7 +46,9 @@
                         </td>
                         <td>
                             <div class="btn-group btn-group-sm">
-                                <a href="{{ url_for('search.edit_knowledge', knowledge_id=entry.id) }}" class="btn btn-outline-primary">编辑</a>
+                                {% if entry.type == 'text' %}
+                                    <a href="{{ url_for('search.edit_knowledge', knowledge_id=entry.id) }}" class="btn btn-outline-primary">编辑</a>
+                                {% endif %}
                                 <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal-{{ entry.id }}">删除</button>
                             </div>
                             

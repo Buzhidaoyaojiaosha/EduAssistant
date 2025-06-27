@@ -10,12 +10,16 @@
     </div>
     <div class="col-auto">
         {% if is_teacher %}
+   
         <a href="{{ url_for('course.create_assignment', course_id=course.id) }}" class="btn btn-primary">
             <i class="fas fa-plus me-1"></i>创建作业
         </a>
         <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addKnowledgePointModal">
             <i class="fas fa-lightbulb me-1"></i>新增知识点
         </button>
+           <a href="{{ url_for('search.add_knowledge', referrer=url_for('course.view', course_id=course.id)) }}" class="btn btn-info me-2">
+    <i class="fas fa-upload me-1"></i>上传文件资源至知识库
+</a>
         <a href="{{ url_for('analytics.course_analytics', course_id=course.id) }}" class="btn btn-outline-primary">
             <i class="fas fa-chart-line me-1"></i>课程分析
         </a>
@@ -180,6 +184,7 @@
             <div class="card-header bg-light">
                 <h5 class="mb-0"><i class="fas fa-search me-2"></i>知识库查询</h5>
             </div>
+            <!-- 知识库查询卡片 -->
             <div class="card-body">
                 <form action="{{ url_for('search.index') }}" method="get">
                     <input type="hidden" name="course_id" value="{{ course.id }}">
@@ -189,6 +194,49 @@
                     </div>
                 </form>
             </div>
+           <!-- 课程相关知识条目 -->
+        
+            <div class="card shadow-sm mt-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>课程相关资源</h5>
+                </div>
+                <div class="card-body">
+                    {% if knowledge_entries %}
+                        <div class="list-group">
+                            {% for entry in knowledge_entries %}
+                                <div class="list-group-item">
+                                    {% if entry.type == 'text' %}
+                                        <!-- 文本类型：显示标题和内容 -->
+                                        <h6 class="mb-2">{{ entry.title }}</h6>
+                                        <div class="text-muted small">
+                                            {{ entry.content|safe }}
+                                        </div>
+                                    {% else %}
+                                        <!-- 其他类型：显示可点击下载的标题 -->
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas {{ 'fa-file-pdf' if entry.type == 'pdf' 
+                                                        else 'fa-file-word' if entry.type == 'doc' 
+                                                        else 'fa-file-image' if entry.type == 'image'
+                                                        else 'fa-file-alt' }} me-2"></i>
+                                            <a href="{{ entry.content }}">
+                                                {{ entry.title }}
+                                            </a>
+                                           
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info mb-0">暂无相关资源</div>
+                    {% endif %}
+                </div>
+            </div>
+
+
+
+
+
         </div>
         <!-- 在右侧学生列表下方添加错题本模块 -->
         {% if is_student %}

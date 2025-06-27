@@ -71,7 +71,19 @@
                 <div class="card shadow-sm mb-3">
                     <div class="card-body">
                         <h5 class="card-title">{{ result.title }}</h5>
-                        <p class="card-text">{{ result.content|truncate(300) }}</p>
+                        
+                        <!-- 根据类型显示内容 -->
+                        {% if result.type == "text"%}
+                            <p class="card-text">{{ result.content|truncate(300) }}</p>
+                        {% else %}
+                            <div class="card-text">
+                                <i class="fas fa-file-download me-2"></i>
+                                <a href="{{ result.content }}"  class="text-decoration-none">
+                                    文件下载
+                                </a>
+                                <small class="text-muted ms-2">(点击下载)</small>
+                            </div>
+                        {% endif %}
                         
                         <!-- 标签和分类 -->
                         <div class="mb-2">
