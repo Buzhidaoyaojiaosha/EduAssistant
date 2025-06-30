@@ -124,4 +124,15 @@ class GraphService:
         tx.commit()
         print(f"课程 [{course_id}] 的知识图谱构建完成，共导入 {len(node_cache)} 个知识点。")
 
-
+    @staticmethod
+    def view_knowledge_graph(course_id):
+        # 查询当前课程下的所有知识点节点
+        query = """
+        MATCH (c:Course {id: $course_id})<-[:BELONGS_TO]-(k:Knowledge)
+        OPTIONAL MATCH (k)-[r]-(other)
+        RETURN k, collect(r), collect(other)
+        """
+        result = graph.run(query, course_id=course_id).data()
+        
+        # 转换结果为适合前端展示的格式（这里以简单字典为例）
+        pass

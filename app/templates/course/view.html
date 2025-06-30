@@ -60,8 +60,28 @@
         <!-- 知识点列表 (仅教师可见) -->
         {% if is_teacher %}
         <div class="card shadow-sm mb-4">
-            <div class="card-header bg-light">
+           
+
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="fas fa-lightbulb me-2"></i>知识点</h5>
+                <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#knowledgeGraphModal">
+                    查看知识图谱
+                </button>
+            </div>
+
+            <!-- 知识图谱模态框 -->
+            <div class="modal fade" id="knowledgeGraphModal" tabindex="-1" aria-labelledby="knowledgeGraphModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="knowledgeGraphModalLabel">课程《{{ course.name }}》的知识图谱</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="viz" style="width: 100%; height: 600px; border: 1px solid #ccc; border-radius: 8px;"></div>
+                    </div>
+                </div>
+            </div>
             </div>
             
             <div class="card-body">
@@ -422,6 +442,9 @@
 }
 </style>
 
+
+<script src="https://unpkg.com/neovis.js@2.0.2"></script>
+
 <script>
     function editKnowledgePoint(id, name, description, parentId) {
         document.getElementById('edit_kp_id').value = id;
@@ -461,6 +484,49 @@
         const modal = new bootstrap.Modal(document.getElementById('deleteKnowledgePointModal'));
         modal.show();
     }
+
+    document.addEventListener('DOMContentLoaded', function () {
+    const config = {
+        containerId: "viz",
+        neo4j: {
+            serverUrl: "bolt://54.175.21.73",
+            serverUser: "neo4j",
+            serverPassword: "kilogram-heels-asterisk"
+        },
+        labels: {
+            "Knowledge": {
+                caption: "name",
+                size: "level"
+            },
+            "Course": {
+                caption: "name"
+            }
+        },
+        relationships: {
+            "SUB_KNOWLEDGE_OF": { caption: true },
+            "PRECEDES": { caption: true },
+            "RELATED_TO": { caption: true },
+            "BELONGS_TO": { caption: true }
+        },
+        
+       initialCypher: `
+    MATCH (c:Course {id: {{ course.id }}})<-[:BELONGS_TO]-(k:Knowledge)
+    OPTIONAL MATCH (k)-[r]->(n)
+    RETURN k, r, n
+`
+
+
+    };
+
+    const viz = new NeoVis.default(config);
+
+    const modal = document.getElementById('knowledgeGraphModal');
+    modal.addEventListener('shown.bs.modal', function () {
+        viz.render();
+    });
+});
+
+    
 </script>
 {% endif %}
 {% endblock %}

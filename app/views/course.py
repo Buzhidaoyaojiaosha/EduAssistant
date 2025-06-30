@@ -861,6 +861,10 @@ def import_knowledge_points(course_id):
         return redirect(url_for('course.view', course_id=course_id))
 
 
+@course_bp.route('/<int:course_id>/view_knowledge_graph')
+def view_knowledge_graph(course_id):
+    course = Course.get_by_id(course_id)
+    return render_template('course/graph.html', course_id=course_id, course_name=course.name)
 
 
 
