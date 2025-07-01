@@ -371,6 +371,14 @@
                             </small>
                             
                             <div>
+
+                                <!-- 添加编辑按钮 -->
+                                <a href="{{ url_for('course.edit_ai_question', question_id=ai_question.ai_question_id) }}" 
+                                class="btn btn-sm btn-outline-primary me-1"
+                                title="编辑题目">
+                                    <i class="fas fa-edit"></i> 编辑
+                                </a>
+
                                 {% if ai_question.is_approved %}
                                 <form method="post" action="{{ url_for('course.unapprove_ai_question', question_id=ai_question.ai_question_id) }}" 
                                     class="d-inline"

@@ -19,6 +19,8 @@ from app.models.learning_data import (
     StudentKnowledgePoint, LearningActivity, 
     KnowledgeBaseKnowledgePoint
 )
+import re 
+
 
 course_bp = Blueprint('course', __name__, url_prefix='/course')
 
@@ -454,6 +456,69 @@ def view_assignment(assignment_id):
                          now=now,
                          feedback=feedback)  
 
+
+@course_bp.route('/ai_question/<int:question_id>/edit', methods=['GET', 'POST'])
+def edit_ai_question(question_id):
+    ai_question = AIQuestion.get_or_none(question_id)
+    
+    if request.method == 'POST':
+        try:
+            # 获取表单数据并更新
+            ai_question.question_name = request.form.get('question_name', ai_question.question_name)
+            ai_question.answer = request.form.get('answer', ai_question.answer)
+            ai_question.analysis = request.form.get('analysis', ai_question.analysis)
+            ai_question.status = int(request.form.get('status', ai_question.status))
+            
+            # 处理题目内容
+            if ai_question.status == 1:  # 选择题
+                options = request.form.getlist('options[]')
+                question_stem = request.form.get('question_stem', '')
+                
+                # 为每个选项添加字母前缀 (A., B., C., ...)
+                prefixed_options = []
+                for i, option in enumerate(options):
+                    letter = chr(65 + i)  # A, B, C, ...
+                    prefixed_options.append(f"{letter}. {option.strip()}")
+                
+                # 合并题干和选项
+                ai_question.context = question_stem + '\n' + '\n'.join(prefixed_options)
+                
+            elif ai_question.status == 2:  # 判断题
+                ai_question.context = request.form.get('context', '')
+            else:  # 简答题
+                ai_question.context = request.form.get('context', '')
+            
+            ai_question.save()
+            flash('AI题目修改成功', 'success')
+            return redirect(url_for('course.view_assignment', assignment_id=ai_question.assignment.id))
+        except Exception as e:
+            flash(f'修改失败: {str(e)}', 'danger')
+    
+    # 准备编辑表单数据
+    question_stem = ""
+    options = []
+    if ai_question.status == 1:  # 如果是选择题
+        parts = ai_question.context.split('\n')
+        question_stem = parts[0] if parts else ""
+        options = []
+        
+        # 提取选项内容（去掉字母前缀）
+        for part in parts[1:]:
+            # 匹配 "A. 选项内容" 格式
+            if re.match(r'^[A-Z]\.\s', part):
+                options.append(part[3:].strip())  # 去掉前3个字符（如"A. "）
+            else:
+                options.append(part.strip())
+    
+    return render_template('course/edit_ai_question.html',
+                         ai_question=ai_question,
+                         question_stem=question_stem,
+                         options=options,
+                         question_types={
+                             1: '选择题',
+                             2: '判断题', 
+                             3: '简答题'
+                         })
 
 # 添加审核路由
 @course_bp.route('/ai_question/<int:question_id>/approve', methods=['POST'])
@@ -1163,3 +1228,5 @@ def grade_student_answers(assignment_id, student_id):
         flash(f'评分失败: {str(e)}', 'danger')
     
     return redirect(url_for('course.view_assignment', assignment_id=assignment_id))
+
+
