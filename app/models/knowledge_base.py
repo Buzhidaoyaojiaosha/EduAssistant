@@ -5,6 +5,7 @@ from app.models.course import Course
 
 class KnowledgeBase(BaseModel):
     title = CharField(max_length=200)
+    type = TextField()  # 知识库条目的类型，1:纯文字，2：pdf,3:pptx,4:其他
     content = TextField()
     course = ForeignKeyField(Course, backref='knowledge_base', null=True)
     category = CharField(max_length=100, null=True)
