@@ -20,3 +20,8 @@ class Config:
     GOOGLE_SEARCH_API_KEY = os.environ.get('GOOGLE_SEARCH_API_KEY')
     GOOGLE_SEARCH_CX = os.environ.get('GOOGLE_SEARCH_CX')
     GOOGLE_SEARCH_PROXY = os.environ.get('GOOGLE_SEARCH_PROXY') or 'NO_PROXY'
+    
+    #neo4j配置
+    NEO4J_URI = os.environ.get('NEO4J_URI')
+    NEO4J_USERNAME = os.environ.get('NEO4J_USERNAME')
+    NEO4J_PASSWORD = os.environ.get('NEO4J_PASSWORD')

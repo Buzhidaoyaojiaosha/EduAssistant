@@ -64,12 +64,33 @@
         <!-- 知识点列表 (仅教师可见) -->
         {% if is_teacher %}
         <div class="card shadow-sm mb-4">
-            <div class="card-header bg-light">
+           
+
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="fas fa-lightbulb me-2"></i>知识点</h5>
+                <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#knowledgeGraphModal">
+                    查看知识图谱
+                </button>
             </div>
+
+            <!-- 知识图谱模态框 -->
+            <div class="modal fade" id="knowledgeGraphModal" tabindex="-1" aria-labelledby="knowledgeGraphModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="knowledgeGraphModalLabel">课程《{{ course.name }}》的知识图谱</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="viz" style="width: 100%; height: 600px; border: 1px solid #ccc; border-radius: 8px;"></div>
+                    </div>
+                </div>
+            </div>
+            </div>
+            
             <div class="card-body">
-                {% if knowledge_points %}
-                <div class="table-responsive">
+            {% if knowledge_points %}
+                <div class="table-responsive" style="max-height: 416px; overflow-y: auto;">
                     <table class="table table-hover">
                         <thead>
                             <tr>
@@ -83,8 +104,14 @@
                             {% for kp in knowledge_points %}
                             <tr>
                                 <td>{{ kp.name }}</td>
-                                <td>{{ kp.description|truncate(50) }}</td>
-                                <td>{% if kp.parent %}{{ kp.parent.name }}{% else %}<span class="text-muted">顶级</span>{% endif %}</td>
+                                <td>{{ kp.description|string|default('无')|truncate(50) }}</td>
+                                <td>
+                                    {% if kp.parent %}
+                                        {{ kp.parent.name }}
+                                    {% else %}
+                                        <span class="text-muted">顶级</span>
+                                    {% endif %}
+                                </td>
                                 <td>
                                     <button type="button" class="btn btn-sm btn-outline-primary"
                                             onclick="editKnowledgePoint({{ kp.id }}, '{{ kp.name }}', '{{ kp.description }}', {% if kp.parent %}{{ kp.parent.id }}{% else %}null{% endif %})">
@@ -105,7 +132,7 @@
                 {% endif %}
             </div>
         </div>
-        {% endif %}
+            {% endif %}
         
         <!-- 作业列表 -->
         <div class="card shadow-sm mb-4">
@@ -321,34 +348,77 @@
                 <h5 class="modal-title" id="addKnowledgePointModalLabel">新增知识点</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="addKnowledgePointForm" action="{{ url_for('course.add_knowledge_point', course_id=course.id) }}" method="post">
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="kp_name" class="form-label">知识点名称</label>
-                        <input type="text" class="form-control" id="kp_name" name="name" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="kp_description" class="form-label">描述</label>
-                        <textarea class="form-control" id="kp_description" name="description" rows="3"></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label for="kp_parent" class="form-label">父级知识点（可选）</label>
-                        <select class="form-select" id="kp_parent" name="parent_id">
-                            <option value="">-- 无父级（顶级知识点）--</option>
-                            {% for kp in knowledge_points %}
-                            <option value="{{ kp.id }}">{{ kp.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
+
+             <ul class="nav nav-tabs" id="addKPTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="manual-tab-modal" data-bs-toggle="tab" data-bs-target="#manual-modal" type="button" role="tab" aria-controls="manual-modal" aria-selected="true">手动输入</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="excel-tab-modal" data-bs-toggle="tab" data-bs-target="#excel-modal" type="button" role="tab" aria-controls="excel-modal" aria-selected="false">Excel 导入</button>
+                </li>
+            </ul>
+            <!-- 标签页内容 -->
+            <div class="tab-content" id="addKPTabContent">
+                <!-- 手动输入页 -->
+                <div class="tab-pane fade show active" id="manual-modal" role="tabpanel" aria-labelledby="manual-tab-modal">
+                    <form id="addKnowledgePointForm" action="{{ url_for('course.add_knowledge_point', course_id=course.id) }}" method="post">
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="kp_name" class="form-label">知识点名称</label>
+                                <input type="text" class="form-control" id="kp_name" name="name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="kp_description" class="form-label">描述</label>
+                                <textarea class="form-control" id="kp_description" name="description" rows="3"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="kp_parent" class="form-label">父级知识点（可选）</label>
+                                <select class="form-select" id="kp_parent" name="parent_id">
+                                    <option value="">-- 无父级（顶级知识点）--</option>
+                                    {% for kp in knowledge_points %}
+                                    <option value="{{ kp.id }}">{{ kp.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                            <button type="submit" class="btn btn-primary">保存</button>
+                        </div>
+                    </form>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                    <button type="submit" class="btn btn-primary">保存</button>
+                <!-- 新增 Excel 导入页 -->
+                <div class="tab-pane fade" id="excel-modal" role="tabpanel" aria-labelledby="excel-tab-modal">                 
+                    <form id="importExcelForm" action="{{ url_for('course.import_knowledge_points', course_id=course.id) }}" method="post" enctype="multipart/form-data" >
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="excelFile" class="form-label">选择 Excel 文件</label>
+                                <input class="form-control" type="file" id="excelFile" name="excel_file" accept=".xlsx, .xls" required>
+                            </div>
+                            <div class="alert alert-info">
+                                <p>Excel 文件格式要求：</p>
+                                <ul>
+                                    <li>A列至G列对应知识点的层级关系，区间内每行只能填写一个知识点</li>
+                                    <li>I列至K列填写对应知识点的前置、后置和关联知识点，多个知识点之间用英文分号";"隔开</li>
+                                    <li>任意两个知识点之间只能存在一种关系（前置、后置或关联），新导入的关系将覆盖旧关系，关系设置总数上限为2000个</li>
+                                    <li>L列写固定标签,包括：重点、难点、考点、课程思政，可根据需要自定义标签，多个标签之间用英文分号";"隔开</li>
+                                    <li>M列写认知维度,包括：记忆、理解、应用、分析、评价、创造，每个知识点只能填入一个认知维度</li>
+                                    <li>N列写知识点分类,包括：事实性、概念性、程序性、元认知，每个知识点只能填入一个分类</li>
+                                    <li>O列写知识点说明,仅支持输入文本，暂不支持图片、公式等</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                            <button type="submit" class="btn btn-primary">导入</button>
+                        </div>
+                    </form>
                 </div>
-            </form>
+            </div>
         </div>
     </div>
 </div>
+
 
 <!-- 编辑知识点模态框 -->
 <div class="modal fade" id="editKnowledgePointModal" tabindex="-1" aria-labelledby="editKnowledgePointModalLabel" aria-hidden="true">
@@ -411,6 +481,18 @@
     </div>
 </div>
 
+<style>
+.nav-tabs .nav-link {
+  color: #000 !important; 
+}
+.nav-tabs .nav-link.active {
+  color: #0d6efd !important;
+}
+</style>
+
+
+<script src="https://unpkg.com/neovis.js@2.0.2"></script>
+
 <script>
     function editKnowledgePoint(id, name, description, parentId) {
         document.getElementById('edit_kp_id').value = id;
@@ -450,6 +532,49 @@
         const modal = new bootstrap.Modal(document.getElementById('deleteKnowledgePointModal'));
         modal.show();
     }
+
+    document.addEventListener('DOMContentLoaded', function () {
+    const config = {
+        containerId: "viz",
+        neo4j: {
+            serverUrl: "bolt://54.175.21.73",
+            serverUser: "neo4j",
+            serverPassword: "kilogram-heels-asterisk"
+        },
+        labels: {
+            "Knowledge": {
+                caption: "name",
+                size: "level"
+            },
+            "Course": {
+                caption: "name"
+            }
+        },
+        relationships: {
+            "SUB_KNOWLEDGE_OF": { caption: true },
+            "PRECEDES": { caption: true },
+            "RELATED_TO": { caption: true },
+            "BELONGS_TO": { caption: true }
+        },
+        
+       initialCypher: `
+    MATCH (c:Course {id: {{ course.id }}})<-[:BELONGS_TO]-(k:Knowledge)
+    OPTIONAL MATCH (k)-[r]->(n)
+    RETURN k, r, n
+`
+
+
+    };
+
+    const viz = new NeoVis.default(config);
+
+    const modal = document.getElementById('knowledgeGraphModal');
+    modal.addEventListener('shown.bs.modal', function () {
+        viz.render();
+    });
+});
+
+    
 </script>
 {% endif %}
 {% endblock %}

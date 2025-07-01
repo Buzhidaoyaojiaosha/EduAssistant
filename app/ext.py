@@ -3,11 +3,13 @@
 from playhouse.postgres_ext import PostgresqlExtDatabase
 from chromadb import PersistentClient
 import os
+from py2neo import Graph
 
 db = PostgresqlExtDatabase(None)
 
 chroma_client = None
 knowledge_base_collection = None
+graph = None
 
 def initialize_extensions():
     # initialize database
@@ -22,3 +24,11 @@ def initialize_extensions():
     chroma_client = PersistentClient(path=os.getenv("CHROMA_PERSIST_DIRECTORY"))
     global knowledge_base_collection
     knowledge_base_collection = chroma_client.get_or_create_collection("knowledge_base")
+    
+    global graph
+    graph =Graph(
+        os.getenv("NEO4J_URI"),
+        auth=(os.getenv("NEO4J_USERNAME"), os.getenv("NEO4J_PASSWORD"))
+    )
+
+
