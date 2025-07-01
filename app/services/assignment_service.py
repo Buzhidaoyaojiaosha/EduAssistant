@@ -2,11 +2,12 @@ from datetime import datetime
 from typing import Optional, List, Dict, Any
 from app.models.assignment import Assignment, StudentAssignment
 from app.models.course import Course, StudentCourse
-from app.models.NewAdd import Question, StudentAnswer
+from app.models.NewAdd import Question, StudentAnswer, AIQuestion
 from app.react.tools_register import register_as_tool
 from peewee import DoesNotExist, fn
 from app.utils.logging import logger
 from app.utils.llm.deepseek import chat_deepseek
+import json
 
 class AssignmentService:
     """作业服务类，处理作业管理和学生作业提交。
@@ -707,3 +708,118 @@ class AssignmentService:
             return f"""【整体评价】作业已完成，获得{total_score}/{max_score}分。
             【优点】完成了所有题目。
             【改进建议】请继续努力，加强对知识点的理解。"""
+
+
+    def get_question_type_name(status: int) -> str:
+        """获取题目类型名称"""
+        types = {
+            1: "选择题",
+            2: "判断题",
+            3: "简答题"
+        }
+        return types.get(status, "未知类型")
+
+
+    def extract_questions_from_text(text: str) -> list:
+        """从非结构化文本中提取题目信息"""
+        # 这里实现一个简单的文本解析逻辑，实际应用中可能需要更复杂的处理
+        questions = []
+        parts = text.split("\n\n")  # 假设每个题目之间有两个换行
+        
+        for part in parts:
+            if not part.strip():
+                continue
+                
+            # 简单解析各部分
+            lines = [line.strip() for line in part.split("\n") if line.strip()]
+            if len(lines) < 3:  # 至少包含题目、答案和解析
+                continue
+                
+            question_data = {
+                "question_name": "AI生成题目",
+                "context": lines[0].replace("题目:", "").strip(),
+                "answer": lines[1].replace("答案:", "").strip(),
+                "analysis": lines[2].replace("解析:", "").strip(),
+                "status": 3  # 默认简答题
+            }
+            print(f"extractquestionsfromtext提取题目: {question_data['context']}\n答案: {question_data['answer']}\n解析: {question_data['analysis']}")
+            questions.append(question_data)
+            
+        return questions
+
+    def generate_similar_questions_with_ai(original_question: Question, assignment: Assignment, num_questions: int = 3) -> list:
+        """使用AI生成与原始题目相似的题目"""
+        try:
+            # 1. 构造更明确的提示词，要求AI返回严格JSON格式
+            prompt = f"""
+            请严格按以下JSON格式生成{num_questions}道与原始题目相似的题目：
+            {{
+                "questions": [
+                    {{
+                        "question_name": "题目名称（与原始题目知识点相关）",
+                        "context": "题目内容（考察点相同但表述不同）",
+                        "answer": "答案",
+                        "analysis": "解析（解释为什么是这个答案）",
+                        "status": {original_question.status}  # 保持与原题一致
+                    }}
+                ]
+            }}
+
+            原始题目参考：
+            - 类型: {AssignmentService.get_question_type_name(original_question.status)}
+            - 内容: {original_question.context}
+            - 答案: {original_question.answer}
+            - 解析: {original_question.analysis}
+            """
+            
+            messages = [
+                {"role": "system", "content": "你必须严格返回合法的JSON格式数据，仅包含题目信息，不要额外解释。"},
+                {"role": "user", "content": prompt}
+            ]
+            
+            # 2. 调用API并验证响应
+            response_text = chat_deepseek(messages).strip()
+            if not response_text:
+                raise ValueError("API返回空响应")
+
+            # 3. 处理可能存在的JSON外围标记（如```json```）
+            if response_text.startswith("```json") and response_text.endswith("```"):
+                response_text = response_text[7:-3].strip()
+            
+            # 4. 安全解析JSON
+            try:
+                response_data = json.loads(response_text)
+            except json.JSONDecodeError as e:
+                logger.error(f"JSON解析失败，原始响应: {response_text}")
+                raise ValueError(f"API返回了非JSON数据: {e}")
+
+            # 5. 数据校验
+            generated_questions_data = response_data.get("questions", [])
+            if not isinstance(generated_questions_data, list):
+                raise ValueError("questions字段必须是列表")
+
+            # 6. 保存题目（添加字段缺失处理）
+            generated_questions = []
+            for q_data in generated_questions_data[:num_questions]:
+                try:
+                    ai_question = AIQuestion.create(
+                        original_question=original_question,
+                        question_name=q_data.get("question_name", "AI生成题目"),
+                        assignment=assignment,
+                        course=assignment.course,
+                        context=q_data["context"],  # 必需字段，若无则抛异常
+                        answer=q_data["answer"],
+                        analysis=q_data.get("analysis", "无解析"),
+                        status=q_data.get("status", original_question.status),
+                        is_approved=False
+                    )
+                    generated_questions.append(ai_question)
+                except KeyError as e:
+                    logger.warning(f"跳过无效题目：缺少必要字段 {e}")
+                    continue
+
+            return generated_questions
+
+        except Exception as e:
+            logger.error(f"生成相似题目失败: {str(e)}", exc_info=True)
+            raise  # 根据业务需求决定是否重新抛出异常

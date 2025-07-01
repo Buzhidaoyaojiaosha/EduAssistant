@@ -13,7 +13,7 @@ from peewee import DoesNotExist
 from app.models.knowledge_base import KnowledgeBase
 from app.models.course import StudentCourse
 from app.models.assignment import Assignment, StudentAssignment
-from app.models.NewAdd import Question, StudentAnswer, Feedback, WrongBook, QuestionWrongBook
+from app.models.NewAdd import Question, StudentAnswer, Feedback, WrongBook, QuestionWrongBook,AIQuestion
 from app.models.learning_data import (
     KnowledgePoint, AssignmentKnowledgePoint, 
     StudentKnowledgePoint, LearningActivity, 
@@ -436,15 +436,49 @@ def view_assignment(assignment_id):
     # 添加当前时间变量
     now = datetime.now()
     
+    # 获取AI生成的相似题目（仅教师可见）
+    ai_questions = []
+    if is_teacher:
+        ai_questions = AIQuestion.select().where(
+            (AIQuestion.assignment == assignment) 
+        ).order_by(AIQuestion.created_time.desc())
+
     return render_template('course/view_assignment.html',
                          assignment=assignment,
                          questions=questions,
+                         ai_questions=ai_questions,
                          is_teacher=is_teacher,
                          student_assignment=student_assignment,
                          submissions=submissions,
                          knowledge_points=knowledge_points,
                          now=now,
-                         feedback=feedback)  # 直接传递feedback对象
+                         feedback=feedback)  
+
+
+# 添加审核路由
+@course_bp.route('/ai_question/<int:question_id>/approve', methods=['POST'])
+def approve_ai_question(question_id):
+    try:
+        question = AIQuestion.get_by_id(question_id)
+        question.is_approved = True
+        question.save()
+        flash('AI题目已通过审核', 'success')
+    except Exception as e:
+        flash(f'审核失败: {str(e)}', 'danger')
+    return redirect(url_for('course.view_assignment', assignment_id=question.assignment.id))
+
+# 添加移除审核路由 若老师审查不通过，直接删除
+@course_bp.route('/ai_question/<int:question_id>/unapprove', methods=['POST'])
+def unapprove_ai_question(question_id):
+    try:
+        question = AIQuestion.get_by_id(question_id)
+        assignment_id = question.assignment.id
+        question.delete_instance()  # 直接删除记录
+        flash('此AI题目已删除', 'warning')
+    except Exception as e:
+        flash(f'删除失败: {str(e)}', 'danger')
+    return redirect(url_for('course.view_assignment', assignment_id=assignment_id))
+
 
 #学生提交作业
 @course_bp.route('/assignment/<int:assignment_id>/submit', methods=['POST'])
@@ -865,6 +899,10 @@ def assignment_knowledge_points(assignment_id):
 def add_question(assignment_id):
     from app.models.assignment import Assignment
     from app.models.course import Course
+    from app.services.assignment_service import AssignmentService  # 导入AssignmentService
+    import logging
+    logger = logging.getLogger(__name__)
+    
     assignment = Assignment.get_by_id(assignment_id)
     course = assignment.course
     
@@ -885,12 +923,14 @@ def add_question(assignment_id):
                 if answer == '1':
                     answer = '对'
                 elif answer == '0':
-                    answer = '对'
+                    answer = '错'  # 修正了之前的错误，0应该对应"错"
                 else:
                     # 如果输入的不是1或0，但题目类型是判断题，给出错误提示
                     flash('判断题答案只能是1(对)或0(错)', 'danger')
                     return render_template('course/add_question.html', assignment=assignment)
+            
             print(f"Processed answer for question type {question_type}: {answer}\n")
+            
             # 创建题目
             question = Question.create(
                 assignment=assignment,
@@ -906,8 +946,25 @@ def add_question(assignment_id):
             # 更新作业总分
             AssignmentService.update_assignment_total_points(assignment_id)
             
-            flash('题目添加成功', 'success')
+            # 添加成功后才生成相似题目
+            try:
+                # 调用生成相似题目的函数
+                generated_questions = AssignmentService.generate_similar_questions_with_ai(
+                    original_question=question,
+                    assignment=assignment,
+                    num_questions=3
+                )
+                
+                if generated_questions:
+                    print(f'题目添加成功，并已生成{len(generated_questions)}道相似题目，请到AI题目管理中审核', 'success')
+                else:
+                    print('题目添加成功，但生成相似题目失败', 'warning')
+            except Exception as ai_error:
+                logger.error(f"生成相似题目失败: {str(ai_error)}")
+                print('题目添加成功，但生成相似题目时出错', 'warning')
+            
             return redirect(url_for('course.view_assignment', assignment_id=assignment_id))
+        
         except Exception as e:
             flash(f'添加题目失败: {str(e)}', 'danger')
     
@@ -947,12 +1004,13 @@ def edit_question(question_id):
 
 @course_bp.route('/question/<int:question_id>/delete', methods=['POST'])
 def delete_question(question_id):
-    """删除题目并更新作业总分"""
+    """删除题目并更新作业总分（同时删除关联的AI题目）"""
     if 'user_id' not in session:
         return redirect(url_for('auth.login'))
     
     user_id = session['user_id']
-    
+    import logging
+    logger = logging.getLogger(__name__)    
     try:
         question = Question.get_by_id(question_id)
         assignment_id = question.assignment.id
@@ -962,15 +1020,26 @@ def delete_question(question_id):
             flash('只有课程教师可以删除题目', 'warning')
             return redirect(url_for('course.view_assignment', assignment_id=assignment_id))
         
-        # 删除题目
+        # 删除关联的AI题目（新增部分）
+        ai_questions = AIQuestion.select().where(
+            (AIQuestion.original_question == question_id) 
+           
+        )
+        for ai_question in ai_questions:
+            ai_question.delete_instance()
+        
+        # 删除原题目
         question.delete_instance()
         
         # 更新作业总分
         AssignmentService.update_assignment_total_points(assignment_id)
         
-        flash('题目已成功删除', 'success')
+        flash('题目及关联AI题目已成功删除', 'success')  # 修改提示信息
+    except DoesNotExist:
+        flash('题目不存在', 'danger')
     except Exception as e:
         flash(f'删除题目失败: {str(e)}', 'danger')
+        logger.error(f"删除题目{question_id}失败: {str(e)}", exc_info=True)
     
     return redirect(url_for('course.view_assignment', assignment_id=assignment_id))
 
