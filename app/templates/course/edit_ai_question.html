@@ -1,0 +1,228 @@
+{% extends 'base.html' %}
+
+{% block title %}编辑AI题目 - {{ ai_question.question_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                <i class="fas fa-robot me-2"></i>
+                编辑AI生成题目
+            </h5>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                <div class="mb-3">
+                    <label for="question_name" class="form-label">题目名称</label>
+                    <input type="text" class="form-control" id="question_name" 
+                           name="question_name" value="{{ ai_question.question_name }}" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="status" class="form-label">题目类型</label>
+                    <select class="form-select" id="status" name="status" onchange="toggleQuestionType()">
+                        {% for type_id, type_name in question_types.items() %}
+                        <option value="{{ type_id }}" {{ 'selected' if ai_question.status == type_id }}>
+                            {{ type_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- 题目内容区域 -->
+                <div id="question-content">
+                    {% if ai_question.status == 1 %}
+                    <!-- 选择题编辑 -->
+                    
+                    
+                    <!-- 修改选择题选项部分，确保按钮有正确的id -->
+                    <div class="mb-3">
+                        <label class="form-label">选项</label>
+                        <div id="options-container">
+                            {% for option in options %}
+                            <div class="input-group mb-2 option-item">
+                                <span class="input-group-text option-letter"></span>
+                                <input type="text" class="form-control" name="options[]" 
+                                    value="{{ option }}" required 
+                                    placeholder="请输入选项内容">
+                                <button type="button" class="btn btn-outline-danger remove-option" title="删除选项">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-primary mt-2" id="add-option">
+                            <i class="fas fa-plus me-1"></i>添加选项
+                        </button>
+                    </div>
+                    {% elif ai_question.status == 2 %}
+                    <!-- 判断题编辑 -->
+                    <div class="mb-3">
+                        <label class="form-label">选项</label>
+                        <div id="options-container">
+                            {% for option in options %}
+                            <div class="input-group mb-2 option-item">
+                                <span class="input-group-text option-letter"></span>
+                                <input type="text" class="form-control" name="options[]" 
+                                    value="{{ option }}" required 
+                                    placeholder="请输入选项内容">
+                                <button type="button" class="btn btn-outline-danger remove-option" title="删除选项">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-primary mt-2" id="add-option">
+                            <i class="fas fa-plus me-1"></i>添加选项
+                        </button>
+                    </div>
+
+                    {% else %}
+                    <!-- 简答题编辑 -->
+                    <div class="mb-3">
+                        <label for="context" class="form-label">题目内容</label>
+                        <textarea class="form-control" id="context" name="context" 
+                                  rows="5" required>{{ ai_question.context }}</textarea>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    <label for="answer" class="form-label">正确答案</label>
+                    {% if ai_question.status == 1 %}
+                    <select class="form-select" id="answer" name="answer" required>
+                        {% for option in options %}
+                        <option value="{{ option[0] }}" {{ 'selected' if option[0] == ai_question.answer }}>
+                            {{ option }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    {% elif ai_question.status == 2 %}
+                    <select class="form-select" id="answer" name="answer" required>
+                        <option value="1" {{ 'selected' if ai_question.answer == '1' }}>正确</option>
+                        <option value="0" {{ 'selected' if ai_question.answer == '0' }}>错误</option>
+                    </select>
+                    {% else %}
+                    <textarea class="form-control" id="answer" name="answer" 
+                              rows="3" required>{{ ai_question.answer }}</textarea>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    <label for="analysis" class="form-label">题目解析</label>
+                    <textarea class="form-control" id="analysis" name="analysis" 
+                              rows="3">{{ ai_question.analysis or '' }}</textarea>
+                </div>
+                
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="{{ url_for('course.view_assignment', assignment_id=ai_question.assignment.id) }}" 
+                       class="btn btn-secondary me-md-2">取消</a>
+                    <button type="submit" class="btn btn-primary">保存修改</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+// 字母生成器 (A, B, C, ..., Z)
+function getLetter(index) {
+    return String.fromCharCode(65 + index);
+}
+
+// 初始化选项字母（显示时去掉前缀）
+function initOptionLetters() {
+    const options = document.querySelectorAll('.option-item');
+    options.forEach((item, index) => {
+        const letterSpan = item.querySelector('.option-letter');
+        if(letterSpan) {
+            letterSpan.textContent = getLetter(index) + '.';
+            
+            // 显示时移除前缀（仅保留内容部分）
+            const input = item.querySelector('input');
+            if(input) {
+                // 如果值是带前缀的格式（如"A. 堆排序"），则去掉前缀
+                if(/^[A-Z]\.\s/.test(input.value)) {
+                    input.value = input.value.substring(3).trim();
+                }
+            }
+        }
+    });
+    updateAnswerOptions();
+}
+
+// 添加新选项
+document.getElementById('add-option').addEventListener('click', function() {
+    const container = document.getElementById('options-container');
+    if(!container) return;
+    
+    const optionCount = container.querySelectorAll('.option-item').length;
+    if(optionCount >= 26) {
+        alert('最多只能添加26个选项');
+        return;
+    }
+    
+    const div = document.createElement('div');
+    div.className = 'input-group mb-2 option-item';
+    div.innerHTML = `
+        <span class="input-group-text option-letter"></span>
+        <input type="text" class="form-control" name="options[]" required placeholder="输入选项内容">
+        <button type="button" class="btn btn-outline-danger remove-option">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    container.appendChild(div);
+    initOptionLetters();
+});
+
+// 删除选项
+document.addEventListener('click', function(e) {
+    if(e.target.classList.contains('remove-option')) {
+        const item = e.target.closest('.option-item');
+        if(item) {
+            item.remove();
+            initOptionLetters();
+        }
+    }
+});
+
+// 更新答案选项
+function updateAnswerOptions() {
+    const answerSelect = document.getElementById('answer');
+    if(!answerSelect) return;
+    
+    const options = document.querySelectorAll('.option-item');
+    const currentValue = answerSelect.value;
+    
+    answerSelect.innerHTML = '';
+    options.forEach((item, index) => {
+        const letter = getLetter(index);
+        const input = item.querySelector('input');
+        if(input) {
+            const option = document.createElement('option');
+            option.value = letter;
+            // 下拉菜单中显示完整格式（A. 选项内容）
+            option.textContent = `${letter}. ${input.value}`;
+            if(letter === currentValue) {
+                option.selected = true;
+            }
+            answerSelect.appendChild(option);
+        }
+    });
+}
+
+// 初始化页面
+document.addEventListener('DOMContentLoaded', function() {
+    if(document.getElementById('options-container')) {
+        initOptionLetters();
+        
+        // 监听选项内容变化
+        document.getElementById('options-container').addEventListener('input', function(e) {
+            if(e.target.tagName === 'INPUT' && e.target.name === 'options[]') {
+                updateAnswerOptions();
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

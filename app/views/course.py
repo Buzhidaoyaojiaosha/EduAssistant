@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session
 from peewee import JOIN
+import io 
 
 from app.services.course_service import CourseService
 from app.services.assignment_service import AssignmentService
@@ -13,12 +14,14 @@ from peewee import DoesNotExist
 from app.models.knowledge_base import KnowledgeBase
 from app.models.course import StudentCourse
 from app.models.assignment import Assignment, StudentAssignment
-from app.models.NewAdd import Question, StudentAnswer, Feedback, WrongBook, QuestionWrongBook
+from app.models.NewAdd import Question, StudentAnswer, Feedback, WrongBook, QuestionWrongBook,AIQuestion
 from app.models.learning_data import (
     KnowledgePoint, AssignmentKnowledgePoint, 
     StudentKnowledgePoint, LearningActivity, 
     KnowledgeBaseKnowledgePoint
 )
+import re 
+
 
 course_bp = Blueprint('course', __name__, url_prefix='/course')
 
@@ -436,15 +439,112 @@ def view_assignment(assignment_id):
     # 添加当前时间变量
     now = datetime.now()
     
+    # 获取AI生成的相似题目（仅教师可见）
+    ai_questions = []
+    if is_teacher:
+        ai_questions = AIQuestion.select().where(
+            (AIQuestion.assignment == assignment) 
+        ).order_by(AIQuestion.created_time.desc())
+
     return render_template('course/view_assignment.html',
                          assignment=assignment,
                          questions=questions,
+                         ai_questions=ai_questions,
                          is_teacher=is_teacher,
                          student_assignment=student_assignment,
                          submissions=submissions,
                          knowledge_points=knowledge_points,
                          now=now,
-                         feedback=feedback)  # 直接传递feedback对象
+                         feedback=feedback)  
+
+
+@course_bp.route('/ai_question/<int:question_id>/edit', methods=['GET', 'POST'])
+def edit_ai_question(question_id):
+    ai_question = AIQuestion.get_or_none(question_id)
+    
+    if request.method == 'POST':
+        try:
+            # 获取表单数据并更新
+            ai_question.question_name = request.form.get('question_name', ai_question.question_name)
+            ai_question.answer = request.form.get('answer', ai_question.answer)
+            ai_question.analysis = request.form.get('analysis', ai_question.analysis)
+            ai_question.status = int(request.form.get('status', ai_question.status))
+            
+            # 处理题目内容
+            if ai_question.status == 1:  # 选择题
+                options = request.form.getlist('options[]')
+                question_stem = request.form.get('question_stem', '')
+                
+                # 为每个选项添加字母前缀 (A., B., C., ...)
+                prefixed_options = []
+                for i, option in enumerate(options):
+                    letter = chr(65 + i)  # A, B, C, ...
+                    prefixed_options.append(f"{letter}. {option.strip()}")
+                
+                # 合并题干和选项
+                ai_question.context = question_stem + '\n' + '\n'.join(prefixed_options)
+                
+            elif ai_question.status == 2:  # 判断题
+                ai_question.context = request.form.get('context', '')
+            else:  # 简答题
+                ai_question.context = request.form.get('context', '')
+            
+            ai_question.save()
+            flash('AI题目修改成功', 'success')
+            return redirect(url_for('course.view_assignment', assignment_id=ai_question.assignment.id))
+        except Exception as e:
+            flash(f'修改失败: {str(e)}', 'danger')
+    
+    # 准备编辑表单数据
+    question_stem = ""
+    options = []
+    if ai_question.status == 1:  # 如果是选择题
+        parts = ai_question.context.split('\n')
+        question_stem = parts[0] if parts else ""
+        options = []
+        
+        # 提取选项内容（去掉字母前缀）
+        for part in parts[1:]:
+            # 匹配 "A. 选项内容" 格式
+            if re.match(r'^[A-Z]\.\s', part):
+                options.append(part[3:].strip())  # 去掉前3个字符（如"A. "）
+            else:
+                options.append(part.strip())
+    
+    return render_template('course/edit_ai_question.html',
+                         ai_question=ai_question,
+                         question_stem=question_stem,
+                         options=options,
+                         question_types={
+                             1: '选择题',
+                             2: '判断题', 
+                             3: '简答题'
+                         })
+
+# 添加审核路由
+@course_bp.route('/ai_question/<int:question_id>/approve', methods=['POST'])
+def approve_ai_question(question_id):
+    try:
+        question = AIQuestion.get_by_id(question_id)
+        question.is_approved = True
+        question.save()
+        flash('AI题目已通过审核', 'success')
+    except Exception as e:
+        flash(f'审核失败: {str(e)}', 'danger')
+    return redirect(url_for('course.view_assignment', assignment_id=question.assignment.id))
+
+# 添加移除审核路由 若老师审查不通过，直接删除
+@course_bp.route('/ai_question/<int:question_id>/unapprove', methods=['POST'])
+def unapprove_ai_question(question_id):
+    try:
+        question = AIQuestion.get_by_id(question_id)
+        assignment_id = question.assignment.id
+        question.delete_instance()  # 直接删除记录
+        flash('此AI题目已删除', 'warning')
+    except Exception as e:
+        flash(f'删除失败: {str(e)}', 'danger')
+    return redirect(url_for('course.view_assignment', assignment_id=assignment_id))
+
 
 #学生提交作业
 @course_bp.route('/assignment/<int:assignment_id>/submit', methods=['POST'])
@@ -702,7 +802,7 @@ def add_knowledge_point(course_id):
         parent_id = int(parent_id)
     
     try:
-        knowledge_point = KnowledgePointService.create_knowledge_point(
+        KnowledgePointService.add_knowledge_to_graph(
             name=name,
             course_id=course_id,
             description=description,
@@ -756,6 +856,17 @@ def edit_knowledge_point(course_id):
         knowledge_point.description = description
         knowledge_point.parent_id = parent_id
         knowledge_point.save()
+
+        try:
+            KnowledgePointService.update_knowledge_point_node(
+                kp_id=knowledge_point.id,
+                name=name,
+                description=description,
+                parent_id=parent_id,
+                course_id=course_id
+            )
+        except Exception as e:
+            flash(f'图数据库同步失败：{e}', 'warning')
         
         flash(f'知识点 "{name}" 更新成功!', 'success')
     except ValueError as e:
@@ -798,12 +909,70 @@ def delete_knowledge_point(course_id):
         
         # 删除知识点
         knowledge_point.delete_instance()
-        
         flash(f'知识点 "{kp_name}" 已删除', 'success')
+
+        try:
+            KnowledgePointService.delete_knowledge_point_node_from_graph(knowledge_point_id)
+        except Exception as e:
+            flash(f'图数据库同步失败（删除知识点）: {e}', 'warning')
+        
+
     except ValueError as e:
         flash(str(e), 'danger')
     
     return redirect(url_for('course.view', course_id=course_id))
+
+
+@course_bp.route('/<int:course_id>/import_knowledge_points', methods=['POST'])
+def import_knowledge_points(course_id):
+    if 'user_id' not in session:
+        return redirect(url_for('auth.login'))
+    
+    user = User.get_by_id(session['user_id'])
+    course = Course.get_by_id(course_id)
+    
+    # 验证用户是否为该课程的教师
+    if course.teacher_id != user.id:
+        flash('只有课程教师可以导入知识点。', 'warning')
+        return redirect(url_for('course.view', course_id=course_id))
+    
+    if 'excel_file' not in request.files:
+        flash('未选择文件。', 'warning')
+        return redirect(url_for('course.view', course_id=course_id))
+    
+    file = request.files['excel_file']
+    if file.filename == '':
+        flash('未选择文件。', 'warning')
+        return redirect(url_for('course.view', course_id=course_id))
+    
+    if file:
+        try:
+            # 读取文件内容到内存
+            file_content = file.read()
+            file_stream = io.BytesIO(file_content)
+        
+        # 先导入到PostgreSQL，获取名称到ID的映射
+            id_cache = KnowledgePointService.import_excel_to_knowledge_points(file_stream, course_id)
+        
+        # 重置文件流指针
+            file_stream.seek(0)
+        
+        # 再导入到Neo4j，传递ID映射
+            KnowledgePointService.excel_to_knowledge_point_graph(file_stream, course_id, id_cache)
+           
+            flash('知识点导入成功。', 'success')
+        except Exception as e:
+            flash(f'知识点导入失败: {str(e)}', 'danger')
+        
+        return redirect(url_for('course.view', course_id=course_id))
+
+
+@course_bp.route('/<int:course_id>/view_knowledge_graph')
+def view_knowledge_graph(course_id):
+    course = Course.get_by_id(course_id)
+    return render_template('course/graph.html', course_id=course_id, course_name=course.name)
+
+
 
 @course_bp.route('/assignment/<int:assignment_id>/knowledge_points', methods=['GET', 'POST'])
 def assignment_knowledge_points(assignment_id):
@@ -865,6 +1034,10 @@ def assignment_knowledge_points(assignment_id):
 def add_question(assignment_id):
     from app.models.assignment import Assignment
     from app.models.course import Course
+    from app.services.assignment_service import AssignmentService  # 导入AssignmentService
+    import logging
+    logger = logging.getLogger(__name__)
+    
     assignment = Assignment.get_by_id(assignment_id)
     course = assignment.course
     
@@ -885,12 +1058,14 @@ def add_question(assignment_id):
                 if answer == '1':
                     answer = '对'
                 elif answer == '0':
-                    answer = '对'
+                    answer = '错'  # 修正了之前的错误，0应该对应"错"
                 else:
                     # 如果输入的不是1或0，但题目类型是判断题，给出错误提示
                     flash('判断题答案只能是1(对)或0(错)', 'danger')
                     return render_template('course/add_question.html', assignment=assignment)
+            
             print(f"Processed answer for question type {question_type}: {answer}\n")
+            
             # 创建题目
             question = Question.create(
                 assignment=assignment,
@@ -906,8 +1081,25 @@ def add_question(assignment_id):
             # 更新作业总分
             AssignmentService.update_assignment_total_points(assignment_id)
             
-            flash('题目添加成功', 'success')
+            # 添加成功后才生成相似题目
+            try:
+                # 调用生成相似题目的函数
+                generated_questions = AssignmentService.generate_similar_questions_with_ai(
+                    original_question=question,
+                    assignment=assignment,
+                    num_questions=3
+                )
+                
+                if generated_questions:
+                    print(f'题目添加成功，并已生成{len(generated_questions)}道相似题目，请到AI题目管理中审核', 'success')
+                else:
+                    print('题目添加成功，但生成相似题目失败', 'warning')
+            except Exception as ai_error:
+                logger.error(f"生成相似题目失败: {str(ai_error)}")
+                print('题目添加成功，但生成相似题目时出错', 'warning')
+            
             return redirect(url_for('course.view_assignment', assignment_id=assignment_id))
+        
         except Exception as e:
             flash(f'添加题目失败: {str(e)}', 'danger')
     
@@ -947,12 +1139,13 @@ def edit_question(question_id):
 
 @course_bp.route('/question/<int:question_id>/delete', methods=['POST'])
 def delete_question(question_id):
-    """删除题目并更新作业总分"""
+    """删除题目并更新作业总分（同时删除关联的AI题目）"""
     if 'user_id' not in session:
         return redirect(url_for('auth.login'))
     
     user_id = session['user_id']
-    
+    import logging
+    logger = logging.getLogger(__name__)    
     try:
         question = Question.get_by_id(question_id)
         assignment_id = question.assignment.id
@@ -962,15 +1155,26 @@ def delete_question(question_id):
             flash('只有课程教师可以删除题目', 'warning')
             return redirect(url_for('course.view_assignment', assignment_id=assignment_id))
         
-        # 删除题目
+        # 删除关联的AI题目（新增部分）
+        ai_questions = AIQuestion.select().where(
+            (AIQuestion.original_question == question_id) 
+           
+        )
+        for ai_question in ai_questions:
+            ai_question.delete_instance()
+        
+        # 删除原题目
         question.delete_instance()
         
         # 更新作业总分
         AssignmentService.update_assignment_total_points(assignment_id)
         
-        flash('题目已成功删除', 'success')
+        flash('题目及关联AI题目已成功删除', 'success')  # 修改提示信息
+    except DoesNotExist:
+        flash('题目不存在', 'danger')
     except Exception as e:
         flash(f'删除题目失败: {str(e)}', 'danger')
+        logger.error(f"删除题目{question_id}失败: {str(e)}", exc_info=True)
     
     return redirect(url_for('course.view_assignment', assignment_id=assignment_id))
 
@@ -1094,3 +1298,5 @@ def grade_student_answers(assignment_id, student_id):
         flash(f'评分失败: {str(e)}', 'danger')
     
     return redirect(url_for('course.view_assignment', assignment_id=assignment_id))
+
+

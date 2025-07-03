@@ -14,11 +14,30 @@ class Question(BaseModel):
     answer = TextField(null=False)
     analysis = TextField()
     score = FloatField()
-    status = IntegerField()  #  1:选择题, 2:判断题, 3:填空题,others主观题,
+    status = IntegerField()  #  1:选择题, 2:判断题, 3:简答题
     created_time = DateTimeField(default=datetime.now)
 
     class Meta:
         table_name = 'question'
+
+
+
+class AIQuestion(BaseModel):
+    ai_question_id = AutoField(primary_key=True)  # AI生成题目的唯一ID
+    original_question = ForeignKeyField(Question, backref='ai_generated_questions')  # 关联原始题目
+    question_name = CharField(max_length=255)  # 题目名称
+    assignment = ForeignKeyField(Assignment, backref='ai_questions')  # 关联作业
+    course = ForeignKeyField(Course, backref='ai_questions')  # 关联课程
+    context = TextField(null=False)  # 题目内容
+    answer = TextField(null=False)  # 答案
+    analysis = TextField(null=False, default='暂无解析')  # 非空且有默认值
+    status = IntegerField()  # 题目类型: 1:选择题, 2:判断题, 3:简答题
+    created_time = DateTimeField(default=datetime.now)  # 创建时间
+    is_approved = BooleanField(default=False)  # 是否已被老师审核通过 false表示未加入题库，true表示加入题库
+
+
+    class Meta:
+        table_name = 'aiquestion'
 
 class StudentAnswer(BaseModel):
     submission_id = AutoField(primary_key=True)  # 修改为自增主键
