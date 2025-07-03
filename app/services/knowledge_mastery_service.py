@@ -21,7 +21,7 @@ class NeuralCDMDataset(Dataset):
     
     def __init__(self, student_ids: List[int], assignment_ids: List[int], 
                  knowledge_point_ids: List[int], scores: List[float], 
-                 assignment_knowledge_maps: Dict[int, List[int]]):
+                 assignment_knowledge_maps: Dict[int, List[Dict]]):
         self.student_ids = student_ids
         self.assignment_ids = assignment_ids
         self.knowledge_point_ids = knowledge_point_ids
@@ -45,9 +45,9 @@ class NeuralCDMDataset(Dataset):
         assignment_id = self.assignment_ids[idx]
         score = self.scores[idx]
         
-        # 获取作业关联的知识点
+        # 获取作业关联的知识点及权重
         knowledge_points = self.assignment_knowledge_maps.get(assignment_id, [])
-        
+        # knowledge_points: List[{'kp_idx': int, 'weight': float}]
         return {
             'student_idx': self.student_id_to_idx[student_id],
             'assignment_idx': self.assignment_id_to_idx[assignment_id],
@@ -133,33 +133,28 @@ class NeuralCDMModel(nn.Module):
                     nn.init.zeros_(module.bias)
     
     def forward(self, student_indices, assignment_knowledge_points, max_knowledge_points=10):
-        """
-        Args:
-            student_indices: [batch_size]
-            assignment_knowledge_points: List[List[int]] - 每个作业的知识点列表
-            max_knowledge_points: 最大知识点数量
-        """
         batch_size = len(student_indices)
-        
-        # 获取学生的知识点掌握度向量
         student_embeddings = self.student_knowledge_embeddings[student_indices]  # [batch_size, num_knowledge_points, knowledge_dim]
-        
-        # 构建批次的知识点向量和mask
         knowledge_vectors = torch.zeros(batch_size, max_knowledge_points, self.knowledge_dim)
         knowledge_mask = torch.zeros(batch_size, max_knowledge_points)
+        knowledge_weights = torch.ones(batch_size, max_knowledge_points)
         
         for i, knowledge_points in enumerate(assignment_knowledge_points):
-            for j, kp_idx in enumerate(knowledge_points[:max_knowledge_points]):
+            for j, kp in enumerate(knowledge_points[:max_knowledge_points]):
+                kp_idx = kp['kp_idx']
+                weight = kp['weight']
                 knowledge_vectors[i, j] = student_embeddings[i, kp_idx]
                 knowledge_mask[i, j] = 1.0
+                knowledge_weights[i, j] = weight
         
-        # 应用注意力机制
-        weighted_knowledge, attention_weights = self.attention(knowledge_vectors, knowledge_mask)
+        # 融合知识点权重（加权平均）
+        # 先归一化权重
+        norm_weights = knowledge_weights / (knowledge_weights.sum(dim=1, keepdim=True) + 1e-8)
+        weighted_knowledge = torch.sum(knowledge_vectors * norm_weights.unsqueeze(-1), dim=1)
         
         # MLP预测得分
         predicted_scores = self.mlp(weighted_knowledge).squeeze(-1)
-        
-        return predicted_scores, attention_weights
+        return predicted_scores, None  # 暂时不返回attention_weights
 
 
 class NeuralCDMService:
@@ -200,31 +195,79 @@ class NeuralCDMService:
         scores = []
         assignment_knowledge_maps = {}
         
+        # 先收集所有知识点ID，构建映射
+        all_knowledge_point_ids = set()
+        temp_assignment_knowledge_data = {}
+        
+        # 调试信息
+        total_students = len(students)
+        total_assignments = len(assignments)
+        total_possible_samples = total_students * total_assignments
+        valid_samples = 0
+        no_submission = 0
+        no_score = 0
+        not_graded = 0
+        no_knowledge_points = 0
+        
+        print(f"调试信息 - 课程 {course_id}:")
+        print(f"  总学生数: {total_students}")
+        print(f"  总作业数: {total_assignments}")
+        print(f"  理论最大样本数: {total_possible_samples}")
+        
         for student in students:
             for assignment in assignments:
-                # 获取学生作业得分
                 try:
                     student_assignment = StudentAssignment.get(
                         StudentAssignment.student_id == student.id,
                         StudentAssignment.assignment_id == assignment.id
                     )
                     
-                    if student_assignment.final_score is not None and student_assignment.status == 2:
-                        # 获取作业关联的知识点
-                        assignment_knowledge = KnowledgePointService.get_assignment_knowledge_points(assignment.id)
-                        
-                        if assignment_knowledge:
-                            # 记录数据
-                            student_ids.append(student.id)
-                            assignment_ids.append(assignment.id)
-                            knowledge_point_ids.extend([kp['knowledge_point'].id for kp in assignment_knowledge])
-                            scores.append(student_assignment.final_score / student_assignment.total_score)
-                            
-                            # 记录作业-知识点映射
-                            assignment_knowledge_maps[assignment.id] = [kp['knowledge_point'].id for kp in assignment_knowledge]
-                            
+                    # 检查作业状态和分数
+                    if student_assignment.final_score is None:
+                        no_score += 1
+                        continue
+                    
+                    if student_assignment.status != 2:
+                        not_graded += 1
+                        continue
+                    
+                    # 检查知识点关联
+                    assignment_knowledge = KnowledgePointService.get_assignment_knowledge_points(assignment.id)
+                    if not assignment_knowledge:
+                        no_knowledge_points += 1
+                        continue
+                    
+                    # 有效样本
+                    valid_samples += 1
+                    student_ids.append(student.id)
+                    assignment_ids.append(assignment.id)
+                    knowledge_point_ids.extend([kp['knowledge_point'].id for kp in assignment_knowledge])
+                    scores.append(student_assignment.final_score / student_assignment.total_score)
+                    
+                    # 临时存储作业-知识点数据
+                    all_knowledge_point_ids.update([kp['knowledge_point'].id for kp in assignment_knowledge])
+                    temp_assignment_knowledge_data[assignment.id] = assignment_knowledge
+                    
                 except DoesNotExist:
+                    no_submission += 1
                     continue
+        
+        print(f"  有效样本数: {valid_samples}")
+        print(f"  未提交作业: {no_submission}")
+        print(f"  无分数记录: {no_score}")
+        print(f"  未批改作业: {not_graded}")
+        print(f"  无知识点关联: {no_knowledge_points}")
+        print(f"  实际可用样本: {valid_samples}")
+        
+        # 构建知识点ID到索引的映射
+        knowledge_id_to_idx = {kid: idx for idx, kid in enumerate(all_knowledge_point_ids)}
+        
+        # 构建最终的assignment_knowledge_maps
+        for assignment_id, assignment_knowledge in temp_assignment_knowledge_data.items():
+            assignment_knowledge_maps[assignment_id] = [
+                {'kp_idx': knowledge_id_to_idx[kp['knowledge_point'].id],
+                 'weight': kp['weight']} for kp in assignment_knowledge
+            ]
         
         # 创建数据集
         dataset = NeuralCDMDataset(
@@ -267,11 +310,24 @@ class NeuralCDMService:
         if metadata['num_samples'] < 10:
             return {
                 'success': False,
-                'message': '训练数据不足，至少需要10个样本'
+                'message': f'训练数据不足，当前只有{metadata["num_samples"]}个有效样本，至少需要10个样本。请检查：1)作业是否已批改(status=2) 2)作业是否有关联知识点 3)学生是否提交了作业'
             }
         
+        # 自定义collate_fn，对knowledge_points做padding
+        def custom_collate_fn(batch):
+            max_kp_len = max(len(item['knowledge_points']) for item in batch)
+            for item in batch:
+                pad_len = max_kp_len - len(item['knowledge_points'])
+                if pad_len > 0:
+                    item['knowledge_points'] += [{'kp_idx': 0, 'weight': 0.0}] * pad_len
+            # 让DataLoader继续用默认方式拼接其它字段
+            collated = {}
+            for key in batch[0]:
+                collated[key] = [d[key] for d in batch]
+            return collated
+        
         # 创建数据加载器
-        dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+        dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, collate_fn=custom_collate_fn)
         
         # 创建模型
         self.model = NeuralCDMModel(
@@ -291,9 +347,9 @@ class NeuralCDMService:
             num_batches = 0
             
             for batch in dataloader:
-                student_indices = batch['student_idx'].to(self.device)
+                student_indices = torch.tensor(batch['student_idx']).to(self.device)
                 assignment_knowledge_points = batch['knowledge_points']
-                scores = batch['score'].float().to(self.device)
+                scores = torch.tensor(batch['score']).float().to(self.device)
                 
                 # 前向传播
                 predicted_scores, _ = self.model(student_indices, assignment_knowledge_points)
