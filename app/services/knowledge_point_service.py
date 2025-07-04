@@ -12,7 +12,7 @@ from typing import List, Dict, Optional
 from peewee import DoesNotExist
 from app.react.tools_register import register_as_tool
 
-# from app.ext import graph  # 已禁用图数据库相关
+from app.ext import graph
 import pandas as pd
 from py2neo import Graph, Node, Relationship
 from app.models.course import Course
