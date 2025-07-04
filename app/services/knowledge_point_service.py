@@ -41,6 +41,15 @@ class KnowledgePointService:
         try:
             course = Course.get_by_id(course_id)
             
+            try:
+                existing_kp = KnowledgePoint.get(
+                    (KnowledgePoint.name == name) & 
+                    (KnowledgePoint.course_id == course_id)
+                )
+                return existing_kp
+            except DoesNotExist:
+                pass
+            
             # 检查父知识点是否存在
             parent = None
             if parent_id:
@@ -439,7 +448,12 @@ class KnowledgePointService:
         #获取课程名称
         course_name = Course.get_by_id(course_id).name
 
-        # 清空旧数据（当前课程下的知识点）
+
+        # graph.run("""
+        #     MATCH (n)
+        #     DETACH DELETE n
+        # """)
+        #清空旧数据（当前课程下的知识点）
         graph.run("""
                 MATCH (c:Course {id: $course_id})<-[:BELONGS_TO]-(k:Knowledge)
                 DETACH DELETE k,c
@@ -534,7 +548,7 @@ class KnowledgePointService:
         # 批量写入数据库
         tx = graph.begin()
 
-        # 创建所有 Knowledge 节点，添加pg_id属性
+        #创建所有 Knowledge 节点，添加pg_id属性
         tx.run("""
                 UNWIND $nodes AS n
                 MERGE (k:Knowledge {name: n.name})
@@ -542,6 +556,20 @@ class KnowledgePointService:
                     k.description = coalesce(n.description, k.description),
                     k.pg_id = $id_cache[n.name]  
             """, nodes=[{"name": n[0], "level": n[1], "description": n[2]} for n in nodes], id_cache=id_cache)
+        
+        # tx.run("""
+        #     UNWIND $nodes AS n
+        #     MERGE (k:Knowledge {name: n.name})
+        #     SET k.level = coalesce(n.level, k.level),
+        #         k.description = coalesce(n.description, k.description),
+        #         k.pg_id = n.pg_id
+        # """, nodes=[{
+        #     "name": n[0],
+        #     "level": n[1],
+        #     "description": n[2],
+        #     "pg_id": id_cache.get(n[0], None)
+        # } for n in nodes])
+
         
         # 创建 BELONGS_TO 关系
         tx.run("""
@@ -575,7 +603,12 @@ class KnowledgePointService:
                 MERGE (a)-[:RELATED_TO]->(b)
             """, rels=[{"from": r[0], "to": r[1]} for r in rel_related])
 
-        tx.commit()
+        try:
+            tx.commit()
+            print("知识图谱导入完成")
+        except Exception as e:
+            print("导入失败！异常信息：", e)
+
     
           
     @staticmethod
