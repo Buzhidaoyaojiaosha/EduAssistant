@@ -1,4 +1,3 @@
-from werkzeug.exceptions import HTTPException
 
 from app.models.learning_data import (
     KnowledgePoint,
@@ -350,7 +349,7 @@ class KnowledgePointService:
         except DoesNotExist:
             raise ValueError(f"知识库条目ID {knowledge_base_id} 不存在")
 
-    @register_as_tool(roles=["teacher"])
+    
     @staticmethod
     def import_excel_to_knowledge_points(file_path: str, course_id: int):
         """
@@ -608,6 +607,7 @@ class KnowledgePointService:
             print("知识图谱导入完成")
         except Exception as e:
             print("导入失败！异常信息：", e)
+
 
     
           

@@ -1,5 +1,5 @@
 from app.models.knowledge_base import KnowledgeBase
-from app.ext import knowledge_base_collection
+from app.ext import knowledge_base_collection,rag_chunk_collection
 import uuid
 import oss2
 from pathlib import Path
@@ -13,7 +13,8 @@ class KnowledgeBaseService:
     """
     
     @staticmethod
-    def add_knowledge(title, type,content, course_id=None, category=None, tags=None):
+    def add_knowledge(title, type,content, course_id=None, category=None, tags=None,is_chunk=False,chunk_index=None,source_file=None):
+
         """添加知识条目到知识库。
         
         Args:
@@ -34,7 +35,10 @@ class KnowledgeBaseService:
             content=content,
             course_id=course_id,
             category=category,
-            tags=tags
+            tags=tags,
+            is_chunk=is_chunk,
+            chunk_index=chunk_index,
+            source_file=source_file,
         )
         
         # 生成唯一ID
@@ -51,14 +55,18 @@ class KnowledgeBaseService:
                 "title": title,
                 "category": category or "",
                 "course_id": course_id or 0,
-                "tags": ",".join(tags) if tags else ""
+                "tags": ",".join(tags) if tags else "",
+                "is_chunk": is_chunk,
+                "chunk_index": chunk_index or 0,
+                "source_file": source_file or "None"
             }]
         )
         
         return knowledge
     
     @staticmethod
-    def search_knowledge(query, course_id=None, limit=5, keyword_weight=0.3):
+    def search_knowledge(query, course_id=None, limit=5, keyword_weight=0.3,is_chunk=False):
+
         """
         升级版知识库搜索：结合语义搜索和关键字全文搜索
         
@@ -76,6 +84,7 @@ class KnowledgeBaseService:
         vector_search = knowledge_base_collection.query(
             query_texts=[query],
             n_results=limit * 3  # 获取更多结果用于后续融合
+            ,where={"is_chunk": is_chunk}
         )
         
         if len(vector_search["ids"]) > 0:
@@ -109,7 +118,8 @@ class KnowledgeBaseService:
         # 使用Peewee的SQL函数进行关键字匹配
         keyword_query = KnowledgeBase.select().where(
             (KnowledgeBase.title.contains(query)) |
-            (KnowledgeBase.content.contains(query))
+            (KnowledgeBase.content.contains(query)) &
+            (KnowledgeBase.is_chunk == is_chunk)
         )
         
         if course_id is not None:
@@ -204,6 +214,8 @@ class KnowledgeBaseService:
         # 从向量数据库中删除
         try:
             knowledge_base_collection.delete(ids=[knowledge.vector_id])
+            rag_chunk_collection.delete(ids=[knowledge.vector_id])
+
         except:
             pass  # 即使向量删除失败也继续删除数据库记录
             
