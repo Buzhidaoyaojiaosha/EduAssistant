@@ -195,7 +195,7 @@ def add_knowledge():
                     )
 
                 except Exception as e:
-                    current_app.logger.error(f"文件处理并存储到向量数据库时出错: {str(e)}")
+                    current_app.logger.error(f"文件处理并存储到向量数据库时出错: {str(e)}",exc_info=True)
                     flash("文件处理并存储到向量数据库时出错，请稍后重试。", 'danger')
 
                 finally:

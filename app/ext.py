@@ -3,7 +3,7 @@ from openai import OpenAI
 from playhouse.postgres_ext import PostgresqlExtDatabase
 from chromadb import PersistentClient
 import os
-from py2neo import Graph
+from neo4j import GraphDatabase
 
 db = PostgresqlExtDatabase(None)
 
@@ -50,7 +50,9 @@ def initialize_extensions():
 
     # initialize graph
     global graph
-    graph = Graph(
-        os.getenv("NEO4J_URI"),
-        auth=(os.getenv("NEO4J_USERNAME"), os.getenv("NEO4J_PASSWORD"))
-    )
+    with GraphDatabase.driver(
+            os.getenv("NEO4J_URI"),
+            auth=(os.getenv("NEO4J_USERNAME"), os.getenv("NEO4J_PASSWORD"))) as graph:
+        graph.verify_connectivity()
+        print("Connected to Neo4j successfully!")
+
