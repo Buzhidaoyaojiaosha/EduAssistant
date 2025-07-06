@@ -1,7 +1,10 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, session
-from peewee import JOIN
-import io 
+import traceback
 
+from flask import Blueprint, render_template, redirect, url_for, flash, request, session, jsonify
+from peewee import JOIN
+import io
+
+from app.ext import graph
 from app.services.course_service import CourseService
 from app.services.assignment_service import AssignmentService
 from app.services.user_service import UserService
@@ -912,7 +915,7 @@ def delete_knowledge_point(course_id):
         flash(f'知识点 "{kp_name}" 已删除', 'success')
 
         try:
-            KnowledgePointService.delete_knowledge_point_node_from_graph(knowledge_point_id)
+            KnowledgePointService.delete_knowledge_point_node_from_graph(kp_name)
         except Exception as e:
             flash(f'图数据库同步失败（删除知识点）: {e}', 'warning')
         
@@ -923,6 +926,7 @@ def delete_knowledge_point(course_id):
     return redirect(url_for('course.view', course_id=course_id))
 
 
+#从Excel文件中导入知识点
 @course_bp.route('/<int:course_id>/import_knowledge_points', methods=['POST'])
 def import_knowledge_points(course_id):
     if 'user_id' not in session:
@@ -963,15 +967,50 @@ def import_knowledge_points(course_id):
             flash('知识点导入成功。', 'success')
         except Exception as e:
             flash(f'知识点导入失败: {str(e)}', 'danger')
+            traceback.print_exc()
         
         return redirect(url_for('course.view', course_id=course_id))
 
 
-@course_bp.route('/<int:course_id>/view_knowledge_graph')
-def view_knowledge_graph(course_id):
-    course = Course.get_by_id(course_id)
-    return render_template('course/graph.html', course_id=course_id, course_name=course.name)
 
+#查看课程知识图谱
+@course_bp.route('/<int:course_id>/view_knowledge_graph')
+def get_course_graph(course_id):
+    query = """
+    MATCH (k1:Knowledge {course_id: $course_id})
+    OPTIONAL MATCH (k1)-[r]->(k2:Knowledge {course_id: $course_id})
+    RETURN k1, r, k2
+    """
+    results = graph.execute_query(query, course_id=course_id, database="neo4j")
+
+    nodes = {}
+    edges = []
+
+    for records in results:
+        for record in records :
+
+            k1, r, k2 = record.values()
+            for node in [k1, k2]:
+                if node is not None:
+                    nid = getattr(node, "id", None) or getattr(node, "element_id", None)
+                    if nid not in nodes:
+                        nodes[nid] = {
+                            "id": nid,
+                            "label": node.get("name", "未知"),
+                            "group": node.get("level", 1)
+                        }
+
+            if r is not None and k1 is not None and k2 is not None:
+                edges.append({
+                    "from": getattr(k1, "id", None) or getattr(k1, "element_id", None),
+                    "to": getattr(k2, "id", None) or getattr(k2, "element_id", None),
+                    "label": getattr(r, "type", "关联")
+                })
+
+        return jsonify({
+            "nodes": list(nodes.values()),
+            "edges": edges
+        })
 
 
 @course_bp.route('/assignment/<int:assignment_id>/knowledge_points', methods=['GET', 'POST'])
