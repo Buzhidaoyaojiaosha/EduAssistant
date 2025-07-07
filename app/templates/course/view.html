@@ -495,7 +495,7 @@
 </style>
 
 
-<script src="https://unpkg.com/neovis.js@2.0.2"></script>
+<script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
 
 <script>
     function editKnowledgePoint(id, name, description, parentId) {
@@ -537,48 +537,56 @@
         modal.show();
     }
 
-    document.addEventListener('DOMContentLoaded', function () {
-    const config = {
-        containerId: "viz",
-        neo4j: {
-            serverUrl: "bolt://54.175.21.73",
-            serverUser: "neo4j",
-            serverPassword: "kilogram-heels-asterisk"
-        },
-        labels: {
-            "Knowledge": {
-                caption: "name",
-                size: "level"
-            },
-            "Course": {
-                caption: "name"
-            }
-        },
-        relationships: {
-            "SUB_KNOWLEDGE_OF": { caption: true },
-            "PRECEDES": { caption: true },
-            "RELATED_TO": { caption: true },
-            "BELONGS_TO": { caption: true }
-        },
-        
-       initialCypher: `
-    MATCH (c:Course {id: {{ course.id }}})<-[:BELONGS_TO]-(k:Knowledge)
-    OPTIONAL MATCH (k)-[r]->(n)
-    RETURN k, r, n
-`
+    document.addEventListener("DOMContentLoaded", function () {
+    const modal = document.getElementById("knowledgeGraphModal");
+    const courseId = "{{ course.id }}";
 
+    if (!modal) return;
 
-    };
+    modal.addEventListener("shown.bs.modal", function () {
+        const container = document.getElementById("viz");
+        if (!container) return;
 
-    const viz = new NeoVis.default(config);
+        // 清空旧内容，避免多次渲染叠加
+        container.innerHTML = "";
 
-    const modal = document.getElementById('knowledgeGraphModal');
-    modal.addEventListener('shown.bs.modal', function () {
-        viz.render();
+        fetch(`/course/${courseId}/view_knowledge_graph`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`请求失败，状态码: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                const nodes = new vis.DataSet(data.nodes);
+                const edges = new vis.DataSet(data.edges);
+
+                const options = {
+                    nodes: {
+                        shape: "dot",
+                        size: 15,
+                        font: { size: 14, color: "#000" }
+                    },
+                    edges: {
+                        arrows: "to",
+                        font: { align: "top" }
+                    },
+                    physics: {
+                        stabilization: false,
+                        barnesHut: { springLength: 150 }
+                    }
+                };
+
+                new vis.Network(container, { nodes, edges }, options);
+            })
+            .catch(error => {
+                console.error("知识图谱加载失败:", error);
+                container.innerHTML = "<p class='text-danger'>加载图谱失败，请稍后再试。</p>";
+            });
     });
 });
 
-    
+
 </script>
 {% endif %}
 {% endblock %}
