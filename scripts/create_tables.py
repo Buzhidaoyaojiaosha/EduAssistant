@@ -30,3 +30,5 @@ tables = [
 #db.create_tables([StudentAssignment])
 #db.create_tables([AssignmentKnowledgePoint, KnowledgeBaseKnowledgePoint])
 # db.create_tables([Chat, ChatMessage])
+
+print(AIQuestion.table_exists())

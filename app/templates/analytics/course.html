@@ -13,10 +13,28 @@
         <p class="text-muted">{{ course.name }} ({{ course.code }})</p>
     </div>
     <div class="col-auto">
+        <button type="button" class="btn btn-success me-2" onclick="updateKnowledgeMastery()">
+            <i class="fas fa-brain me-1"></i>更新知识点掌握度
+        </button>
         <a href="{{ url_for('course.view', course_id=course.id) }}" class="btn btn-outline-primary">
             <i class="fas fa-arrow-left me-1"></i>返回课程
         </a>
     </div>
+</div>
+
+<!-- 更新进度提示 -->
+<div id="updateProgress" class="alert alert-info" style="display: none;">
+    <div class="d-flex align-items-center">
+        <div class="spinner-border spinner-border-sm me-2" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <span id="updateMessage">正在训练模型并更新知识点掌握度，请稍候...</span>
+    </div>
+</div>
+
+<!-- 更新结果提示 -->
+<div id="updateResult" class="alert" style="display: none;">
+    <span id="resultMessage"></span>
 </div>
 
 <!-- 课程统计数据卡片 -->
@@ -222,5 +240,53 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     {% endif %}
 });
+
+// 更新知识点掌握度函数
+function updateKnowledgeMastery() {
+    const courseId = {{ course.id }};
+    const updateProgress = document.getElementById('updateProgress');
+    const updateResult = document.getElementById('updateResult');
+    const resultMessage = document.getElementById('resultMessage');
+    
+    // 显示进度提示
+    updateProgress.style.display = 'block';
+    updateResult.style.display = 'none';
+    
+    // 发送请求到后端
+    fetch(`/analytics/course/${courseId}/update_mastery`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        // 隐藏进度提示
+        updateProgress.style.display = 'none';
+        
+        // 显示结果
+        updateResult.style.display = 'block';
+        if (data.success) {
+            updateResult.className = 'alert alert-success';
+            resultMessage.textContent = data.message;
+            // 3秒后刷新页面以显示更新后的数据
+            setTimeout(() => {
+                window.location.reload();
+            }, 3000);
+        } else {
+            updateResult.className = 'alert alert-danger';
+            resultMessage.textContent = data.message;
+        }
+    })
+    .catch(error => {
+        // 隐藏进度提示
+        updateProgress.style.display = 'none';
+        
+        // 显示错误
+        updateResult.style.display = 'block';
+        updateResult.className = 'alert alert-danger';
+        resultMessage.textContent = '更新失败，请稍后重试。错误信息：' + error.message;
+    });
+}
 </script>
 {% endblock %}

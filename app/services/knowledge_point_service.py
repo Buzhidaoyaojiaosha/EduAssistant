@@ -12,7 +12,6 @@ from peewee import DoesNotExist
 
 from app.react.tools_register import register_as_tool
 
-#和图数据库相关的操作
 from app.ext import graph
 import pandas as pd
 from app.models.course import Course

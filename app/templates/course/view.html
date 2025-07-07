@@ -318,6 +318,10 @@
                                                 data-bs-target="#questionDetail{{ question.id }}">
                                             查看详情
                                         </button>
+                                        <a href="{{ url_for('wrongbook.practice_questions', course_id=course.id) }}"
+                                           class="btn btn-sm btn-outline-success mt-2 ms-2">
+                                           <i class="fas fa-dumbbell me-1"></i>再练几题
+                                        </a>
                                     </li>
                                     {% endfor %}
                                 </ul>
