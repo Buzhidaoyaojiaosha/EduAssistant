@@ -10,16 +10,20 @@
     </div>
     <div class="col-auto">
         {% if is_teacher %}
-   
+
         <a href="{{ url_for('course.create_assignment', course_id=course.id) }}" class="btn btn-primary">
             <i class="fas fa-plus me-1"></i>创建作业
         </a>
         <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addKnowledgePointModal">
             <i class="fas fa-lightbulb me-1"></i>新增知识点
         </button>
-           <a href="{{ url_for('search.add_knowledge', referrer=url_for('course.view', course_id=course.id)) }}" class="btn btn-info me-2">
-    <i class="fas fa-upload me-1"></i>上传文件资源至知识库
-</a>
+        <a href="{{ url_for('search.add_knowledge', referrer=url_for('course.view', course_id=course.id)) }}"
+            class="btn btn-info me-2">
+            <i class="fas fa-upload me-1"></i>上传文件资源至知识库
+        </a>
+        <button type="button" class="btn btn-warning me-2" id="generateTeachingOutlineBtn">
+            <i class="fas fa-magic me-1"></i>自动生成教学内容
+        </button>
         <a href="{{ url_for('analytics.course_analytics', course_id=course.id) }}" class="btn btn-outline-primary">
             <i class="fas fa-chart-line me-1"></i>课程分析
         </a>
@@ -41,8 +45,9 @@
                 {% if is_student %}
                 <div class="alert alert-success mt-3">
                     <i class="fas fa-check-circle me-2"></i>您已加入该课程
-                    <form action="{{ url_for('course.unenroll', course_id=course.id) }}" method="post" style="display: inline-block; float: right;">
-                        <button type="submit" class="btn btn-sm btn-outline-danger" 
+                    <form action="{{ url_for('course.unenroll', course_id=course.id) }}" method="post"
+                        style="display: inline-block; float: right;">
+                        <button type="submit" class="btn btn-sm btn-outline-danger"
                             onclick="return confirm('确定要退出此课程吗？这可能会影响您的作业和成绩记录。')">
                             <i class="fas fa-user-minus me-1"></i>退出课程
                         </button>
@@ -51,7 +56,8 @@
                 {% elif not is_teacher %}
                 <div class="alert alert-info mt-3">
                     <i class="fas fa-info-circle me-2"></i>您尚未加入该课程
-                    <form action="{{ url_for('course.enroll', course_id=course.id) }}" method="post" style="display: inline-block; float: right;">
+                    <form action="{{ url_for('course.enroll', course_id=course.id) }}" method="post"
+                        style="display: inline-block; float: right;">
                         <button type="submit" class="btn btn-sm btn-success">
                             <i class="fas fa-user-plus me-1"></i>加入课程
                         </button>
@@ -60,36 +66,39 @@
                 {% endif %}
             </div>
         </div>
-        
+
         <!-- 知识点列表 (仅教师可见) -->
         {% if is_teacher %}
         <div class="card shadow-sm mb-4">
-           
+
 
             <div class="card-header bg-light d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="fas fa-lightbulb me-2"></i>知识点</h5>
-                <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#knowledgeGraphModal">
+                <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal"
+                    data-bs-target="#knowledgeGraphModal">
                     查看知识图谱
                 </button>
             </div>
 
             <!-- 知识图谱模态框 -->
-            <div class="modal fade" id="knowledgeGraphModal" tabindex="-1" aria-labelledby="knowledgeGraphModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-xl">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="knowledgeGraphModalLabel">课程《{{ course.name }}》的知识图谱</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div id="viz" style="width: 100%; height: 600px; border: 1px solid #ccc; border-radius: 8px;"></div>
+            <div class="modal fade" id="knowledgeGraphModal" tabindex="-1" aria-labelledby="knowledgeGraphModalLabel"
+                aria-hidden="true">
+                <div class="modal-dialog modal-xl">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="knowledgeGraphModalLabel">课程《{{ course.name }}》的知识图谱</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div id="viz"
+                                style="width: 100%; height: 600px; border: 1px solid #ccc; border-radius: 8px;"></div>
+                        </div>
                     </div>
                 </div>
             </div>
-            </div>
-            
+
             <div class="card-body">
-            {% if knowledge_points %}
+                {% if knowledge_points %}
                 <div class="table-responsive" style="max-height: 416px; overflow-y: auto;">
                     <table class="table table-hover">
                         <thead>
@@ -107,18 +116,18 @@
                                 <td>{{ kp.description|string|default('无')|truncate(50) }}</td>
                                 <td>
                                     {% if kp.parent %}
-                                        {{ kp.parent.name }}
+                                    {{ kp.parent.name }}
                                     {% else %}
-                                        <span class="text-muted">顶级</span>
+                                    <span class="text-muted">顶级</span>
                                     {% endif %}
                                 </td>
                                 <td>
                                     <button type="button" class="btn btn-sm btn-outline-primary"
-                                            onclick="editKnowledgePoint({{ kp.id }}, '{{ kp.name }}', '{{ kp.description }}', {% if kp.parent %}{{ kp.parent.id }}{% else %}null{% endif %})">
+                                        onclick="editKnowledgePoint({{ kp.id }}, '{{ kp.name }}', '{{ kp.description }}', {% if kp.parent %}{{ kp.parent.id }}{% else %}null{% endif %})">
                                         编辑
                                     </button>
                                     <button type="button" class="btn btn-sm btn-outline-danger"
-                                            onclick="deleteKnowledgePoint({{ kp.id }}, '{{ kp.name }}')">
+                                        onclick="deleteKnowledgePoint({{ kp.id }}, '{{ kp.name }}')">
                                         删除
                                     </button>
                                 </td>
@@ -132,8 +141,8 @@
                 {% endif %}
             </div>
         </div>
-            {% endif %}
-        
+        {% endif %}
+
         <!-- 作业列表 -->
         <div class="card shadow-sm mb-4">
             <div class="card-header bg-light">
@@ -161,19 +170,22 @@
                                 <td>{{ assignment.due_date.strftime('%Y-%m-%d') }}</td>
                                 <td>{{ assignment.total_points }}</td>
                                 {% if is_student %}
-                                    {% set student_assignment = student_assignments|selectattr('assignment.id', 'equalto', assignment.id)|first %}
-                                    <td>
-                                        {% if student_assignment and student_assignment.status==1 %}
-                                        <span class="badge bg-success">已提交</span>
-                                        {% elif student_assignment and (student_assignment.final_score or student_assignment.status == 2) %}
-                                        <span class="badge bg-warning">已批改</span>
-                                        {% else %}
-                                        <span class="badge bg-danger">未提交</span>
-                                        {% endif %}
-                                    </td>
+                                {% set student_assignment = student_assignments|selectattr('assignment.id', 'equalto',
+                                assignment.id)|first %}
+                                <td>
+                                    {% if student_assignment and student_assignment.status==1 %}
+                                    <span class="badge bg-success">已提交</span>
+                                    {% elif student_assignment and (student_assignment.final_score or
+                                    student_assignment.status == 2) %}
+                                    <span class="badge bg-warning">已批改</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">未提交</span>
+                                    {% endif %}
+                                </td>
                                 {% endif %}
                                 <td>
-                                    <a href="{{ url_for('course.view_assignment', assignment_id=assignment.id) }}" class="btn btn-sm btn-outline-primary">查看</a>
+                                    <a href="{{ url_for('course.view_assignment', assignment_id=assignment.id) }}"
+                                        class="btn btn-sm btn-outline-primary">查看</a>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -186,7 +198,7 @@
             </div>
         </div>
     </div>
-    
+
     <div class="col-md-4">
         <!-- 学生列表 (仅教师可见) -->
         {% if is_teacher and students %}
@@ -196,12 +208,13 @@
             </div>
             <div class="card-body">
                 <ul class="list-group list-group-flush">
-                {% for student in students %}
+                    {% for student in students %}
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         {{ student.name }}
-                        <a href="{{ url_for('analytics.student_analytics', student_id=student.id, course_id=course.id) }}" class="btn btn-sm btn-outline-primary">查看分析</a>
+                        <a href="{{ url_for('analytics.student_analytics', student_id=student.id, course_id=course.id) }}"
+                            class="btn btn-sm btn-outline-primary">查看分析</a>
                     </li>
-                {% endfor %}
+                    {% endfor %}
                 </ul>
             </div>
         </div>
@@ -221,41 +234,41 @@
                     </div>
                 </form>
             </div>
-           <!-- 课程相关知识条目 -->
-        
+            <!-- 课程相关知识条目 -->
+
             <div class="card shadow-sm mt-4">
                 <div class="card-header bg-light">
                     <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>课程相关资源</h5>
                 </div>
                 <div class="card-body">
                     {% if knowledge_entries %}
-                        <div class="list-group">
-                            {% for entry in knowledge_entries %}
-                                <div class="list-group-item">
-                                    {% if entry.type == 'text' %}
-                                        <!-- 文本类型：显示标题和内容 -->
-                                        <h6 class="mb-2">{{ entry.title }}</h6>
-                                        <div class="text-muted small">
-                                            {{ entry.content|safe }}
-                                        </div>
-                                    {% else %}
-                                        <!-- 其他类型：显示可点击下载的标题 -->
-                                        <div class="d-flex align-items-center">
-                                            <i class="fas {{ 'fa-file-pdf' if entry.type == 'pdf' 
+                    <div class="list-group">
+                        {% for entry in knowledge_entries %}
+                        <div class="list-group-item">
+                            {% if entry.type == 'text' %}
+                            <!-- 文本类型：显示标题和内容 -->
+                            <h6 class="mb-2">{{ entry.title }}</h6>
+                            <div class="text-muted small">
+                                {{ entry.content|safe }}
+                            </div>
+                            {% else %}
+                            <!-- 其他类型：显示可点击下载的标题 -->
+                            <div class="d-flex align-items-center">
+                                <i class="fas {{ 'fa-file-pdf' if entry.type == 'pdf' 
                                                         else 'fa-file-word' if entry.type == 'doc' 
                                                         else 'fa-file-image' if entry.type == 'image'
                                                         else 'fa-file-alt' }} me-2"></i>
-                                            <a href="{{ entry.content }}">
-                                                {{ entry.title }}
-                                            </a>
-                                           
-                                        </div>
-                                    {% endif %}
-                                </div>
-                            {% endfor %}
+                                <a href="{{ entry.content }}">
+                                    {{ entry.title }}
+                                </a>
+
+                            </div>
+                            {% endif %}
                         </div>
+                        {% endfor %}
+                    </div>
                     {% else %}
-                        <div class="alert alert-info mb-0">暂无相关资源</div>
+                    <div class="alert alert-info mb-0">暂无相关资源</div>
                     {% endif %}
                 </div>
             </div>
@@ -277,16 +290,14 @@
                     {% for assignment_data in wrong_questions %}
                     <div class="accordion-item">
                         <h2 class="accordion-header">
-                            <button class="accordion-button collapsed" type="button"
-                                    data-bs-toggle="collapse"
-                                    data-bs-target="#collapse{{ assignment_data.assignment.id }}">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#collapse{{ assignment_data.assignment.id }}">
                                 {{ assignment_data.assignment.title }}
                                 <span class="badge bg-danger ms-2">{{ assignment_data.questions|length }}</span>
                             </button>
                         </h2>
-                        <div id="collapse{{ assignment_data.assignment.id }}"
-                             class="accordion-collapse collapse"
-                             data-bs-parent="#wrongQuestionsAccordion">
+                        <div id="collapse{{ assignment_data.assignment.id }}" class="accordion-collapse collapse"
+                            data-bs-parent="#wrongQuestionsAccordion">
                             <div class="accordion-body p-0">
                                 <ul class="list-group list-group-flush">
                                     {% for question in assignment_data.questions %}
@@ -297,7 +308,7 @@
                                                 {{ question.score }}/{{ question.total_points }}
                                             </span>
                                         </div>
-        
+
                                         <!-- 展开内容 -->
                                         <div class="mt-2 collapse" id="questionDetail{{ question.id }}">
                                             <div class="card bg-light mt-2">
@@ -311,16 +322,14 @@
                                                 </div>
                                             </div>
                                         </div>
-        
-                                        <button class="btn btn-sm btn-outline-primary mt-2"
-                                                type="button"
-                                                data-bs-toggle="collapse"
-                                                data-bs-target="#questionDetail{{ question.id }}">
+
+                                        <button class="btn btn-sm btn-outline-primary mt-2" type="button"
+                                            data-bs-toggle="collapse" data-bs-target="#questionDetail{{ question.id }}">
                                             查看详情
                                         </button>
                                         <a href="{{ url_for('wrongbook.practice_questions', course_id=course.id) }}"
-                                           class="btn btn-sm btn-outline-success mt-2 ms-2">
-                                           <i class="fas fa-dumbbell me-1"></i>再练几题
+                                            class="btn btn-sm btn-outline-success mt-2 ms-2">
+                                            <i class="fas fa-dumbbell me-1"></i>再练几题
                                         </a>
                                     </li>
                                     {% endfor %}
@@ -345,7 +354,8 @@
 
 <!-- 新增知识点模态框 -->
 {% if is_teacher %}
-<div class="modal fade" id="addKnowledgePointModal" tabindex="-1" aria-labelledby="addKnowledgePointModalLabel" aria-hidden="true">
+<div class="modal fade" id="addKnowledgePointModal" tabindex="-1" aria-labelledby="addKnowledgePointModalLabel"
+    aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -353,19 +363,24 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
 
-             <ul class="nav nav-tabs" id="addKPTab" role="tablist">
+            <ul class="nav nav-tabs" id="addKPTab" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="manual-tab-modal" data-bs-toggle="tab" data-bs-target="#manual-modal" type="button" role="tab" aria-controls="manual-modal" aria-selected="true">手动输入</button>
+                    <button class="nav-link active" id="manual-tab-modal" data-bs-toggle="tab"
+                        data-bs-target="#manual-modal" type="button" role="tab" aria-controls="manual-modal"
+                        aria-selected="true">手动输入</button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="excel-tab-modal" data-bs-toggle="tab" data-bs-target="#excel-modal" type="button" role="tab" aria-controls="excel-modal" aria-selected="false">Excel 导入</button>
+                    <button class="nav-link" id="excel-tab-modal" data-bs-toggle="tab" data-bs-target="#excel-modal"
+                        type="button" role="tab" aria-controls="excel-modal" aria-selected="false">Excel 导入</button>
                 </li>
             </ul>
             <!-- 标签页内容 -->
             <div class="tab-content" id="addKPTabContent">
                 <!-- 手动输入页 -->
-                <div class="tab-pane fade show active" id="manual-modal" role="tabpanel" aria-labelledby="manual-tab-modal">
-                    <form id="addKnowledgePointForm" action="{{ url_for('course.add_knowledge_point', course_id=course.id) }}" method="post">
+                <div class="tab-pane fade show active" id="manual-modal" role="tabpanel"
+                    aria-labelledby="manual-tab-modal">
+                    <form id="addKnowledgePointForm"
+                        action="{{ url_for('course.add_knowledge_point', course_id=course.id) }}" method="post">
                         <div class="modal-body">
                             <div class="mb-3">
                                 <label for="kp_name" class="form-label">知识点名称</label>
@@ -373,7 +388,8 @@
                             </div>
                             <div class="mb-3">
                                 <label for="kp_description" class="form-label">描述</label>
-                                <textarea class="form-control" id="kp_description" name="description" rows="3"></textarea>
+                                <textarea class="form-control" id="kp_description" name="description"
+                                    rows="3"></textarea>
                             </div>
                             <div class="mb-3">
                                 <label for="kp_parent" class="form-label">父级知识点（可选）</label>
@@ -392,12 +408,15 @@
                     </form>
                 </div>
                 <!-- 新增 Excel 导入页 -->
-                <div class="tab-pane fade" id="excel-modal" role="tabpanel" aria-labelledby="excel-tab-modal">                 
-                    <form id="importExcelForm" action="{{ url_for('course.import_knowledge_points', course_id=course.id) }}" method="post" enctype="multipart/form-data" >
+                <div class="tab-pane fade" id="excel-modal" role="tabpanel" aria-labelledby="excel-tab-modal">
+                    <form id="importExcelForm"
+                        action="{{ url_for('course.import_knowledge_points', course_id=course.id) }}" method="post"
+                        enctype="multipart/form-data">
                         <div class="modal-body">
                             <div class="mb-3">
                                 <label for="excelFile" class="form-label">选择 Excel 文件</label>
-                                <input class="form-control" type="file" id="excelFile" name="excel_file" accept=".xlsx, .xls" required>
+                                <input class="form-control" type="file" id="excelFile" name="excel_file"
+                                    accept=".xlsx, .xls" required>
                             </div>
                             <div class="alert alert-info">
                                 <p>Excel 文件格式要求：</p>
@@ -425,7 +444,8 @@
 
 
 <!-- 编辑知识点模态框 -->
-<div class="modal fade" id="editKnowledgePointModal" tabindex="-1" aria-labelledby="editKnowledgePointModalLabel" aria-hidden="true">
+<div class="modal fade" id="editKnowledgePointModal" tabindex="-1" aria-labelledby="editKnowledgePointModalLabel"
+    aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -463,7 +483,8 @@
 </div>
 
 <!-- 删除知识点确认模态框 -->
-<div class="modal fade" id="deleteKnowledgePointModal" tabindex="-1" aria-labelledby="deleteKnowledgePointModalLabel" aria-hidden="true">
+<div class="modal fade" id="deleteKnowledgePointModal" tabindex="-1" aria-labelledby="deleteKnowledgePointModalLabel"
+    aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -484,14 +505,164 @@
         </div>
     </div>
 </div>
+<!-- 生成进度模态框 -->
+<div class="modal fade" id="generateProgressModal" tabindex="-1" aria-labelledby="generateProgressModalLabel"
+    aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="generateProgressModalLabel">正在生成教学大纲</h5>
+            </div>
+            <div class="modal-body text-center">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">生成中...</span>
+                </div>
+                <p class="mb-0">AI正在分析课程资料并生成教学大纲，请稍候...</p>
+                <div class="progress mt-3">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
+                        style="width: 100%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 生成结果模态框 -->
+<div class="modal fade" id="generateResultModal" tabindex="-1" aria-labelledby="generateResultModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="generateResultModalLabel">教学大纲生成完成</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="generateResultContent">
+                    <!-- 生成的内容将在这里显示 -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-primary" id="downloadPdfBtn">
+                    <i class="fas fa-download me-1"></i>下载PDF
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 错误提示模态框 -->
+<div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="errorModalLabel">生成失败</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <span id="errorMessage">生成教学大纲时发生错误，请稍后重试。</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <style>
-.nav-tabs .nav-link {
-  color: #000 !important; 
-}
-.nav-tabs .nav-link.active {
-  color: #0d6efd !important;
-}
+    .nav-tabs .nav-link {
+        color: #000 !important;
+    }
+
+    .nav-tabs .nav-link.active {
+        color: #0d6efd !important;
+    }
+
+    /* 教学大纲内容样式 */
+    .teaching-outline-content {
+        font-family: "Microsoft YaHei", "SimHei", Arial, sans-serif;
+        line-height: 1.6;
+        color: #333;
+    }
+
+    .teaching-outline-content h1 {
+        color: #2c3e50;
+        border-bottom: 2px solid #3498db;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+    }
+
+    .teaching-outline-content h2 {
+        color: #34495e;
+        margin-top: 25px;
+        margin-bottom: 15px;
+    }
+
+    .teaching-outline-content h3 {
+        color: #7f8c8d;
+        margin-top: 20px;
+        margin-bottom: 10px;
+    }
+
+    .teaching-outline-content ul,
+    .teaching-outline-content ol {
+        margin-left: 20px;
+        margin-bottom: 15px;
+    }
+
+    .teaching-outline-content li {
+        margin-bottom: 5px;
+    }
+
+    .teaching-outline-content p {
+        margin-bottom: 12px;
+        text-align: justify;
+    }
+
+    .teaching-outline-content strong {
+        color: #2c3e50;
+    }
+
+    /* 进度条动画 */
+    .progress-bar-animated {
+        animation: progress-bar-stripes 1s linear infinite;
+    }
+
+    @keyframes progress-bar-stripes {
+        0% {
+            background-position: 40px 0;
+        }
+
+        100% {
+            background-position: 0 0;
+        }
+    }
+
+    /* 按钮悬停效果 */
+    #generateTeachingOutlineBtn:hover {
+        background-color: #e0a800;
+        border-color: #d39e00;
+    }
+
+    #generateTeachingOutlineBtn:disabled {
+        background-color: #6c757d;
+        border-color: #6c757d;
+        cursor: not-allowed;
+    }
+
+    /* 响应式设计 */
+    @media (max-width: 768px) {
+        .modal-xl {
+            max-width: 95%;
+        }
+
+        .teaching-outline-content {
+            font-size: 14px;
+        }
+    }
 </style>
 
 
@@ -502,7 +673,7 @@
         document.getElementById('edit_kp_id').value = id;
         document.getElementById('edit_kp_name').value = name;
         document.getElementById('edit_kp_description').value = description;
-        
+
         const parentSelect = document.getElementById('edit_kp_parent');
         if (parentId) {
             for (let i = 0; i < parentSelect.options.length; i++) {
@@ -514,78 +685,299 @@
         } else {
             parentSelect.selectedIndex = 0;
         }
-        
-        document.getElementById('editKnowledgePointForm').action = 
+
+        document.getElementById('editKnowledgePointForm').action =
             "{{ url_for('course.edit_knowledge_point', course_id=course.id) }}";
-        
+
         // 禁用与当前知识点相同的选项和子知识点选项
         for (let i = 0; i < parentSelect.options.length; i++) {
             parentSelect.options[i].disabled = (parentSelect.options[i].value == id);
         }
-        
+
         const modal = new bootstrap.Modal(document.getElementById('editKnowledgePointModal'));
         modal.show();
     }
-    
+
     function deleteKnowledgePoint(id, name) {
         document.getElementById('delete_kp_id').value = id;
         document.getElementById('delete_kp_name').textContent = name;
-        document.getElementById('deleteKnowledgePointForm').action = 
+        document.getElementById('deleteKnowledgePointForm').action =
             "{{ url_for('course.delete_knowledge_point', course_id=course.id) }}";
-        
+
         const modal = new bootstrap.Modal(document.getElementById('deleteKnowledgePointModal'));
         modal.show();
     }
 
     document.addEventListener("DOMContentLoaded", function () {
-    const modal = document.getElementById("knowledgeGraphModal");
-    const courseId = "{{ course.id }}";
+        const modal = document.getElementById("knowledgeGraphModal");
+        const courseId = "{{ course.id }}";
 
-    if (!modal) return;
+        if (!modal) return;
 
-    modal.addEventListener("shown.bs.modal", function () {
-        const container = document.getElementById("viz");
-        if (!container) return;
+        modal.addEventListener("shown.bs.modal", function () {
+            const container = document.getElementById("viz");
+            if (!container) return;
 
-        // 清空旧内容，避免多次渲染叠加
-        container.innerHTML = "";
+            // 清空旧内容，避免多次渲染叠加
+            container.innerHTML = "";
 
-        fetch(`/course/${courseId}/view_knowledge_graph`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`请求失败，状态码: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                const nodes = new vis.DataSet(data.nodes);
-                const edges = new vis.DataSet(data.edges);
-
-                const options = {
-                    nodes: {
-                        shape: "dot",
-                        size: 15,
-                        font: { size: 14, color: "#000" }
-                    },
-                    edges: {
-                        arrows: "to",
-                        font: { align: "top" }
-                    },
-                    physics: {
-                        stabilization: false,
-                        barnesHut: { springLength: 150 }
+            fetch(`/course/${courseId}/view_knowledge_graph`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`请求失败，状态码: ${response.status}`);
                     }
-                };
+                    return response.json();
+                })
+                .then(data => {
+                    const nodes = new vis.DataSet(data.nodes);
+                    const edges = new vis.DataSet(data.edges);
 
-                new vis.Network(container, { nodes, edges }, options);
-            })
-            .catch(error => {
-                console.error("知识图谱加载失败:", error);
-                container.innerHTML = "<p class='text-danger'>加载图谱失败，请稍后再试。</p>";
-            });
+                    const options = {
+                        nodes: {
+                            shape: "dot",
+                            size: 15,
+                            font: { size: 14, color: "#000" }
+                        },
+                        edges: {
+                            arrows: "to",
+                            font: { align: "top" }
+                        },
+                        physics: {
+                            stabilization: false,
+                            barnesHut: { springLength: 150 }
+                        }
+                    };
+
+                    new vis.Network(container, { nodes, edges }, options);
+                })
+                .catch(error => {
+                    console.error("知识图谱加载失败:", error);
+                    container.innerHTML = "<p class='text-danger'>加载图谱失败，请稍后再试。</p>";
+                });
+        });
     });
-});
+    document.addEventListener('DOMContentLoaded', function () {
+        const generateBtn = document.getElementById('generateTeachingOutlineBtn');
+        const progressModal = new bootstrap.Modal(document.getElementById('generateProgressModal'));
+        const resultModal = new bootstrap.Modal(document.getElementById('generateResultModal'));
+        const errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+        const downloadBtn = document.getElementById('downloadPdfBtn');
 
+        let generatedData = null;
+        const courseId = "{{ course.id }}";
+
+        // 检查按钮是否存在
+        if (!generateBtn) {
+            console.error('生成按钮未找到');
+            return;
+        }
+
+        // 生成教学大纲
+        generateBtn.addEventListener('click', function () {
+            // 禁用按钮防止重复点击
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>生成中...';
+
+            // 显示进度模态框
+            progressModal.show();
+
+            // 发送生成请求
+            fetch('/course/api/generate_teaching_outline', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    course_id: parseInt(courseId)
+                }),
+                credentials: 'same-origin' // 确保发送cookies
+            })
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    console.log('Response headers:', response.headers);
+
+                    if (!response.ok) {
+                        return response.json().then(data => {
+                            throw new Error(data.error || `HTTP Error: ${response.status}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Response data:', data);
+
+                    // 隐藏进度模态框
+                    progressModal.hide();
+
+                    if (data.error) {
+                        showError(data.error);
+                    } else if (data.success) {
+                        generatedData = data;
+                        showResult(data);
+                    } else {
+                        showError('响应数据格式错误');
+                    }
+                })
+                .catch(error => {
+                    console.error('生成失败:', error);
+                    progressModal.hide();
+
+                    // 更详细的错误处理
+                    let errorMessage = '生成失败，请重试。';
+
+                    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                        errorMessage = '网络连接失败，请检查网络后重试。';
+                    } else if (error.message.includes('HTTP Error: 401')) {
+                        errorMessage = '登录已过期，请重新登录。';
+                        setTimeout(() => {
+                            window.location.href = '/login';
+                        }, 2000);
+                    } else if (error.message.includes('HTTP Error: 403')) {
+                        errorMessage = '没有权限执行此操作。';
+                    } else if (error.message.includes('HTTP Error: 404')) {
+                        errorMessage = '课程不存在或已被删除。';
+                    } else if (error.message.includes('HTTP Error: 500')) {
+                        errorMessage = '服务器内部错误，请稍后重试。';
+                    } else if (error.message) {
+                        errorMessage = error.message;
+                    }
+
+                    showError(errorMessage);
+                })
+                .finally(() => {
+                    // 恢复按钮状态
+                    generateBtn.disabled = false;
+                    generateBtn.innerHTML = '<i class="fas fa-magic me-1"></i>自动生成教学内容';
+                });
+        });
+
+        // 下载PDF
+        downloadBtn.addEventListener('click', function () {
+            if (!generatedData || !generatedData.pdf_base64) {
+                showError('PDF文件不存在，请重新生成。');
+                return;
+            }
+
+            try {
+                // 创建下载链接
+                const byteCharacters = atob(generatedData.pdf_base64);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], { type: 'application/pdf' });
+
+                // 创建下载链接
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = generatedData.filename || '教学大纲.pdf';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+
+                // 显示下载成功提示
+                showSuccessToast('PDF文件已开始下载');
+            } catch (error) {
+                console.error('下载失败:', error);
+                showError('PDF下载失败，请重新生成后再试。');
+            }
+        });
+
+        // 显示生成结果
+        function showResult(data) {
+            const contentDiv = document.getElementById('generateResultContent');
+
+            // 格式化内容显示
+            let formattedContent = data.content;
+
+            // 简单的markdown到HTML转换
+            formattedContent = formattedContent
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+                .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+                .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+                .replace(/^#### (.*$)/gm, '<h4>$1</h4>')
+                .replace(/^\* (.*$)/gm, '<li>$1</li>')
+                .replace(/^(\d+\.) (.*$)/gm, '<li>$2</li>')
+                .replace(/\n\n/g, '</p><p>')
+                .replace(/\n/g, '<br>');
+
+            // 处理列表
+            formattedContent = formattedContent.replace(/(<li>.*<\/li>)/g, function (match) {
+                return '<ul>' + match.replace(/<\/li><li>/g, '</li><li>') + '</ul>';
+            });
+
+            // 包装段落
+            if (!formattedContent.includes('<p>')) {
+                formattedContent = '<p>' + formattedContent + '</p>';
+            }
+
+            contentDiv.innerHTML = `
+            <div class="teaching-outline-content">
+                <div class="alert alert-success" role="alert">
+                    <i class="fas fa-check-circle me-2"></i>
+                    教学大纲已成功生成！标题：<strong>${data.title}</strong>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        ${formattedContent}
+                    </div>
+                </div>
+            </div>
+        `;
+
+            resultModal.show();
+        }
+
+        // 显示错误信息
+        function showError(message) {
+            const errorMessageElement = document.getElementById('errorMessage');
+            if (errorMessageElement) {
+                errorMessageElement.textContent = message;
+                errorModal.show();
+            } else {
+                alert(message); // 备用方案
+            }
+        }
+
+        // 显示成功提示
+        function showSuccessToast(message) {
+            // 创建临时提示
+            const toast = document.createElement('div');
+            toast.className = 'alert alert-success position-fixed';
+            toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            toast.innerHTML = `
+            <i class="fas fa-check-circle me-2"></i>
+            ${message}
+        `;
+
+            document.body.appendChild(toast);
+
+            // 3秒后自动移除
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 3000);
+        }
+
+        // 处理模态框关闭事件
+        document.getElementById('generateProgressModal').addEventListener('hidden.bs.modal', function () {
+            // 进度模态框关闭时的处理
+        });
+
+        document.getElementById('generateResultModal').addEventListener('hidden.bs.modal', function () {
+            // 结果模态框关闭时的处理
+        });
+
+        // 添加调试信息
+        console.log('页面加载完成，课程ID:', courseId);
+    });
 
 </script>
 {% endif %}

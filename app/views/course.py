@@ -12,6 +12,7 @@ from app.services.knowledge_point_service import KnowledgePointService
 from app.services.knowledge_base_service import KnowledgeBaseService
 from app.models.user import User
 from app.models.course import Course
+from app.services.teaching_preparation_service import TeachingPreparationService
 from datetime import datetime
 from peewee import DoesNotExist
 from app.models.knowledge_base import KnowledgeBase
@@ -24,7 +25,9 @@ from app.models.learning_data import (
     KnowledgeBaseKnowledgePoint
 )
 import re 
-
+from app.utils.logging import logger
+import logging
+logger = logging.getLogger(__name__)
 
 course_bp = Blueprint('course', __name__, url_prefix='/course')
 
@@ -1338,4 +1341,78 @@ def grade_student_answers(assignment_id, student_id):
     
     return redirect(url_for('course.view_assignment', assignment_id=assignment_id))
 
-
+@course_bp.route('/api/generate_teaching_outline', methods=['POST'])
+def api_generate_teaching_outline():
+    """API端点：生成教学大纲"""
+    try:
+        # 检查用户是否登录（使用session）
+        if 'user_id' not in session:
+            return jsonify({'error': '用户未登录，请先登录'}), 401
+        
+        # 检查请求内容类型
+        if not request.is_json:
+            return jsonify({'error': '请求格式错误，需要JSON格式'}), 400
+        
+        # 获取请求数据
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': '请求数据为空'}), 400
+            
+        if 'course_id' not in data:
+            return jsonify({'error': '缺少必要的参数: course_id'}), 400
+        
+        course_id = data['course_id']
+        
+        # 验证course_id格式
+        try:
+            course_id = int(course_id)
+        except (ValueError, TypeError):
+            return jsonify({'error': '课程ID格式错误'}), 400
+        
+        # 验证课程存在
+        course = Course.get_by_id(course_id)
+        if not course:
+            return jsonify({'error': '课程不存在'}), 404
+        
+        # 检查用户权限（可选：如果需要权限验证）
+        # current_user_id = session.get('user_id')
+        # 这里可以添加具体的权限检查逻辑
+        # 例如：检查用户是否是该课程的教师
+        # if course.teacher_id != current_user_id:
+        #     return jsonify({'error': '没有权限访问该课程'}), 403
+        
+        # 调用教学准备服务生成大纲
+        try:
+            result = TeachingPreparationService.generate_outline(course_id)
+        except Exception as service_error:
+            logger.error(f"TeachingPreparationService.generate_outline 失败: {str(service_error)}")
+            return jsonify({'error': '教学大纲生成服务暂时不可用，请稍后重试'}), 500
+        
+        # 检查生成结果
+        if not result:
+            return jsonify({'error': '生成服务返回空结果'}), 500
+            
+        if 'error' in result:
+            logger.error(f"生成教学大纲失败 - 课程ID: {course_id}, 错误: {result['error']}")
+            return jsonify({'error': result['error']}), 500
+        
+        # 验证返回数据的完整性
+        required_fields = ['content', 'pdf_base64', 'filename', 'title', 'download_ready']
+        for field in required_fields:
+            if field not in result:
+                logger.error(f"生成结果缺少必要字段: {field}")
+                return jsonify({'error': f'生成结果不完整，缺少: {field}'}), 500
+        
+        # 返回成功结果
+        return jsonify({
+            'success': True,
+            'content': result['content'],
+            'pdf_base64': result['pdf_base64'],
+            'filename': result['filename'],
+            'title': result['title'],
+            'download_ready': result['download_ready']
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"API生成教学大纲异常: {str(e)}", exc_info=True)
+        return jsonify({'error': '服务器内部错误，请稍后重试'}), 500

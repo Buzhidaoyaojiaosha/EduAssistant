@@ -15,7 +15,7 @@
                         <label for="title" class="form-label">标题</label>
                         <input type="text" class="form-control" id="title" name="title" required>
                     </div>
-                    
+
                     <!-- 条目类型选择 -->
                     <div class="mb-3">
                         <label for="entry_type" class="form-label">条目类型</label>
@@ -26,19 +26,19 @@
                             <option value="other">其他文件</option>
                         </select>
                     </div>
-                    
+
                     <!-- 动态内容区域 -->
                     <div class="mb-3" id="text_content_div">
                         <label for="content" class="form-label">内容</label>
                         <textarea class="form-control" id="content" name="content" rows="8"></textarea>
                     </div>
-                    
+
                     <div class="mb-3 d-none" id="file_upload_div">
                         <label for="file" class="form-label">上传文件</label>
                         <input type="file" class="form-control" id="file" name="file">
                         <small class="text-muted" id="file_hint">请上传PDF、PPTX或其他支持的文件</small>
                     </div>
-                    
+
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="category" class="form-label">分类</label>
@@ -49,10 +49,11 @@
                             <input type="text" class="form-control" id="tags" name="tags" placeholder="例如: 期末考试, 复习">
                         </div>
                     </div>
-                    
+
                     <!-- 关联课程字段 - 动态显示"不关联课程"选项 -->
                     <div class="mb-4">
-                        <label for="course_id" class="form-label">关联课程 <span id="course_required" class="text-danger d-none">*</span></label>
+                        <label for="course_id" class="form-label">关联课程 <span id="course_required"
+                                class="text-danger d-none">*</span></label>
                         <select class="form-select" id="course_id" name="course_id">
                             <option id="no_course_option" value="">不关联课程</option>
                             {% for course in courses %}
@@ -60,18 +61,19 @@
                             {% endfor %}
                         </select>
                     </div>
-                    
+
                     <div class="d-flex justify-content-between">
                         {% if request.args.get('referrer') %}
-                            <a href="{{ request.args.get('referrer') }}" class="btn btn-secondary">取消</a>
+                        <a href="{{ request.args.get('referrer') }}" class="btn btn-secondary">取消</a>
                         {% else %}
-                            <a href="{{ url_for('search.manage_knowledge') }}" class="btn btn-secondary">取消</a>
+                        <a href="{{ url_for('search.manage_knowledge') }}" class="btn btn-secondary">取消</a>
                         {% endif %}
-                        
+
                         {% if request.args.get('referrer') %}
-                            <button type="submit" name="return_to" value="{{ request.args.get('referrer') }}" class="btn btn-primary">保存</button>
+                        <button type="submit" name="return_to" value="{{ request.args.get('referrer') }}"
+                            class="btn btn-primary">保存</button>
                         {% else %}
-                            <button type="submit" class="btn btn-primary">保存</button>
+                        <button type="submit" class="btn btn-primary">保存</button>
                         {% endif %}
                     </div>
                 </form>
@@ -82,177 +84,177 @@
 
 <!-- JavaScript处理动态切换和必选逻辑 -->
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const entryType = document.getElementById('entry_type');
-    const textContentDiv = document.getElementById('text_content_div');
-    const fileUploadDiv = document.getElementById('file_upload_div');
-    const contentTextarea = document.getElementById('content');
-    const courseSelect = document.getElementById('course_id');
-    const noCourseOption = document.getElementById('no_course_option');
-    const courseRequiredMarker = document.getElementById('course_required');
-    const fileHint = document.getElementById('file_hint');
-    const fileInput = document.getElementById('file');
-    
-    // 文件类型映射
-    const fileTypeMap = {
-        'pdf': {
-            hint: '请上传PDF文件（最大10MB）',
-            accept: '.pdf',
-            mime: 'application/pdf'
-        },
-        'pptx': {
-            hint: '请上传PPTX文件（最大20MB）',
-            accept: '.pptx',
-            mime: 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
-        },
-        'other': {
-            hint: '请上传支持的文件.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.txt,.mp3,.mp4（最大15MB）',
-            accept: '.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.txt,.mp3,.mp4',
-            mime: ''
-        }
-    };
-    
-    // 初始化状态
-    updateContentFields();
-    
-    // 监听类型变化
-    entryType.addEventListener('change', updateContentFields);
-    
-    function updateContentFields() {
-        if (entryType.value === 'text') {
-            // 纯文字模式
-            textContentDiv.classList.remove('d-none');
-            fileUploadDiv.classList.add('d-none');
-            contentTextarea.setAttribute('required', '');
-            
-            // 显示"不关联课程"选项
-            noCourseOption.style.display = '';
-            // 取消课程必选
-            courseSelect.removeAttribute('required');
-            courseRequiredMarker.classList.add('d-none');
-            
-            // 重置文件输入
-            fileInput.value = '';
-        } else {
-            // 文件上传模式
-            textContentDiv.classList.add('d-none');
-            fileUploadDiv.classList.remove('d-none');
-            contentTextarea.removeAttribute('required');
-            
-            // 更新文件提示和接受类型
-            const fileType = fileTypeMap[entryType.value] || fileTypeMap.other;
-            fileHint.textContent = fileType.hint;
-            fileInput.setAttribute('accept', fileType.accept);
-            
-            // 隐藏"不关联课程"选项并确保选中其他选项
-            noCourseOption.style.display = 'none';
-            if (courseSelect.value === '') {
-                courseSelect.selectedIndex = 1;
-            }
-            // 设置课程必选
-            courseSelect.setAttribute('required', '');
-            courseRequiredMarker.classList.remove('d-none');
-        }
-    }
-    
-    // 文件类型验证
-fileInput.addEventListener('change', function() {
-    if (entryType.value === 'text') return;
-    
-    const file = this.files[0];
-    if (!file) return;
-    
-    const fileExt = file.name.split('.').pop().toLowerCase();
-    const allowedExts = fileTypeMap[entryType.value].accept.split(',');
-    
-    if (!allowedExts.includes(`.${fileExt}`)) {
-        alert(`请上传${fileTypeMap[entryType.value].hint.split('（')[0]}`);
-        this.value = '';
-        return;
-    }
-    
-    // 自动填充标题（去除扩展名）
-    const titleInput = document.getElementById('title');
-    const fileName = file.name; // 移除文件扩展名
-    titleInput.value = fileName;
-});
+    document.addEventListener('DOMContentLoaded', function () {
+        const entryType = document.getElementById('entry_type');
+        const textContentDiv = document.getElementById('text_content_div');
+        const fileUploadDiv = document.getElementById('file_upload_div');
+        const contentTextarea = document.getElementById('content');
+        const courseSelect = document.getElementById('course_id');
+        const noCourseOption = document.getElementById('no_course_option');
+        const courseRequiredMarker = document.getElementById('course_required');
+        const fileHint = document.getElementById('file_hint');
+        const fileInput = document.getElementById('file');
 
-    // 监听类型变化（修改原有函数）
-    function updateContentFields() {
-        if (entryType.value === 'text') {
-            // 纯文字模式
-            textContentDiv.classList.remove('d-none');
-            fileUploadDiv.classList.add('d-none');
-            contentTextarea.setAttribute('required', '');
-            
-            // 显示"不关联课程"选项
-            noCourseOption.style.display = '';
-            // 取消课程必选
-            courseSelect.removeAttribute('required');
-            courseRequiredMarker.classList.add('d-none');
-            
-            // 重置文件输入
-            fileInput.value = '';
-        } else {
-            // 文件上传模式
-            textContentDiv.classList.add('d-none');
-            fileUploadDiv.classList.remove('d-none');
-            contentTextarea.removeAttribute('required');
-            
-            // 更新文件提示和接受类型
-            const fileType = fileTypeMap[entryType.value] || fileTypeMap.other;
-            fileHint.textContent = fileType.hint;
-            fileInput.setAttribute('accept', fileType.accept);
-            
-            // 隐藏"不关联课程"选项并确保选中其他选项
-            noCourseOption.style.display = 'none';
-            if (courseSelect.value === '') {
-                courseSelect.selectedIndex = 1;
+        // 文件类型映射
+        const fileTypeMap = {
+            'pdf': {
+                hint: '请上传PDF文件（最大10MB）',
+                accept: '.pdf',
+                mime: 'application/pdf'
+            },
+            'pptx': {
+                hint: '请上传PPTX文件（最大20MB）',
+                accept: '.pptx',
+                mime: 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+            },
+            'other': {
+                hint: '请上传支持的文件.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.txt,.mp3,.mp4',
+                accept: '.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.txt,.mp3,.mp4',
+                mime: ''
             }
-            // 设置课程必选
-            courseSelect.setAttribute('required', '');
-            courseRequiredMarker.classList.remove('d-none');
-            
-            // 如果已有文件，更新标题
-            if (fileInput.files.length > 0) {
-                const file = fileInput.files[0];
-                const titleInput = document.getElementById('title');
-                const fileName = file.name;
-                titleInput.value = fileName;
+        };
+
+        // 初始化状态
+        updateContentFields();
+
+        // 监听类型变化
+        entryType.addEventListener('change', updateContentFields);
+
+        function updateContentFields() {
+            if (entryType.value === 'text') {
+                // 纯文字模式
+                textContentDiv.classList.remove('d-none');
+                fileUploadDiv.classList.add('d-none');
+                contentTextarea.setAttribute('required', '');
+
+                // 显示"不关联课程"选项
+                noCourseOption.style.display = '';
+                // 取消课程必选
+                courseSelect.removeAttribute('required');
+                courseRequiredMarker.classList.add('d-none');
+
+                // 重置文件输入
+                fileInput.value = '';
+            } else {
+                // 文件上传模式
+                textContentDiv.classList.add('d-none');
+                fileUploadDiv.classList.remove('d-none');
+                contentTextarea.removeAttribute('required');
+
+                // 更新文件提示和接受类型
+                const fileType = fileTypeMap[entryType.value] || fileTypeMap.other;
+                fileHint.textContent = fileType.hint;
+                fileInput.setAttribute('accept', fileType.accept);
+
+                // 隐藏"不关联课程"选项并确保选中其他选项
+                noCourseOption.style.display = 'none';
+                if (courseSelect.value === '') {
+                    courseSelect.selectedIndex = 1;
+                }
+                // 设置课程必选
+                courseSelect.setAttribute('required', '');
+                courseRequiredMarker.classList.remove('d-none');
             }
         }
-    }
-    
-    // 表单提交前验证
-    document.querySelector('form').addEventListener('submit', function(e) {
-        // 验证课程
-        if (entryType.value !== 'text' && courseSelect.value === '') {
-            e.preventDefault();
-            alert('非纯文字类型的知识条目必须关联课程！');
-            courseSelect.focus();
-            return;
-        }
-        
-        // 验证文件类型
-        if (entryType.value !== 'text') {
-            const file = fileInput.files[0];
-            if (!file) {
-                e.preventDefault();
-                alert('请选择要上传的文件！');
-                fileInput.focus();
-                return;
-            }
-            
+
+        // 文件类型验证
+        fileInput.addEventListener('change', function () {
+            if (entryType.value === 'text') return;
+
+            const file = this.files[0];
+            if (!file) return;
+
             const fileExt = file.name.split('.').pop().toLowerCase();
             const allowedExts = fileTypeMap[entryType.value].accept.split(',');
-            
+
             if (!allowedExts.includes(`.${fileExt}`)) {
-                e.preventDefault();
-                alert(`文件类型不符合要求，${fileTypeMap[entryType.value].hint}`);
-                fileInput.focus();
+                alert(`请上传${fileTypeMap[entryType.value].hint.split('（')[0]}`);
+                this.value = '';
+                return;
+            }
+
+            // 自动填充标题（去除扩展名）
+            const titleInput = document.getElementById('title');
+            const fileName = file.name; // 移除文件扩展名
+            titleInput.value = fileName;
+        });
+
+        // 监听类型变化（修改原有函数）
+        function updateContentFields() {
+            if (entryType.value === 'text') {
+                // 纯文字模式
+                textContentDiv.classList.remove('d-none');
+                fileUploadDiv.classList.add('d-none');
+                contentTextarea.setAttribute('required', '');
+
+                // 显示"不关联课程"选项
+                noCourseOption.style.display = '';
+                // 取消课程必选
+                courseSelect.removeAttribute('required');
+                courseRequiredMarker.classList.add('d-none');
+
+                // 重置文件输入
+                fileInput.value = '';
+            } else {
+                // 文件上传模式
+                textContentDiv.classList.add('d-none');
+                fileUploadDiv.classList.remove('d-none');
+                contentTextarea.removeAttribute('required');
+
+                // 更新文件提示和接受类型
+                const fileType = fileTypeMap[entryType.value] || fileTypeMap.other;
+                fileHint.textContent = fileType.hint;
+                fileInput.setAttribute('accept', fileType.accept);
+
+                // 隐藏"不关联课程"选项并确保选中其他选项
+                noCourseOption.style.display = 'none';
+                if (courseSelect.value === '') {
+                    courseSelect.selectedIndex = 1;
+                }
+                // 设置课程必选
+                courseSelect.setAttribute('required', '');
+                courseRequiredMarker.classList.remove('d-none');
+
+                // 如果已有文件，更新标题
+                if (fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    const titleInput = document.getElementById('title');
+                    const fileName = file.name;
+                    titleInput.value = fileName;
+                }
             }
         }
+
+        // 表单提交前验证
+        document.querySelector('form').addEventListener('submit', function (e) {
+            // 验证课程
+            if (entryType.value !== 'text' && courseSelect.value === '') {
+                e.preventDefault();
+                alert('非纯文字类型的知识条目必须关联课程！');
+                courseSelect.focus();
+                return;
+            }
+
+            // 验证文件类型
+            if (entryType.value !== 'text') {
+                const file = fileInput.files[0];
+                if (!file) {
+                    e.preventDefault();
+                    alert('请选择要上传的文件！');
+                    fileInput.focus();
+                    return;
+                }
+
+                const fileExt = file.name.split('.').pop().toLowerCase();
+                const allowedExts = fileTypeMap[entryType.value].accept.split(',');
+
+                if (!allowedExts.includes(`.${fileExt}`)) {
+                    e.preventDefault();
+                    alert(`文件类型不符合要求，${fileTypeMap[entryType.value].hint}`);
+                    fileInput.focus();
+                }
+            }
+        });
     });
-});
 </script>
 {% endblock %}
