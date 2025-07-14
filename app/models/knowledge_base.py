@@ -13,7 +13,7 @@ class KnowledgeBase(BaseModel):
     vector_id = CharField(max_length=100, null=True)  # 在Chroma中的向量ID
     is_chunk = BooleanField(default=False)  # 标记是否为切分片段
     chunk_index = IntegerField(null=True)  # 切分片段的下标
-    source_file = TextField(null=True)  # 源文件链接
+    # source_file = TextField(null=True)  # 源文件链接
 
     
     def __repr__(self):

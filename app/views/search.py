@@ -4,45 +4,64 @@ from app.services.course_service import CourseService
 from app.services.rag_service import RAGService
 from app.services.user_service import UserService
 from app.models.user import User
+from app.models.knowledge_base import KnowledgeBase
+from app.models.course import Course
 import os
 import uuid
 
 search_bp = Blueprint('search', __name__, url_prefix='/search')
-
 
 @search_bp.route('/')
 def index():
     if 'user_id' not in session:
         return redirect(url_for('auth.login'))
 
-    query = request.args.get('q', '')
-    course_id = request.args.get('course_id')
+    query = request.args.get('q', '').strip()
+    course_id = request.args.get('course_id', type=int)
 
-    if course_id:
-        try:
-            course_id = int(course_id)
-        except:
-            course_id = None
+    # 获取当前用户
+    user_id = session['user_id']
+    user = User.get_by_id(user_id)
 
+    # 获取用户课程，用于筛选
+    if UserService.has_role(user, 'teacher'):
+        courses = CourseService.get_courses_by_teacher(user_id)
+    elif UserService.has_role(user, 'student'):
+        courses = CourseService.get_courses_by_student(user_id)
+    else:
+        courses = CourseService.get_all_courses()
+    # 如果是管理员且没有搜索词，显示所有条目或按课程筛选
+    if UserService.has_role(user, 'admin') and not query:
+        if course_id:
+            # 按课程筛选显示
+         
+            entries = KnowledgeBase.select().where(
+                KnowledgeBase.course_id == course_id
+            ).order_by(KnowledgeBase.title)
+            selected_course = Course.get_or_none(Course.id == course_id)
+        else:
+            # 显示所有条目
+            entries = KnowledgeBase.select().order_by(KnowledgeBase.title)
+            selected_course = None
+
+        return render_template('search/index.html',
+                            all_entries=entries if not course_id else None,
+                            course_entries=entries if course_id else None,
+                            selected_course=selected_course,
+                            query=query,
+                            courses=courses,
+                            selected_course_id=course_id)
+
+    # 正常搜索逻辑
     results = []
     if query:
         results = KnowledgeBaseService.search_knowledge(query, course_id)
 
-    # 获取用户课程，用于筛选
-    user_id = session['user_id']
-    user = User.get_by_id(user_id)
-
-    if UserService.has_role(user, 'teacher'):
-        courses = CourseService.get_courses_by_teacher(user_id)
-    else:
-        courses = CourseService.get_courses_by_student(user_id)
-
     return render_template('search/index.html',
-                           query=query,
-                           results=results,
-                           courses=courses,
-                           selected_course_id=course_id)
-
+                         query=query,
+                         results=results,
+                         courses=courses,
+                         selected_course_id=course_id)
 
 @search_bp.route('/api/search')
 def api_search():
@@ -213,7 +232,7 @@ def add_knowledge():
                 course_id=course_id,
                 category=category,
                 tags=tags,
-                source_file=file_url,
+             
                 is_chunk=False,
                 chunk_index=0,
             )
