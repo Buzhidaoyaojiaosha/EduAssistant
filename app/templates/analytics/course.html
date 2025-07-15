@@ -13,9 +13,13 @@
         <p class="text-muted">{{ course.name }} ({{ course.code }})</p>
     </div>
     <div class="col-auto">
+        <!-- 如果是管理员或教师才显示更新按钮 -->
+        {% if is_admin or current_user.id == course.teacher_id %}
         <button type="button" class="btn btn-success me-2" onclick="updateKnowledgeMastery()">
             <i class="fas fa-brain me-1"></i>更新知识点掌握度
         </button>
+        {% endif %}
+        
         <a href="{{ url_for('course.view', course_id=course.id) }}" class="btn btn-outline-primary">
             <i class="fas fa-arrow-left me-1"></i>返回课程
         </a>

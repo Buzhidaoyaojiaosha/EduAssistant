@@ -2,9 +2,9 @@ from flask import Blueprint, render_template, jsonify, request, session, redirec
 from app.services.analytics_service import AnalyticsService
 from app.services.course_service import CourseService
 from app.services.knowledge_mastery_service import NeuralCDMService
-from app.models.user import User
-from app.models.course import Course
-from app.utils.result import Result  # 导入Result类
+from app.models.user import User, Role,UserRole
+from app.models.course import Course,StudentCourse
+
 
 analytics_bp = Blueprint('analytics', __name__, url_prefix='/analytics')
 
@@ -13,7 +13,45 @@ def index():
     if 'user_id' not in session:
         return redirect(url_for('auth.login'))
     
-    return render_template('analytics/index.html')
+    user_id = session['user_id']
+    current_user = User.get_by_id(user_id)
+    
+    roles = [ur.role.name for ur in current_user.roles]
+    print(f"调试信息 - 用户角色: {roles}")  # 添加调试输出
+    is_teacher = 'teacher' in roles
+    is_admin = 'admin' in roles
+   
+    
+    # 根据角色获取不同的数据
+    if is_admin:
+        courses = CourseService.get_all_courses()  # 管理员可以看到所有课程
+        all_students = (User
+                    .select()
+                    .join(UserRole)
+                    .join(Role)
+                    .where(Role.name == 'student'))
+        print(f"调试信息 - 管理员查看所有课程和学生: {len(courses)} 课程, {len(all_students)} 学生")
+    elif is_teacher:
+        courses = CourseService.get_courses_by_teacher(user_id)  # 教师只能看到自己教的课程
+        # 获取教师所有课程的学生（去重）
+        all_students = (User
+                       .select()
+                       .join(StudentCourse)
+                       .join(Course)
+                       .where(Course.teacher == user_id, 
+                              StudentCourse.is_active == True)
+                       .distinct())
+
+        print(f"{all_students}")
+        print(f"调试信息 - 教师查看课程: {len(courses)} 课程, {len(all_students)} 学生")
+    else:
+        courses = CourseService.get_courses_by_student(user_id)  # 学生只能看到自己选的课程
+        all_students = []
+    return render_template('analytics/index.html', 
+                         is_teacher=is_teacher,
+                         is_admin=is_admin,
+                         courses=courses,
+                         all_students=all_students)
 
 @analytics_bp.route('/student/<int:student_id>')
 def student_analytics(student_id):
@@ -24,19 +62,29 @@ def student_analytics(student_id):
     current_user = User.get_by_id(user_id)
     student = User.get_by_id(student_id)
     
-    # 验证权限：只有学生本人或其教师才能查看
-    is_teacher = False
-    student_courses = CourseService.get_courses_by_student(student_id)
-    for course in student_courses:
-        if course.teacher_id == user_id:
-            is_teacher = True
-            break
+    # 获取用户角色
+    roles = [ur.role.name for ur in current_user.roles]
+    print(f"调试信息 - 用户角色: {roles}")  # 添加调试输出
+    is_teacher = 'teacher' in roles
+    is_admin = 'admin' in roles
+  
     
-    if user_id != student_id and not is_teacher:
+    # 验证权限
+    if user_id != student_id and not is_teacher and not is_admin:
         return redirect(url_for('dashboard.index'))
     
-    # 获取学生的课程列表
-    courses = CourseService.get_courses_by_student(student_id)
+    # 获取可选的课程列表
+    if is_admin:
+        # 管理员可以看到学生选的所有课程
+        courses = CourseService.get_courses_by_student(student_id)
+    elif is_teacher:
+        # 教师只能看到自己教的课程中该学生选的课程
+        teacher_courses = CourseService.get_courses_by_teacher(user_id)
+        student_courses = CourseService.get_courses_by_student(student_id)
+        courses = list(set(teacher_courses) & set(student_courses))
+    else:
+        # 学生只能看到自己选的课程
+        courses = CourseService.get_courses_by_student(student_id)
     
     # 默认选择第一个课程
     selected_course_id = request.args.get('course_id', None)
@@ -62,12 +110,14 @@ def student_analytics(student_id):
     )
     
     return render_template('analytics/student.html',
-                          student=student,
-                          courses=courses,
-                          selected_course_id=int(selected_course_id) if selected_course_id else None,
-                          activity_summary=activity_summary,
-                          knowledge_mastery=knowledge_mastery,
-                          learning_issues=learning_issues)
+                         student=student,
+                         courses=courses,
+                         selected_course_id=int(selected_course_id) if selected_course_id else None,
+                         activity_summary=activity_summary,
+                         knowledge_mastery=knowledge_mastery,
+                         learning_issues=learning_issues,
+                         is_teacher=is_teacher,
+                         is_admin=is_admin)
 
 @analytics_bp.route('/course/<int:course_id>')
 def course_analytics(course_id):
@@ -75,10 +125,18 @@ def course_analytics(course_id):
         return redirect(url_for('auth.login'))
     
     user_id = session['user_id']
+    current_user = User.get_by_id(user_id)
     course = Course.get_by_id(course_id)
     
-    # 验证权限：只有课程教师可以查看
-    if course.teacher_id != user_id:
+    # 获取用户角色
+    roles = [ur.role.name for ur in current_user.roles]
+    print(f"调试信息 - 用户角色: {roles}")  # 添加调试输出
+    is_admin = 'admin' in roles
+    
+    # 验证权限：管理员或课程教师可以查看
+    print(f"调试信息 - 课程教师ID: {course.teacher_id}, 当前用户ID: {user_id}, 是否管理员: {is_admin}")
+
+    if not is_admin and course.teacher_id != user_id:
         return redirect(url_for('dashboard.index'))
     
     # 获取课程学生
@@ -97,10 +155,13 @@ def course_analytics(course_id):
         course_activity[student.id] = activity
     
     return render_template('analytics/course.html',
-                          course=course,
-                          students=students,
-                          student_masteries=student_masteries,
-                          course_activity=course_activity)
+                         current_user=current_user,
+                         course=course,
+                         students=students,
+                         student_masteries=student_masteries,
+                         course_activity=course_activity,
+                         is_admin=is_admin)
+
 
 @analytics_bp.route('/record-activity', methods=['POST'])
 def record_activity():
