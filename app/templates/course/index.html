@@ -83,8 +83,43 @@
                     {% if session.get('user_id') == course.teacher.id %}
                     <a href="{{ url_for('analytics.course_analytics', course_id=course.id) }}"
                         class="btn btn-sm btn-outline-primary">查看分析</a>
-                    <a href="{{ url_for('course.delete', course_id=course.id) }}" class="btn btn-sm btn-danger">删除课程</a>
+                    <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal"
+                        data-bs-target="#deleteCourseModal{{ course.id }}">
+                        删除课程
+                    </button>
                     {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 删除课程确认模态框 -->
+    <div class="modal fade" id="deleteCourseModal{{ course.id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="deleteAssignmentModalLabel">
+                        <i class="fas fa-exclamation-triangle me-2"></i>确认删除课程
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>确定要删除课程 "<strong>{{ course.name }}</strong>" 吗？</p>
+                    <p class="text-danger">⚠️ 此操作将删除：</p>
+                    <ul class="text-danger">
+                        <li>课程下的所有作业和题目</li>
+                        <li>学生的答题记录和成绩</li>
+                        <li>错题本和学习数据</li>
+                        <li>所有相关的知识点</li>
+                    </ul>
+                    <p class="text-danger"><strong>此操作不可恢复！</strong></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <form method="POST" action="{{ url_for('course.delete', course_id=course.id) }}"
+                        style="display: inline;">
+                        <button type="submit" class="btn btn-danger">确认删除</button>
+                    </form>
                 </div>
             </div>
         </div>
