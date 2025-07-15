@@ -40,7 +40,7 @@ def generate_assessment_with_ai(course_id: int, num_questions: int = 10) -> List
 1. 题目类型多样，包含选择题、判断题和简答题
 2. 题目难度适中，覆盖课程核心知识点
 3. 每道题包含题目内容、正确答案和详细解析
-4. 返回严格的JSON格式数据
+4. 返回严格的JSON格式数据，注意选择题的题目内容需要包含选项内容
 
 返回格式示例：
 {{
@@ -54,7 +54,13 @@ def generate_assessment_with_ai(course_id: int, num_questions: int = 10) -> List
         {{
             "type": "判断题",
             "content": "题目内容",
-            "answer": "正确",
+            "answer": "对",
+            "analysis": "解析说明"
+        }},
+        {{
+            "type": "判断题",
+            "content": "题目内容",
+            "answer": "错",
             "analysis": "解析说明"
         }},
         {{

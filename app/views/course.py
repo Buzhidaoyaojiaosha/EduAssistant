@@ -18,7 +18,7 @@ from peewee import DoesNotExist
 from app.models.knowledge_base import KnowledgeBase
 from app.models.course import StudentCourse
 from app.models.assignment import Assignment, StudentAssignment
-from app.models.NewAdd import Question, StudentAnswer, Feedback, WrongBook, QuestionWrongBook,AIQuestion
+from app.models.NewAdd import Question, StudentAnswer, Feedback, WrongBook, QuestionWrongBook,AIQuestion,AiQuestionStudentAnswer
 from app.models.learning_data import (
     KnowledgePoint, AssignmentKnowledgePoint, 
     StudentKnowledgePoint, LearningActivity, 
@@ -396,6 +396,98 @@ def create_assignment(course_id):
         return redirect(url_for('course.view', course_id=course_id))
     
     return render_template('course/create_assignment.html', course=course)
+
+@course_bp.route('/assignment/<int:assignment_id>/delete', methods=['POST'])
+def delete_assignment(assignment_id):
+    """删除作业及其所有相关数据"""
+    if 'user_id' not in session:
+        flash('请先登录', 'warning')
+        return redirect(url_for('auth.login'))
+    
+    try:
+        assignment = Assignment.get_by_id(assignment_id)
+        course_id = assignment.course.id
+        user_id = session['user_id']
+        
+        # 验证权限 - 只有课程教师可以删除作业
+        if assignment.course.teacher_id != user_id:
+            flash('只有课程教师可以删除作业', 'warning')
+            return redirect(url_for('course.view_assignment', assignment_id=assignment_id))
+        
+        # 使用事务确保数据一致性
+        with Assignment._meta.database.atomic():
+            # 1. 获取作业相关的所有题目
+            questions = Question.select().where(Question.assignment == assignment)
+            
+            # 2. 删除所有题目相关的数据
+            if questions:
+                question_ids = [q.question_id for q in questions]
+                
+                # 删除学生答案
+                StudentAnswer.delete().where(
+                    StudentAnswer.question_id.in_(question_ids)
+                ).execute()
+                
+                # 删除错题本关联
+                QuestionWrongBook.delete().where(
+                    QuestionWrongBook.question_id.in_(question_ids)
+                ).execute()
+
+                # 获取AI生成的题目ID列表
+                ai_questions = AIQuestion.select().where(
+                    AIQuestion.original_question.in_(question_ids)
+                )
+                
+                if ai_questions:
+                    ai_question_ids = [ai_q.ai_question_id for ai_q in ai_questions]
+                    
+                    # 删除AI生成题目的学生答案
+                    AiQuestionStudentAnswer.delete().where(
+                        AiQuestionStudentAnswer.ai_question.in_(ai_question_ids)
+                    ).execute()
+
+                # 删除AI生成的题目
+                AIQuestion.delete().where(
+                    AIQuestion.original_question.in_(question_ids)
+                ).execute()
+                
+                # 删除题目本身
+                Question.delete().where(
+                    Question.assignment == assignment
+                ).execute()
+            
+            # 3. 删除学生作业记录
+            StudentAssignment.delete().where(
+                StudentAssignment.assignment == assignment
+            ).execute()
+            
+            # 4. 删除作业反馈
+            Feedback.delete().where(
+                Feedback.assignment == assignment
+            ).execute()
+            
+            # 5. 删除作业与知识点的关联
+            AssignmentKnowledgePoint.delete().where(
+                AssignmentKnowledgePoint.assignment == assignment
+            ).execute()
+            
+            # 6. 最后删除作业本身
+            assignment_title = assignment.title
+            assignment.delete_instance()
+            
+            flash(f'作业 "{assignment_title}" 及其所有相关数据已成功删除', 'success')
+        
+        return redirect(url_for('course.view', course_id=course_id))
+    
+    except DoesNotExist:
+        flash('作业不存在', 'danger')
+        return redirect(url_for('dashboard.index'))
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        flash(f'删除作业失败: {str(e)}', 'danger')
+        return redirect(url_for('course.view_assignment', assignment_id=assignment_id))
+    
 #查看作业详情页
 @course_bp.route('/assignment/<int:assignment_id>')
 def view_assignment(assignment_id):
@@ -1442,6 +1534,46 @@ def generate_assessment(course_id):
             'error': str(e)  # 或者更友好的错误消息
         }), 500
 
+
+@course_bp.route('/<int:course_id>/assignments', methods=['GET'])
+def get_assignments(course_id):
+    """获取课程的作业列表"""
+    try:
+        # 验证课程是否存在
+        try:
+            course = Course.get_by_id(course_id)
+        except DoesNotExist:
+            return jsonify({
+                'success': False,
+                'error': '课程不存在'
+            }), 404
+        
+        # 获取作业列表
+        assignments = Assignment.select().where(Assignment.course == course)
+        
+        # 构造返回数据
+        assignments_data = []
+        for assignment in assignments:
+            assignments_data.append({
+                'id': assignment.id,
+                'title': assignment.title,
+                'description': assignment.description,
+                'due_date': assignment.due_date.strftime('%Y-%m-%d') if assignment.due_date else None,
+                'total_points': float(assignment.total_points) if assignment.total_points else 0.0
+            })
+        
+        return jsonify({
+            'success': True,
+            'assignments': assignments_data
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"获取作业列表失败: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': '获取作业列表失败'
+        }), 500
+    
 @course_bp.route('/<int:course_id>/save_assessment', methods=['POST'])
 def save_assessment(course_id):
     """保存生成的考核题目"""
@@ -1481,7 +1613,7 @@ def save_assessment(course_id):
                 due_date=datetime.now().replace(hour=23, minute=59, second=59),  # 设置为当天23:59:59
                 total_points=0.0
             )
-            assignment_id = assignment.assignment_id
+            assignment_id = assignment.id
         else:
             # 验证作业是否存在
             try:

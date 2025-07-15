@@ -339,7 +339,7 @@
                                         </button>
                                         <a href="{{ url_for('wrongbook.practice_questions', course_id=course.id, question_id=question.id) }}"
                                             class="btn btn-sm btn-outline-success mt-2 ms-2">
-                                                <i class="fas fa-dumbbell me-1"></i>再练几题
+                                            <i class="fas fa-dumbbell me-1"></i>再练几题
                                         </a>
                                     </li>
                                     {% endfor %}
@@ -622,9 +622,9 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
-                <button type="button" class="btn btn-primary" id="saveAssessmentBtn">
+                <!-- <button type="button" class="btn btn-primary" id="saveAssessmentBtn">
                     <i class="fas fa-save me-1"></i>保存到作业
-                </button>
+                </button> -->
             </div>
         </div>
     </div>
@@ -700,14 +700,10 @@
 
     /* 按钮悬停效果 */
     #generateTeachingOutlineBtn:hover {
-        background-color: #e0a800;
-        border-color: #d39e00;
-    }
-
-    #generateTeachingOutlineBtn:disabled {
-        background-color: #6c757d;
-        border-color: #6c757d;
-        cursor: not-allowed;
+        background-color: #5a6268 !important;
+        border-color: #545b62 !important;
+        color: white !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
     /* 响应式设计 */
@@ -1035,6 +1031,9 @@
         // 添加调试信息
         console.log('页面加载完成，课程ID:', courseId);
     });
+    // 全局变量存储生成的题目数据
+    let currentQuestions = [];
+
     // 生成考核内容按钮事件
     document.getElementById('generateAssessmentBtn').addEventListener('click', function () {
         const courseId = "{{ course.id }}";
@@ -1065,12 +1064,14 @@
                 // 隐藏进度模态框
                 assessmentProgressModal.hide();
 
-                btn.innerHTML = '<i class="fas fa-question-circle me-1"></i>自动生成考核内容';
+                btn.innerHTML = '<i class="fas fa-clipboard-check me-1"></i>自动生成考核内容';
                 btn.disabled = false;
 
                 if (data.error) {
                     showError(data.error);
                 } else {
+                    // 保存题目数据到全局变量
+                    currentQuestions = data.questions;
                     showAssessmentQuestions(data.questions);
                 }
             })
@@ -1080,7 +1081,7 @@
                 // 隐藏进度模态框
                 assessmentProgressModal.hide();
 
-                btn.innerHTML = '<i class="fas fa-question-circle me-1"></i>自动生成考核内容';
+                btn.innerHTML = '<i class="fas fa-clipboard-check me-1"></i>自动生成考核内容';
                 btn.disabled = false;
                 showError('生成考核题目失败，请重试');
             });
@@ -1102,7 +1103,7 @@
             card.className = 'card mb-3';
             card.innerHTML = `
             <div class="card-header d-flex justify-content-between align-items-center">
-                <span>题目 ${index + 1} - ${question.type}</span>
+                <span>题目 ${index + 1}</span>
                 <span class="badge bg-primary">${question.type}</span>
             </div>
             <div class="card-body">
@@ -1159,23 +1160,46 @@
         fetch(`/course/${courseId}/assignments`)
             .then(response => response.json())
             .then(data => {
-                data.assignments.forEach(assignment => {
-                    const option = document.createElement('option');
-                    option.value = assignment.id;
-                    option.textContent = assignment.title;
-                    select.appendChild(option);
-                });
+                if (data.assignments) {
+                    data.assignments.forEach(assignment => {
+                        const option = document.createElement('option');
+                        option.value = assignment.id;
+                        option.textContent = assignment.title;
+                        select.appendChild(option);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('获取作业列表失败:', error);
+                // 不影响主要功能，只是没有现有作业选项
             });
     }
 
-    // 确认保存按钮事件
+    // 确认保存按钮事件 - 修复版本
     document.addEventListener('click', function (e) {
         if (e.target.id === 'confirmSaveBtn') {
-            const assignmentId = document.getElementById('saveToAssignment').value;
+            const assignmentSelect = document.getElementById('saveToAssignment');
+            const assignmentId = assignmentSelect.value;
             const courseId = "{{ course.id }}";
+            const btn = e.target;
 
-            // 获取所有题目数据
-            const questions = []; // 这里需要从UI获取题目数据
+            // 检查是否有题目数据
+            if (!currentQuestions || currentQuestions.length === 0) {
+                showError('没有题目数据，请先生成题目');
+                return;
+            }
+
+            // 显示保存状态
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>保存中...';
+
+            // 准备发送的数据
+            const requestData = {
+                assignment_id: assignmentId,
+                questions: currentQuestions
+            };
+
+            console.log('发送数据:', requestData); // 调试信息
 
             fetch(`/course/${courseId}/save_assessment`, {
                 method: 'POST',
@@ -1183,27 +1207,100 @@
                     'Content-Type': 'application/json',
                     'X-Requested-With': 'XMLHttpRequest'
                 },
-                body: JSON.stringify({
-                    assignment_id: assignmentId,
-                    questions: questions
-                })
+                body: JSON.stringify(requestData)
             })
-                .then(response => response.json())
+                .then(response => {
+                    console.log('响应状态:', response.status); // 调试信息
+                    return response.json();
+                })
                 .then(data => {
+                    console.log('响应数据:', data); // 调试信息
+
                     if (data.success) {
-                        alert('题目保存成功！');
+                        // 显示成功消息
+                        showSuccessMessage(`题目保存成功！创建了 ${data.questions_created} 道题目，总分 ${data.total_points} 分`);
+
                         // 关闭模态框
-                        bootstrap.Modal.getInstance(document.getElementById('assessmentModal')).hide();
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('assessmentModal'));
+                        if (modal) {
+                            modal.hide();
+                        }
+
+                        // 清空题目数据
+                        currentQuestions = [];
+
+                        // 刷新页面以显示新作业
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1500);
                     } else {
                         showError(data.error || '保存失败');
                     }
                 })
                 .catch(error => {
                     console.error('保存题目失败:', error);
-                    showError('保存题目失败');
+                    showError('保存题目失败，请重试');
+                })
+                .finally(() => {
+                    // 恢复按钮状态
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-save me-1"></i>确认保存';
                 });
         }
     });
+
+    // 显示成功消息
+    function showSuccessMessage(message) {
+        // 创建成功提示框
+        const successDiv = document.createElement('div');
+        successDiv.className = 'alert alert-success alert-dismissible fade show position-fixed';
+        successDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        successDiv.innerHTML = `
+        <i class="fas fa-check-circle me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+        document.body.appendChild(successDiv);
+
+        // 5秒后自动移除
+        setTimeout(() => {
+            if (successDiv.parentNode) {
+                successDiv.parentNode.removeChild(successDiv);
+            }
+        }, 5000);
+    }
+
+    // 显示错误信息的函数（如果不存在）
+    function showError(message) {
+        const errorModal = document.getElementById('errorModal');
+        const errorMessage = document.getElementById('errorMessage');
+
+        if (errorModal && errorMessage) {
+            errorMessage.textContent = message;
+            const modal = new bootstrap.Modal(errorModal);
+            modal.show();
+        } else {
+            // 备用方案：创建临时错误提示
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'alert alert-danger alert-dismissible fade show position-fixed';
+            errorDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            errorDiv.innerHTML = `
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+
+            document.body.appendChild(errorDiv);
+
+            // 5秒后自动移除
+            setTimeout(() => {
+                if (errorDiv.parentNode) {
+                    errorDiv.parentNode.removeChild(errorDiv);
+                }
+            }, 5000);
+        }
+    }
 </script>
 {% endif %}
 {% endblock %}

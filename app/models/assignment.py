@@ -6,7 +6,7 @@ from app.models.user import User
 class Assignment(BaseModel):
     title = CharField(max_length=100)
     description = TextField()
-    course = ForeignKeyField(Course, backref='assignments')
+    course = ForeignKeyField(Course, backref='assignments',on_delete='CASCADE')
     due_date = DateTimeField()
     total_points = FloatField(default=100.0)
     
