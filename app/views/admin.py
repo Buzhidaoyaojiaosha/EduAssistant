@@ -1,6 +1,10 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session
 from app.services.user_service import UserService
 from app.models.user import User, Role, UserRole
+from app.models.user import User
+from app.models.course import Course
+from app.models.assignment import Assignment
+from app.models.knowledge_base import KnowledgeBase
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -23,13 +27,24 @@ def admin_required(view_func):
 @admin_bp.route('/')
 @admin_required
 def index():
-    return render_template('admin/dashboard.html')
+    print("\n--- 进入admin index函数 ---") 
+    # 获取真实系统统计数据
+    stats = {
+        'user_count': User.select().count(),
+        'course_count': Course.select().count(),
+        'assignment_count': Assignment.select().count(),
+        'knowledge_count': KnowledgeBase.select().count()
+    }
+    print(f"\n统计数据: {stats}\n")
+    return render_template('admin/dashboard.html', **stats)
+
 
 @admin_bp.route('/users')
 @admin_required
 def users():
     all_users = User.select()
     return render_template('admin/users.html', users=all_users)
+
 
 @admin_bp.route('/users/<int:user_id>', methods=['GET', 'POST'])
 @admin_required
@@ -56,11 +71,13 @@ def edit_user(user_id):
     
     return render_template('admin/edit_user.html', user=user, roles=roles, user_roles=user_roles)
 
+
 @admin_bp.route('/roles')
 @admin_required
 def roles():
     all_roles = Role.select()
     return render_template('admin/roles.html', roles=all_roles)
+
 
 @admin_bp.route('/roles/add', methods=['GET', 'POST'])
 @admin_required
@@ -77,6 +94,7 @@ def add_role():
             return redirect(url_for('admin.roles'))
     
     return render_template('admin/add_role.html')
+
 
 @admin_bp.route('/initialize', methods=['GET', 'POST'])
 def initialize_system():
@@ -119,3 +137,87 @@ def initialize_system():
             flash(str(e), 'danger')
     
     return render_template('admin/initialize.html')
+
+
+@admin_bp.route('/users/<int:user_id>/delete', methods=['POST'])
+@admin_required
+def delete_user(user_id):
+    try:
+        # 获取当前登录用户
+        current_user = User.get_by_id(session['user_id'])
+        
+        # 不能删除自己
+        if current_user.id == user_id:
+            flash('不能删除当前登录的用户。', 'danger')
+            return redirect(url_for('admin.users'))
+            
+        user = User.get_by_id(user_id)
+        username = user.username
+        
+        # 调用服务层删除用户
+     
+        success = UserService.delete_user(user_id)
+        
+        if success:
+            flash(f'用户 {username} 已成功删除。', 'success')
+        else:
+            flash(f'删除用户 {username} 失败。', 'danger')
+            
+    except User.DoesNotExist:
+        flash('用户不存在。', 'danger')
+    except Exception as e:
+        flash(f'删除用户时出错: {str(e)}', 'danger')
+    
+    return redirect(url_for('admin.users'))
+
+@admin_bp.route('/users/add', methods=['POST'])
+@admin_required
+def add_user():
+    username = request.form.get('username')
+    email = request.form.get('email')
+    name = request.form.get('name')
+    password = request.form.get('password')
+    is_active = 'is_active' in request.form
+    roles = request.form.getlist('roles')
+    
+    try:
+        user = UserService.create_user(
+            username=username,
+            email=email,
+            password=password,
+            name=name,
+            role_names=roles,  # 注意这里参数名是role_names
+          
+        )
+
+        flash('用户添加成功', 'success')
+        return redirect(url_for('admin.users'))
+    except ValueError as e:
+        flash(str(e), 'danger')
+        return redirect(url_for('admin.users'))
+    except Exception as e:
+        flash(f'添加用户失败333: {str(e)}', 'danger')
+        return redirect(url_for('admin.users'))
+    
+@admin_bp.route('/users/<int:user_id>/reset-password', methods=['POST'])
+@admin_required
+def reset_password(user_id):
+    try:
+        new_password = request.form.get('new_password')
+        confirm_password = request.form.get('confirm_password')
+        
+        # 验证密码是否匹配
+        if new_password != confirm_password:
+            flash('两次输入的密码不一致，请重新输入', 'danger')
+            return redirect(url_for('admin.edit_user', user_id=user_id))
+        
+        # 获取用户并重置密码
+        user = User.get_by_id(user_id)
+        UserService.set_password(user, new_password)
+        
+        flash('密码已成功重置', 'success')
+        return redirect(url_for('admin.edit_user', user_id=user_id))
+        
+    except Exception as e:
+        flash(f'重置密码时出错: {str(e)}', 'danger')
+        return redirect(url_for('admin.edit_user', user_id=user_id))

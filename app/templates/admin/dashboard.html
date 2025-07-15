@@ -22,6 +22,7 @@
                     <a href="{{ url_for('admin.users') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
                         <div>
                             <i class="fas fa-users me-2"></i>用户管理
+                            <small class="d-block text-muted">当前用户数: {{ user_count }}</small>
                         </div>
                         <span class="badge bg-primary rounded-pill">查看</span>
                     </a>
@@ -34,6 +35,7 @@
                     <a href="{{ url_for('search.manage_knowledge') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
                         <div>
                             <i class="fas fa-book me-2"></i>知识库管理
+                            <small class="d-block text-muted">条目数: {{ knowledge_count }}</small>
                         </div>
                         <span class="badge bg-primary rounded-pill">查看</span>
                     </a>
@@ -52,40 +54,45 @@
                 <div class="row text-center">
                     <div class="col-md-3 mb-3">
                         <div class="bg-light rounded p-3">
-                            <h3 class="text-primary mb-1" id="userCount">--</h3>
+                            <h3 class="text-primary mb-1">{{ user_count }}</h3>
                             <p class="mb-0 text-muted">用户数</p>
+                           
                         </div>
                     </div>
                     <div class="col-md-3 mb-3">
                         <div class="bg-light rounded p-3">
-                            <h3 class="text-primary mb-1" id="courseCount">--</h3>
+                            <h3 class="text-primary mb-1">{{ course_count }}</h3>
                             <p class="mb-0 text-muted">课程数</p>
+                           
                         </div>
                     </div>
                     <div class="col-md-3 mb-3">
                         <div class="bg-light rounded p-3">
-                            <h3 class="text-primary mb-1" id="assignmentCount">--</h3>
+                            <h3 class="text-primary mb-1">{{ assignment_count }}</h3>
                             <p class="mb-0 text-muted">作业数</p>
+                           
                         </div>
                     </div>
                     <div class="col-md-3 mb-3">
                         <div class="bg-light rounded p-3">
-                            <h3 class="text-primary mb-1" id="knowledgeBaseCount">--</h3>
+                            <h3 class="text-primary mb-1">{{ knowledge_count }}</h3>
                             <p class="mb-0 text-muted">知识条目</p>
+                         
                         </div>
                     </div>
                 </div>
                 
-                <!-- 这里可以添加更多系统状态信息 -->
+                <!-- 系统状态信息
                 <div class="alert alert-info mt-3 mb-0">
-                    <i class="fas fa-info-circle me-2"></i>系统运行正常，欢迎使用教学分析助手管理控制台。
-                </div>
+                    <i class="fas fa-info-circle me-2"></i>
+                    系统运行正常，最后更新: {{ last_updated|default("刚刚") }}
+                </div> -->
             </div>
         </div>
     </div>
 </div>
-
-<!-- 最近活动 -->
+<!-- 
+待办事项
 <div class="row">
     <div class="col-12">
         <div class="card shadow-sm">
@@ -93,31 +100,56 @@
                 <h5 class="mb-0"><i class="fas fa-list me-2"></i>待办事项</h5>
             </div>
             <div class="card-body">
+                {% if pending_tasks %}
+                <ul class="list-group list-group-flush">
+                    {% for task in pending_tasks %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">{{ task.title }}</h6>
+                            <small class="text-muted">{{ task.description }}</small>
+                        </div>
+                        <span class="badge bg-{{ task.priority }} rounded-pill">{{ task.due_date }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
                 <div class="alert alert-light text-center">
                     <p class="mb-0">当前没有需要处理的待办事项</p>
                 </div>
+                {% endif %}
                 
-                <!-- 这里可以添加待处理的系统事件或任务 -->
-                <div class="d-flex justify-content-end">
-                    <button class="btn btn-outline-primary btn-sm">
-                        <i class="fas fa-sync-alt me-1"></i>刷新列表
+                <div class="d-flex justify-content-end mt-3">
+                    <button class="btn btn-outline-primary btn-sm" onclick="refreshDashboard()">
+                        <i class="fas fa-sync-alt me-1"></i>刷新数据
                     </button>
                 </div>
             </div>
         </div>
     </div>
-</div>
+</div> -->
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    // 获取系统数据统计（在实际应用中，这些数据应该从后端API获取）
-    document.addEventListener('DOMContentLoaded', function() {
-        // 模拟数据，实际应用中应该通过AJAX从后端获取
-        document.getElementById('userCount').innerText = '{{ user_count|default("--") }}';
-        document.getElementById('courseCount').innerText = '{{ course_count|default("--") }}';
-        document.getElementById('assignmentCount').innerText = '{{ assignment_count|default("--") }}';
-        document.getElementById('knowledgeBaseCount').innerText = '{{ knowledge_count|default("--") }}';
-    });
+    function refreshDashboard() {
+        fetch("{{ url_for('admin.index') }}", {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.text())
+        .then(html => {
+            document.open();
+            document.write(html);
+            document.close();
+        })
+        .catch(error => {
+            console.error('刷新失败:', error);
+            alert('刷新数据失败，请稍后再试');
+        });
+    }
+    
+    // 自动刷新数据（每5分钟）
+    setTimeout(refreshDashboard, 300000);
 </script>
 {% endblock %}

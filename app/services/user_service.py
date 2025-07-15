@@ -1,6 +1,12 @@
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.models.user import User, Role, UserRole
-from app.react.tools_register import register_as_tool
+from app.models.course import *
+from app.models.knowledge_base import *
+from app.models.NewAdd import *
+from app.models.learning_data import *
+from app.models.assignment import *
+from app.models.user import User
+from app.services.course_service import CourseService
 
 class UserService:
     """用户服务类，处理用户认证、注册和用户管理。
@@ -26,14 +32,16 @@ class UserService:
         Raises:
             ValueError: 如果用户名或邮箱已存在
         """
+      
         # 检查用户名是否已存在
         if User.select().where(User.username == username).exists():
             raise ValueError(f"用户名 '{username}' 已存在")
+       
         
         # 检查邮箱是否已存在
         if User.select().where(User.email == email).exists():
             raise ValueError(f"邮箱 '{email}' 已被注册")
-        
+       
         # 创建用户
         user = User.create(
             username=username,
@@ -41,14 +49,14 @@ class UserService:
             password_hash=generate_password_hash(password),
             name=name
         )
-        
+        print(f"用户 {username} 创建成功，ID: {user.id}")
         # 分配角色
         if role_names:
             for role_name in role_names:
                 role = Role.get_or_none(Role.name == role_name)
                 if role:
                     UserRole.create(user=user, role=role)
-        
+      
         return user
     
     @staticmethod
@@ -114,3 +122,87 @@ class UserService:
                 "is_active": user.is_active
             }
         return None
+    @staticmethod
+    def delete_user(user_id):
+        """彻底删除用户及其所有相关数据（区分老师、学生、管理员）
+        
+        Args:
+            user_id (int): 要删除的用户ID
+            
+        Returns:
+            bool: 删除是否成功
+            
+        Raises:
+            DoesNotExist: 如果用户不存在
+        """
+        try:
+            user = User.get_by_id(user_id)
+            
+ 
+            
+            # 1. 更可靠的角色检查方式
+            print(f"调试信息 - 正在删除用户: {user.username}, ID: {user.id}")
+            roles = [ur.role.name for ur in user.roles]
+            print(f"调试信息 - 用户角色: {roles}")  # 添加调试输出
+            is_teacher = 'teacher' in roles
+            is_student = 'student' in roles
+            is_admin = 'admin' in roles
+            
+            print(f"调试信息 - 用户角色: {roles}")  # 添加调试输出
+
+            # 如果是管理员，直接删除用户本身（不处理其他关联数据）
+            if is_admin and not (is_teacher or is_student):
+                # 只需删除用户角色关联和用户本身
+                UserRole.delete().where(UserRole.user == user).execute()
+                user.delete_instance()
+                return True
+
+            # 2. 删除用户角色关联
+            UserRole.delete().where(UserRole.user == user).execute()
+           
+            print(f"{is_teacher}{is_student} {is_admin}")
+            if is_teacher:
+                
+                # 3.1 删除老师教授的课程及相关数据
+                courses = Course.select().where(Course.teacher == user)
+                for course in courses:
+                    # 使用之前编写的delete_course函数彻底删除课程
+                    CourseService.delete_course(course.id)
+
+            if is_student:
+                # 4. 删除学生的学习活动记录
+                LearningActivity.delete().where(LearningActivity.student == user).execute()
+                
+                # 5. 删除学生知识点掌握度
+                StudentKnowledgePoint.delete().where(StudentKnowledgePoint.student == user).execute()
+                
+                # 6. 删除学生作业记录
+                StudentAssignment.delete().where(StudentAssignment.student == user).execute()
+                
+                # 7. 删除学生答案记录
+                StudentAnswer.delete().where(StudentAnswer.student == user).execute()
+                AiQuestionStudentAnswer.delete().where(AiQuestionStudentAnswer.student == user).execute()
+                
+                # 8. 删除学生错题本
+                WrongBook.delete().where(WrongBook.student == user).execute()
+                
+                # 9. 删除学生课程关联
+                StudentCourse.delete().where(StudentCourse.student == user).execute()
+                
+                # 10. 删除学生反馈
+                Feedback.delete().where(Feedback.student == user).execute()
+
+            # 11. 最后删除用户本身
+            user.delete_instance()
+            return True
+            
+        except Exception as e:
+            # 记录错误日志
+            print(f"删除用户失败: {str(e)}")
+            return False
+        
+    @classmethod
+    def set_password(cls, user, password):
+        """设置用户密码"""
+        user.password_hash = generate_password_hash(password)  # 使用Flask的werkzeug.security中的generate_password_hash
+        user.save()
