@@ -10,23 +10,33 @@
     </div>
     <div class="col-auto">
         {% if is_teacher %}
+        <!-- 第一行按钮 -->
+        <div class="mb-2">
+            <a href="{{ url_for('course.create_assignment', course_id=course.id) }}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i>创建作业
+            </a>
+            <button type="button" class="btn btn-success" data-bs-toggle="modal"
+                data-bs-target="#addKnowledgePointModal">
+                <i class="fas fa-lightbulb me-1"></i>新增知识点
+            </button>
+            <a href="{{ url_for('search.add_knowledge', referrer=url_for('course.view', course_id=course.id)) }}"
+                class="btn btn-info me-2">
+                <i class="fas fa-upload me-1"></i>上传文件资源至知识库
+            </a>
+        </div>
 
-        <a href="{{ url_for('course.create_assignment', course_id=course.id) }}" class="btn btn-primary">
-            <i class="fas fa-plus me-1"></i>创建作业
-        </a>
-        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addKnowledgePointModal">
-            <i class="fas fa-lightbulb me-1"></i>新增知识点
-        </button>
-        <a href="{{ url_for('search.add_knowledge', referrer=url_for('course.view', course_id=course.id)) }}"
-            class="btn btn-info me-2">
-            <i class="fas fa-upload me-1"></i>上传文件资源至知识库
-        </a>
-        <button type="button" class="btn btn-warning me-2" id="generateTeachingOutlineBtn">
-            <i class="fas fa-magic me-1"></i>自动生成教学内容
-        </button>
-        <a href="{{ url_for('analytics.course_analytics', course_id=course.id) }}" class="btn btn-outline-primary">
-            <i class="fas fa-chart-line me-1"></i>课程分析
-        </a>
+        <!-- 第二行按钮 -->
+        <div>
+            <button type="button" class="btn btn-secondary me-2" id="generateTeachingOutlineBtn">
+                <i class="fas fa-graduation-cap me-1"></i>自动生成教学内容
+            </button>
+            <button type="button" class="btn btn-warning me-2" id="generateAssessmentBtn">
+                <i class="fas fa-clipboard-check me-1"></i>自动生成考核内容
+            </button>
+            <a href="{{ url_for('analytics.course_analytics', course_id=course.id) }}" class="btn btn-outline-primary">
+                <i class="fas fa-chart-line me-1"></i>课程分析
+            </a>
+        </div>
         {% endif %}
     </div>
 </div>
@@ -571,7 +581,54 @@
         </div>
     </div>
 </div>
-
+<!-- 生成考核进度模态框 -->
+<div class="modal fade" id="generateAssessmentProgressModal" tabindex="-1"
+    aria-labelledby="generateAssessmentProgressModalLabel" aria-hidden="true" data-bs-backdrop="static"
+    data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="generateAssessmentProgressModalLabel">正在生成考核内容</h5>
+            </div>
+            <div class="modal-body text-center">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">生成中...</span>
+                </div>
+                <p class="mb-0">AI正在分析课程知识库并生成考核题目，请稍候...</p>
+                <div class="progress mt-3">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
+                        style="width: 100%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- 生成考核内容模态框 -->
+<div class="modal fade" id="assessmentModal" tabindex="-1" aria-labelledby="assessmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="assessmentModalLabel">AI生成考核题目</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    以下是AI根据课程知识库生成的考核题目，请检查并保存到作业中
+                </div>
+                <div id="assessmentContent">
+                    <!-- 题目内容将通过JavaScript动态添加 -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-primary" id="saveAssessmentBtn">
+                    <i class="fas fa-save me-1"></i>保存到作业
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 <style>
     .nav-tabs .nav-link {
         color: #000 !important;
@@ -978,7 +1035,175 @@
         // 添加调试信息
         console.log('页面加载完成，课程ID:', courseId);
     });
+    // 生成考核内容按钮事件
+    document.getElementById('generateAssessmentBtn').addEventListener('click', function () {
+        const courseId = "{{ course.id }}";
+        const btn = this;
 
+        // 创建进度模态框实例
+        const assessmentProgressModal = new bootstrap.Modal(document.getElementById('generateAssessmentProgressModal'));
+
+        // 显示加载状态
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>生成中...';
+
+        // 显示进度模态框
+        assessmentProgressModal.show();
+
+        const numQuestions = 10;
+
+        fetch(`/course/${courseId}/generate_assessment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ num_questions: numQuestions })
+        })
+            .then(response => response.json())
+            .then(data => {
+                // 隐藏进度模态框
+                assessmentProgressModal.hide();
+
+                btn.innerHTML = '<i class="fas fa-question-circle me-1"></i>自动生成考核内容';
+                btn.disabled = false;
+
+                if (data.error) {
+                    showError(data.error);
+                } else {
+                    showAssessmentQuestions(data.questions);
+                }
+            })
+            .catch(error => {
+                console.error('生成考核题目失败:', error);
+
+                // 隐藏进度模态框
+                assessmentProgressModal.hide();
+
+                btn.innerHTML = '<i class="fas fa-question-circle me-1"></i>自动生成考核内容';
+                btn.disabled = false;
+                showError('生成考核题目失败，请重试');
+            });
+    });
+
+    // 显示生成的题目
+    function showAssessmentQuestions(questions) {
+        const container = document.getElementById('assessmentContent');
+        container.innerHTML = '';
+
+        if (questions.length === 0) {
+            container.innerHTML = '<div class="alert alert-warning">未生成题目</div>';
+            return;
+        }
+
+        // 创建题目卡片
+        questions.forEach((question, index) => {
+            const card = document.createElement('div');
+            card.className = 'card mb-3';
+            card.innerHTML = `
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>题目 ${index + 1} - ${question.type}</span>
+                <span class="badge bg-primary">${question.type}</span>
+            </div>
+            <div class="card-body">
+                <h6 class="card-title">${question.content}</h6>
+                <div class="mt-3">
+                    <strong>答案：</strong> ${question.answer}
+                </div>
+                <div class="mt-2">
+                    <strong>解析：</strong> ${question.analysis}
+                </div>
+            </div>
+        `;
+            container.appendChild(card);
+        });
+
+        // 添加保存选项
+        const saveOptions = document.createElement('div');
+        saveOptions.className = 'mt-4';
+        saveOptions.innerHTML = `
+        <div class="mb-3">
+            <label class="form-label">保存到：</label>
+            <div class="d-flex gap-2">
+                <select class="form-select" id="saveToAssignment">
+                    <option value="new">创建新作业</option>
+                    <!-- 现有作业选项将通过JS动态添加 -->
+                </select>
+                <button class="btn btn-success" id="confirmSaveBtn">
+                    <i class="fas fa-save me-1"></i>确认保存
+                </button>
+            </div>
+        </div>
+    `;
+        container.appendChild(saveOptions);
+
+        // 填充现有作业选项
+        populateAssignmentOptions();
+
+        // 显示模态框
+        const modal = new bootstrap.Modal(document.getElementById('assessmentModal'));
+        modal.show();
+    }
+
+    // 填充作业选项
+    function populateAssignmentOptions() {
+        const courseId = "{{ course.id }}";
+        const select = document.getElementById('saveToAssignment');
+
+        // 清空现有选项（保留"创建新作业"）
+        while (select.options.length > 1) {
+            select.remove(1);
+        }
+
+        // 从服务器获取作业列表
+        fetch(`/course/${courseId}/assignments`)
+            .then(response => response.json())
+            .then(data => {
+                data.assignments.forEach(assignment => {
+                    const option = document.createElement('option');
+                    option.value = assignment.id;
+                    option.textContent = assignment.title;
+                    select.appendChild(option);
+                });
+            });
+    }
+
+    // 确认保存按钮事件
+    document.addEventListener('click', function (e) {
+        if (e.target.id === 'confirmSaveBtn') {
+            const assignmentId = document.getElementById('saveToAssignment').value;
+            const courseId = "{{ course.id }}";
+
+            // 获取所有题目数据
+            const questions = []; // 这里需要从UI获取题目数据
+
+            fetch(`/course/${courseId}/save_assessment`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    assignment_id: assignmentId,
+                    questions: questions
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('题目保存成功！');
+                        // 关闭模态框
+                        bootstrap.Modal.getInstance(document.getElementById('assessmentModal')).hide();
+                    } else {
+                        showError(data.error || '保存失败');
+                    }
+                })
+                .catch(error => {
+                    console.error('保存题目失败:', error);
+                    showError('保存题目失败');
+                });
+        }
+    });
 </script>
 {% endif %}
 {% endblock %}

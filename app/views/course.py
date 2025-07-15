@@ -29,6 +29,9 @@ from app.utils.logging import logger
 import logging
 logger = logging.getLogger(__name__)
 
+from flask import current_app, jsonify, request
+from app.services.question_generator_service import QuestionGeneratorService
+
 course_bp = Blueprint('course', __name__, url_prefix='/course')
 
 @course_bp.route('/')
@@ -1416,3 +1419,132 @@ def api_generate_teaching_outline():
     except Exception as e:
         logger.error(f"API生成教学大纲异常: {str(e)}", exc_info=True)
         return jsonify({'error': '服务器内部错误，请稍后重试'}), 500
+    
+@course_bp.route('/<int:course_id>/generate_assessment', methods=['POST'])
+def generate_assessment(course_id):
+    """生成考核题目接口"""
+    try:
+        # 从请求中获取题目数量，默认为10
+        data = request.get_json()
+        num_questions = data.get('num_questions', 10)
+        
+        # 调用生成函数
+        questions = QuestionGeneratorService.generate_questions_with_ai(course_id, num_questions)
+        
+        return jsonify({
+            'success': True,
+            'questions': questions
+        })
+    except Exception as e:
+        current_app.logger.error(f"生成考核题目失败: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)  # 或者更友好的错误消息
+        }), 500
+
+@course_bp.route('/<int:course_id>/save_assessment', methods=['POST'])
+def save_assessment(course_id):
+    """保存生成的考核题目"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                'success': False,
+                'error': '请求数据为空'
+            }), 400
+            
+        assignment_id = data.get('assignment_id')
+        questions = data.get('questions', [])
+        
+        if not questions:
+            return jsonify({
+                'success': False,
+                'error': '没有题目数据'
+            }), 400
+        
+        # 验证课程是否存在
+        try:
+            course = Course.get_by_id(course_id)
+        except DoesNotExist:
+            return jsonify({
+                'success': False,
+                'error': '课程不存在'
+            }), 404
+        
+        # 处理保存逻辑
+        if assignment_id == "new":
+            # 创建新作业
+            assignment = Assignment.create(
+                title=f"AI生成考核题目-{datetime.now().strftime('%Y%m%d')}",
+                description=f"通过AI自动生成的考核题目，生成时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+                course=course,  # 传递Course对象，而不是course_id
+                due_date=datetime.now().replace(hour=23, minute=59, second=59),  # 设置为当天23:59:59
+                total_points=0.0
+            )
+            assignment_id = assignment.assignment_id
+        else:
+            # 验证作业是否存在
+            try:
+                assignment = Assignment.get_by_id(assignment_id)
+            except DoesNotExist:
+                return jsonify({
+                    'success': False,
+                    'error': '作业不存在'
+                }), 404
+        
+        # 保存题目
+        total_points = 0.0
+        created_questions = []
+        
+        for question_data in questions:
+            # 验证题目数据
+            if not question_data.get('content') or not question_data.get('answer'):
+                continue
+            
+            # 根据题目类型设置分数和状态
+            question_type = question_data.get('type', '简答题')
+            if question_type == '简答题':
+                score = 10.0
+                status = 3  # 简答题
+            elif question_type == '判断题':
+                score = 5.0
+                status = 2  # 判断题
+            elif question_type == '选择题':
+                score = 5.0
+                status = 1  # 选择题
+            else:
+                score = 5.0
+                status = 3  # 默认为简答题
+            
+            # 创建题目对象
+            new_question = Question.create(
+                question_name=question_data.get('title', f"题目{len(created_questions) + 1}"),
+                assignment=assignment,
+                course=course,
+                context=question_data['content'],
+                answer=question_data['answer'],
+                analysis=question_data.get('analysis', ''),
+                score=score,
+                status=status
+            )
+            
+            total_points += score
+            created_questions.append(new_question)
+        
+        # 更新作业总分
+        assignment.total_points = total_points
+        assignment.save()
+        
+        return jsonify({
+            'success': True,
+            'assignment_id': assignment_id,
+            'questions_created': len(created_questions),
+            'total_points': total_points
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"保存考核题目失败: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': '保存失败，请稍后重试'
+        }), 500

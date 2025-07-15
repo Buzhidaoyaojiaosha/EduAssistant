@@ -4,6 +4,90 @@ from app.react.tools_register import register_as_tool
 from app.utils.logging import logger
 from app.models.course import Course
 from app.models.learning_data import KnowledgePoint
+import json
+from app.utils.llm.deepseek import chat_deepseek
+from app.services.course_service import CourseService
+from app.react.tools.teaching_preparation import _get_course_knowledge_content
+
+@register_as_tool(roles=["teacher"])
+def generate_assessment_with_ai(course_id: int, num_questions: int = 10) -> List[Dict]:
+    """使用AI根据课程知识库生成考核题目
+    
+    Args:
+        course_id (int): 课程ID
+        num_questions (int): 题目数量，默认为10
+        
+    Returns:
+        List[Dict]: 生成的题目列表，包含题目内容、答案和解析
+    """
+    try:
+        course = Course.get_by_id(course_id)
+        if not course:
+            return []
+        
+        # 获取课程知识库内容
+        knowledge_content = _get_course_knowledge_content(course_id=course_id)
+        
+        # 构造提示词
+        prompt = f"""
+你是一位经验丰富的教师，需要为课程《{course.name}》设计一套考核题目。
+请根据以下课程知识库内容，生成{num_questions}道题目，包含选择题、判断题和简答题：
+
+课程知识库内容：
+{knowledge_content}
+
+要求：
+1. 题目类型多样，包含选择题、判断题和简答题
+2. 题目难度适中，覆盖课程核心知识点
+3. 每道题包含题目内容、正确答案和详细解析
+4. 返回严格的JSON格式数据
+
+返回格式示例：
+{{
+    "questions": [
+        {{
+            "type": "选择题",
+            "content": "题目内容",
+            "answer": "A",
+            "analysis": "解析说明"
+        }},
+        {{
+            "type": "判断题",
+            "content": "题目内容",
+            "answer": "正确",
+            "analysis": "解析说明"
+        }},
+        {{
+            "type": "简答题",
+            "content": "题目内容",
+            "answer": "参考答案",
+            "analysis": "解析说明"
+        }}
+    ]
+}}
+"""
+        
+        messages = [
+            {"role": "system", "content": "你是一位专业教师，擅长设计教学考核题目。"},
+            {"role": "user", "content": prompt}
+        ]
+        
+        # 调用DeepSeek API
+        response_text = chat_deepseek(messages).strip()
+        
+        # 处理可能的JSON标记
+        if response_text.startswith("```json") and response_text.endswith("```"):
+            response_text = response_text[7:-3].strip()
+        
+        # 解析JSON响应
+        response_data = json.loads(response_text)
+        questions = response_data.get("questions", [])
+        
+        return questions
+        
+    except Exception as e:
+        logger.error(f"生成考核题目失败: {str(e)}")
+        return []
 
 def generate_by_knowledge_point(knowledge_point_id: int, difficulty: str = "medium", num_questions: int = 5) -> List[Dict]:
     """根据知识点生成题目
