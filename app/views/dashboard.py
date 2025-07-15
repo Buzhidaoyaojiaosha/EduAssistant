@@ -59,7 +59,7 @@ def index():
         
         return render_template('dashboard/student_dashboard.html', **context)
     else:
-        return render_template('admin/dashboard.html', **context)
+        return redirect(url_for('admin.index')) 
 
 @dashboard_bp.route('/profile')
 def profile():
