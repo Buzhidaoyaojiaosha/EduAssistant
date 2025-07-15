@@ -4,6 +4,7 @@ import uuid
 import oss2
 from pathlib import Path
 import os
+from urllib.parse import quote
 from urllib.parse import urlparse
 class KnowledgeBaseService:
     """知识库服务, 处理FAQ和知识内容的存储、检索。
@@ -284,7 +285,6 @@ class KnowledgeBaseService:
     @staticmethod
     def upload_file_to_oss(local_file_path):
         """上传文件到OSS并返回可直接显示中文的URL"""
-      
         
         # 初始化OSS
         auth = oss2.Auth(
@@ -292,7 +292,6 @@ class KnowledgeBaseService:
             os.getenv('OSS_ACCESS_KEY_SECRET')
         )
 
-        """上传文件并设置为公共读"""
         endpoint = os.getenv('OSS_ENDPOINT')
         bucket_name = os.getenv('OSS_BUCKET_NAME')
         if not os.path.isfile(local_file_path):
@@ -300,19 +299,46 @@ class KnowledgeBaseService:
 
         bucket = oss2.Bucket(auth, f'https://{endpoint}', bucket_name)
         object_name = Path(local_file_path).name
-        print(f"开始上传文件:local_file_path {local_file_path} 到 OSS 存储桶:bucket_name {bucket_name}  object_name {object_name}")
+        
+        # 根据文件后缀设置对应的Content-Type
+        extension = Path(local_file_path).suffix.lower()
+        content_type_map = {
+            '.pdf': 'application/pdf',
+            '.ppt': 'application/vnd.ms-powerpoint',
+            '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            '.doc': 'application/msword',
+            '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            '.xls': 'application/vnd.ms-excel',
+            '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            '.jpg': 'image/jpeg',
+            '.jpeg': 'image/jpeg',
+            '.png': 'image/png',
+            '.gif': 'image/gif',
+            '.txt': 'text/plain',
+            '.mp3': 'audio/mpeg',
+            '.mp4': 'video/mp4',
+            '.csv': 'text/csv',
+            '.zip': 'application/zip',
+            '.rar': 'application/x-rar-compressed',
+        }
+        
+        # 默认使用二进制流类型
+        content_type = content_type_map.get(extension, 'application/octet-stream')
+        
+        print(f"开始上传文件: {local_file_path} 到 OSS 存储桶: {bucket_name}, 对象名: {object_name}, 类型: {content_type}")
+        
         try:
-            # 上传文件
+            # 上传文件并设置Content-Type
             result = bucket.put_object_from_file(
                 object_name,
                 local_file_path,
-                headers={'Content-Type': 'application/pdf'}
+                headers={'Content-Type': content_type}
             )
             
             if result.status == 200:
-                # 只设置这个文件为公共读
+                # 设置文件为公共读
                 bucket.put_object_acl(object_name, oss2.OBJECT_ACL_PUBLIC_READ)
-                file_url = f"https://{bucket_name}.{endpoint}/{object_name}"
+                file_url =  f"https://{bucket_name}.{endpoint}/{quote(object_name)}"
                 print(f"文件上传成功: {file_url}")
                 return file_url
             else:

@@ -21,7 +21,7 @@ tables = [
             KnowledgeBase,
             Chat, ChatMessage,
             Question, StudentAnswer, Feedback, WrongBook, QuestionWrongBook,
-            AIQuestion,
+            AIQuestion,AiQuestionStudentAnswer
         ]
 
 # db.drop_tables(tables)

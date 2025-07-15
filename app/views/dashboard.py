@@ -40,7 +40,7 @@ def index():
         context['recent_assignments'] = recent_assignments[:5]
         
         return render_template('dashboard/teacher_dashboard.html', **context)
-    else:
+    elif UserService.has_role(user, 'student'):
         # 获取学生课程
         courses = CourseService.get_courses_by_student(user_id)
         context['courses'] = courses
@@ -58,6 +58,8 @@ def index():
         context['learning_issues'] = learning_issues
         
         return render_template('dashboard/student_dashboard.html', **context)
+    else:
+        return render_template('admin/dashboard.html', **context)
 
 @dashboard_bp.route('/profile')
 def profile():

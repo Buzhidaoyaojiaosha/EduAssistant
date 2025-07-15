@@ -39,6 +39,16 @@ class AIQuestion(BaseModel):
     class Meta:
         table_name = 'aiquestion'
 
+class AiQuestionStudentAnswer(BaseModel):
+    ai_submission_id = AutoField(primary_key=True)  # 自增主键
+    student = ForeignKeyField(User, backref='ai_answers')  # 关联学生用户
+    ai_question = ForeignKeyField(AIQuestion, backref='student_answers')  # 关联AI生成的题目
+    student_answer = TextField()  # 学生提交的答案
+    ai_feedback = TextField()  # AI生成的纠错评语
+    submission_time = DateTimeField(default=datetime.now)
+    class Meta:
+        table_name = 'aiquestionstudentanswer'
+
 class StudentAnswer(BaseModel):
     submission_id = AutoField(primary_key=True)  # 修改为自增主键
     student = ForeignKeyField(User, backref='answers')
