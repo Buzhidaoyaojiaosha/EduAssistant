@@ -10,6 +10,27 @@
     </div>
 </div>
 
+{% if not is_teacher and not is_admin %}
+<!-- 学生视图 -->
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="fas fa-user-graduate me-2"></i>我的学习分析</h5>
+            </div>
+            <div class="card-body">
+                <p>查看您的学习活动、知识点掌握情况和学习预警。</p>
+                <div class="d-grid gap-2 mt-4">
+                    <a href="{{ url_for('analytics.student_analytics', student_id=session.get('user_id')) }}" class="btn btn-primary">
+                        查看我的学习数据
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<!-- 教师/管理员视图 -->
 <div class="row">
     <div class="col-md-6 mb-4">
         <div class="card shadow-sm h-100">
@@ -18,12 +39,25 @@
             </div>
             <div class="card-body">
                 <p>查看学生的学习活动、知识点掌握情况和学习预警。</p>
-                <p>您可以分析自己或您授课班级内学生的学习数据。</p>
                 
-                <div class="d-grid gap-2 mt-4">
-                    <a href="{{ url_for('analytics.student_analytics', student_id=session.get('user_id')) }}" class="btn btn-primary">
-                        查看我的学习数据
-                    </a>
+                <div class="mt-4">
+                    <h6 class="mb-3">选择学生:</h6>
+                    <form id="studentSelectForm" class="mb-3">
+                        <select class="form-select" id="studentSelect" name="student_id">
+                            <option value="">-- 请选择学生 --</option>
+                            {% if is_admin %}
+                                <!-- 管理员可以看到所有学生 -->
+                                {% for student in all_students %}
+                                <option value="{{ student.id }}">{{ student.name }} ({{ student.username }})</option>
+                                {% endfor %}
+                            {% else %}
+                                <!-- 教师只能看到自己课程的学生 -->
+                                {% for student in all_students %}
+                                <option value="{{ student.id }}">{{ student.name }} ({{ student.username }})</option>
+                                {% endfor %}
+                            {% endif %}
+                        </select>
+                    </form>
                 </div>
             </div>
         </div>
@@ -36,24 +70,25 @@
             </div>
             <div class="card-body">
                 <p>查看课程整体学习情况、作业完成率和学生进度。</p>
-                <p>教师可以查看所授课程的整体学习数据和统计信息。</p>
                 
-                <!-- 教师课程列表 -->
-                <div id="teacherCourses" class="mt-4">
+                <div class="mt-4">
                     <h6 class="mb-3">选择要查看的课程:</h6>
-                    <div class="list-group">
-                        {% for course in courses %}
-                        <a href="{{ url_for('analytics.course_analytics', course_id=course.id) }}" class="list-group-item list-group-item-action">
-                            {{ course.name }}
-                        </a>
-                        {% endfor %}
-                    </div>
+                    <form id="courseSelectForm">
+                        <select class="form-select" id="courseSelect" name="course_id">
+                            <option value="">-- 请选择课程 --</option>
+                            {% for course in courses %}
+                            <option value="{{ course.id }}">{{ course.name }} ({{ course.code }})</option>
+                            {% endfor %}
+                        </select>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
 </div>
+{% endif %}
 
+<!-- 说明部分保持不变 -->
 <div class="row">
     <div class="col-12">
         <div class="card shadow-sm">
@@ -61,19 +96,39 @@
                 <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>关于学习数据分析</h5>
             </div>
             <div class="card-body">
-                <p>教学分析助手收集和分析学生的学习行为数据，帮助教师和学生了解学习进展情况。</p>
+               <p>教学分析助手收集和分析学生的学习行为数据，帮助教师和学生了解学习进展情况。</p>
                 <p>我们的分析功能包括：</p>
                 <ul>
-                    <li>学习活动追踪 - 记录和分析学习活动类型和时长</li>
-                    <li>知识点掌握度评估 - 分析学生对课程知识点的理解和掌握情况</li>
-                    <li>学习预警 - 识别潜在的学习问题并提供干预建议</li>
-                    <li>课程整体分析 - 帮助教师了解课程整体效果和学生表现</li>
+                <li>学习活动追踪 - 记录和分析学习活动类型和时长</li>
+                <li>知识点掌握度评估 - 分析学生对课程知识点的理解和掌握情况</li>
+                <li>学习预警 - 识别潜在的学习问题并提供干预建议</li>
+                <li>课程整体分析 - 帮助教师了解课程整体效果和学生表现</li>
                 </ul>
                 <p class="mb-0 mt-3 text-muted">
-                    <small><i class="fas fa-shield-alt me-1"></i>我们重视数据隐私，所有分析结果仅对相关教师和学生本人可见。</small>
+                <small><i class="fas fa-shield-alt me-1"></i>我们重视数据隐私，所有分析结果仅对相关教师和学生本人可见。</small>
                 </p>
             </div>
         </div>
     </div>
 </div>
+
+{% if is_teacher or is_admin %}
+<script>
+// 学生选择器自动跳转
+document.getElementById('studentSelect').addEventListener('change', function() {
+    const studentId = this.value;
+    if (studentId) {
+        window.location.href = `/analytics/student/${studentId}`;
+    }
+});
+
+// 课程选择器自动跳转
+document.getElementById('courseSelect').addEventListener('change', function() {
+    const courseId = this.value;
+    if (courseId) {
+        window.location.href = `/analytics/course/${courseId}`;
+    }
+});
+</script>
+{% endif %}
 {% endblock %}
