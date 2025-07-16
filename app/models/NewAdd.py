@@ -31,7 +31,7 @@ class AIQuestion(BaseModel):
     context = TextField(null=False)  # 题目内容
     answer = TextField(null=False)  # 答案
     analysis = TextField(null=False, default='暂无解析')  # 非空且有默认值
-    status = IntegerField()  # 题目类型: 1:选择题, 2:判断题, 3:简答题
+    status = IntegerField()  # 题目类型: 1:选择题, 2:判断题, 3:简答题,4:编程题
     created_time = DateTimeField(default=datetime.now)  # 创建时间
     is_approved = BooleanField(default=False)  # 是否已被老师审核通过 false表示未加入题库，true表示加入题库
 

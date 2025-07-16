@@ -27,7 +27,7 @@
                     <i class="fas fa-info-circle me-2"></i>
                     以下是AI根据您的错题生成的练习题目，帮助您巩固相关知识点。
                 </div>
-                
+
                 <div class="mb-4">
                     <h5 class="mb-3"><i class="fas fa-question-circle me-2"></i>练习题目</h5>
                     <div class="list-group">
@@ -41,8 +41,9 @@
                                     <span class="badge bg-{{ 'success' if question.status == 1 
                                         else 'primary' if question.status == 2 
                                         else 'warning' }}">
-                                        {{ '选择题' if question.status == 1 
-                                        else '判断题' if question.status == 2 
+                                        {{ '选择题' if question.status == 1
+                                        else '判断题' if question.status == 2
+                                        else '编程题' if question.status == 4
                                         else '简答题' }}
                                     </span>
                                     {% if answer_record %}
@@ -50,131 +51,138 @@
                                     {% endif %}
                                 </div>
                             </div>
-                            
+
                             <!-- 题目内容 -->
                             <!-- 题目内容部分修改为 -->
                             <div class="mt-2">
                                 <div class="card bg-light mb-2">
                                     <div class="card-body p-3">
                                         <!-- 所有题目都显示题目内容 -->
-                                        {% if question.status == 1 %}  <!-- 选择题 -->
-                                            <p class="mb-2">{{ question.context.split('\n')[0] }}</p>
-                                            <div class="options">
-                                                {% for option in question.context.split('\n')[1:] if option.strip() %}
-                                                <div class="form-check">
-                                                    {% if answer_record %}
-                                                        <!-- 已回答的选择题显示已选答案 -->
-                                                        <input class="form-check-input" type="radio" 
-                                                            name="answer_{{ question.ai_question_id }}" 
-                                                            id="option_{{ question.ai_question_id }}_{{ loop.index }}"
-                                                            value="{{ option[0] }}" 
-                                                            {% if answer_record.student_answer == option[0] %}checked{% endif %}
-                                                            disabled>
-                                                        <label class="form-check-label" for="option_{{ question.ai_question_id }}_{{ loop.index }}">
-                                                            {{ option }}
-                                                            {% if answer_record.student_answer == option[0] %}
-                                                            <span class="badge bg-primary ms-2">你的选择</span>
-                                                            {% endif %}
-                                                        </label>
-                                                    {% else %}
-                                                        <!-- 未回答的选择题显示可选按钮 -->
-                                                        <input class="form-check-input" type="radio" 
-                                                            name="answer_{{ question.ai_question_id }}" 
-                                                            id="option_{{ question.ai_question_id }}_{{ loop.index }}"
-                                                            value="{{ option[0] }}">
-                                                        <label class="form-check-label" for="option_{{ question.ai_question_id }}_{{ loop.index }}">
-                                                            {{ option }}
-                                                        </label>
-                                                    {% endif %}
-                                                </div>
-                                                {% endfor %}
-                                            </div>
-                                        {% elif question.status == 2 %}  <!-- 判断题 -->
-                                            <p class="mb-2">{{ question.context }}</p>
+                                        {% if question.status == 1 %} <!-- 选择题 -->
+                                        <p class="mb-2">{{ question.context.split('\n')[0] }}</p>
+                                        <div class="options">
+                                            {% for option in question.context.split('\n')[1:] if option.strip() %}
                                             <div class="form-check">
-                                                <input class="form-check-input" type="radio" 
-                                                    name="answer_{{ question.ai_question_id }}" 
-                                                    id="true_{{ question.ai_question_id }}" value="1"
-                                                    {% if answer_record %}disabled{% endif %}
-                                                    {% if answer_record and answer_record.student_answer == '1' %}checked{% endif %}>
-                                                <label class="form-check-label" for="true_{{ question.ai_question_id }}">
-                                                    正确
-                                                    {% if answer_record and answer_record.student_answer == '1' %}
+                                                {% if answer_record %}
+                                                <!-- 已回答的选择题显示已选答案 -->
+                                                <input class="form-check-input" type="radio"
+                                                    name="answer_{{ question.ai_question_id }}"
+                                                    id="option_{{ question.ai_question_id }}_{{ loop.index }}"
+                                                    value="{{ option[0] }}" {% if
+                                                    answer_record.student_answer==option[0] %}checked{% endif %}
+                                                    disabled>
+                                                <label class="form-check-label"
+                                                    for="option_{{ question.ai_question_id }}_{{ loop.index }}">
+                                                    {{ option }}
+                                                    {% if answer_record.student_answer == option[0] %}
                                                     <span class="badge bg-primary ms-2">你的选择</span>
                                                     {% endif %}
                                                 </label>
-                                            </div>
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="radio" 
-                                                    name="answer_{{ question.ai_question_id }}" 
-                                                    id="false_{{ question.ai_question_id }}" value="0"
-                                                    {% if answer_record %}disabled{% endif %}
-                                                    {% if answer_record and answer_record.student_answer == '0' %}checked{% endif %}>
-                                                <label class="form-check-label" for="false_{{ question.ai_question_id }}">
-                                                    错误
-                                                    {% if answer_record and answer_record.student_answer == '0' %}
-                                                    <span class="badge bg-primary ms-2">你的选择</span>
-                                                    {% endif %}
+                                                {% else %}
+                                                <!-- 未回答的选择题显示可选按钮 -->
+                                                <input class="form-check-input" type="radio"
+                                                    name="answer_{{ question.ai_question_id }}"
+                                                    id="option_{{ question.ai_question_id }}_{{ loop.index }}"
+                                                    value="{{ option[0] }}">
+                                                <label class="form-check-label"
+                                                    for="option_{{ question.ai_question_id }}_{{ loop.index }}">
+                                                    {{ option }}
                                                 </label>
+                                                {% endif %}
                                             </div>
-                                        {% else %}  <!-- 简答题 -->
-                                            <p class="mb-2">{{ question.context }}</p>
-                                            {% if answer_record %}
-                                                <div class="form-control" style="background-color: #f8f9fa;">
-                                                    {{ answer_record.student_answer }}
-                                                </div>
-                                            {% else %}
-                                                <textarea class="form-control" 
-                                                        name="answer_{{ question.ai_question_id }}" 
-                                                        rows="3"
-                                                        placeholder="请输入您的答案..."></textarea>
-                                            {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                        {% elif question.status == 2 %} <!-- 判断题 -->
+                                        <p class="mb-2">{{ question.context }}</p>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio"
+                                                name="answer_{{ question.ai_question_id }}"
+                                                id="true_{{ question.ai_question_id }}" value="1" {% if answer_record
+                                                %}disabled{% endif %} {% if answer_record and
+                                                answer_record.student_answer=='1' %}checked{% endif %}>
+                                            <label class="form-check-label" for="true_{{ question.ai_question_id }}">
+                                                正确
+                                                {% if answer_record and answer_record.student_answer == '1' %}
+                                                <span class="badge bg-primary ms-2">你的选择</span>
+                                                {% endif %}
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio"
+                                                name="answer_{{ question.ai_question_id }}"
+                                                id="false_{{ question.ai_question_id }}" value="0" {% if answer_record
+                                                %}disabled{% endif %} {% if answer_record and
+                                                answer_record.student_answer=='0' %}checked{% endif %}>
+                                            <label class="form-check-label" for="false_{{ question.ai_question_id }}">
+                                                错误
+                                                {% if answer_record and answer_record.student_answer == '0' %}
+                                                <span class="badge bg-primary ms-2">你的选择</span>
+                                                {% endif %}
+                                            </label>
+                                        </div>
+                                        {% elif question.status == 4 %} <!-- 编程题 -->
+                                        <p class="mb-2">{{ question.context }}</p>
+                                        {% if answer_record %}
+                                        <div class="form-control" style="background-color: #f8f9fa;">
+                                            {{ answer_record.student_answer }}
+                                        </div>
+                                        {% else %}
+                                        <textarea class="form-control" name="answer_{{ question.ai_question_id }}"
+                                            rows="3" placeholder="请输入您的答案..."></textarea>
                                         {% endif %}
-                                        
-                                        <!-- 所有题目都显示学生答案（简答题已在上方显示） -->
-                                        {% if answer_record and question.status != 3 %}
-                                            <div class="student-answer mt-3">
-                                                <h6>你的答案：</h6>
-                                                <p>{{ answer_record.student_answer }}</p>
-                                            </div>
+                                        {% else %} <!-- 简答题 -->
+                                        <p class="mb-2">{{ question.context }}</p>
+                                        {% if answer_record %}
+                                        <div class="form-control" style="background-color: #f8f9fa;">
+                                            {{ answer_record.student_answer }}
+                                        </div>
+                                        {% else %}
+                                        <textarea class="form-control" name="answer_{{ question.ai_question_id }}"
+                                            rows="3" placeholder="请输入您的答案..."></textarea>
+                                        {% endif %}
+                                        {% endif %}
+
+                                        <!-- 所有题目都显示学生答案（简答题和编程题已在上方显示） -->
+                                        {% if answer_record and question.status != 3 and question.status != 4 %}
+                                        <div class="student-answer mt-3">
+                                            <h6>你的答案：</h6>
+                                            <p>{{ answer_record.student_answer }}</p>
+                                        </div>
                                         {% endif %}
                                     </div>
                                 </div>
                             </div>
-                            
+
                             {% if answer_record %}
-                                <!-- 已作答的题目显示AI反馈 -->
-                                <div class="mt-2 show" id="ai_feedback_{{ question.ai_question_id }}">
-                                    <div class="card border-warning">
-                                        <div class="card-header bg-warning text-white">
-                                            <h6 class="mb-0"><i class="fas fa-robot me-1"></i>AI纠错反馈</h6>
-                                        </div>
-                                        <div class="card-body">
-                                            <div style="white-space: pre-line;">{{ answer_record.ai_feedback }}</div>
-                                        </div>
+                            <!-- 已作答的题目显示AI反馈 -->
+                            <div class="mt-2 show" id="ai_feedback_{{ question.ai_question_id }}">
+                                <div class="card border-warning">
+                                    <div class="card-header bg-warning text-white">
+                                        <h6 class="mb-0"><i class="fas fa-robot me-1"></i>AI纠错反馈</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div style="white-space: pre-line;">{{ answer_record.ai_feedback }}</div>
                                     </div>
                                 </div>
-                                 <button class="btn btn-sm btn-outline-info mt-2" 
-                                        type="button"
-                                        onclick="toggleAnswer('answer_{{ question.ai_question_id }}')">
-                                    <i class="fas fa-eye me-1"></i>查看答案
-                                </button>
-                                
+                            </div>
+                            <button class="btn btn-sm btn-outline-info mt-2" type="button"
+                                onclick="toggleAnswer('answer_{{ question.ai_question_id }}')">
+                                <i class="fas fa-eye me-1"></i>查看答案
+                            </button>
+
                             {% else %}
-                                <!-- 未作答的题目显示按钮 -->
-                                <button class="btn btn-sm btn-outline-info mt-2" 
-                                        type="button"
-                                        onclick="toggleAnswer('answer_{{ question.ai_question_id }}')">
-                                    <i class="fas fa-eye me-1"></i>查看答案
-                                </button>
-                                
-                                <button class="btn btn-sm btn-outline-warning mt-2 ms-2" 
-                                        type="button"
-                                        onclick="submitForAICheck('{{ question.ai_question_id }}')">
-                                    <i class="fas fa-robot me-1"></i>AI纠错
-                                </button>
+                            <!-- 未作答的题目显示按钮 -->
+                            <button class="btn btn-sm btn-outline-info mt-2" type="button"
+                                onclick="toggleAnswer('answer_{{ question.ai_question_id }}')">
+                                <i class="fas fa-eye me-1"></i>查看答案
+                            </button>
+
+                            <button class="btn btn-sm btn-outline-warning mt-2 ms-2" type="button"
+                                onclick="submitForAICheck('{{ question.ai_question_id }}')">
+                                <i class="fas fa-robot me-1"></i>AI纠错
+                            </button>
                             {% endif %}
-                            
+
                             <!-- 答案和解析（默认隐藏） -->
                             <div class="mt-2 collapse" id="answer_{{ question.ai_question_id }}">
                                 <div class="card border-info">
@@ -205,9 +213,9 @@
             </div>
         </div>
     </div>
-    
+
     <!-- ...（右侧统计面板保持不变）... -->
-      
+
     <div class="col-md-4">
         <!-- 练习统计 -->
         <div class="card shadow-sm mb-4">
@@ -221,13 +229,14 @@
                         <small class="text-muted">推荐题目</small>
                     </div>
                     <div class="col-6">
-                        <h4 class="text-success">{{ questions_with_answers|selectattr('answer_record')|list|length }}</h4>
+                        <h4 class="text-success">{{ questions_with_answers|selectattr('answer_record')|list|length }}
+                        </h4>
                         <small class="text-muted">已完成</small>
                     </div>
                 </div>
             </div>
         </div>
-        
+
         <!-- 学习建议 -->
         <div class="card shadow-sm">
             <div class="card-header bg-light">
@@ -264,6 +273,7 @@
         border-left: 4px solid #28a745;
         background-color: rgba(40, 167, 69, 0.05);
     }
+
     .student-answer {
         background-color: #f8f9fa;
         padding: 10px;
@@ -273,80 +283,80 @@
 </style>
 
 <script>
-// 提交答案给AI纠错
-function submitForAICheck(questionId) {
-    const answer = getStudentAnswer(questionId);
-    if (!answer) {
-        alert('请先回答问题再提交纠错');
-        return;
+    // 提交答案给AI纠错
+    function submitForAICheck(questionId) {
+        const answer = getStudentAnswer(questionId);
+        if (!answer) {
+            alert('请先回答问题再提交纠错');
+            return;
+        }
+
+        // 显示加载状态
+        const feedbackDiv = document.getElementById(`ai_feedback_${questionId}`);
+        const loadingDiv = document.getElementById(`ai_loading_${questionId}`);
+        const contentDiv = document.getElementById(`ai_feedback_content_${questionId}`);
+
+        if (feedbackDiv) feedbackDiv.classList.add('show');
+        if (loadingDiv) loadingDiv.style.display = 'block';
+        if (contentDiv) contentDiv.innerHTML = '';
+
+        fetch('/wrongbook/ai_check', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                question_id: questionId,
+                student_answer: answer
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // 提交成功后刷新页面
+                    window.location.reload();
+                } else {
+                    if (contentDiv) contentDiv.innerHTML = `<div class="alert alert-danger">${data.error || 'AI纠错服务暂时不可用'}</div>`;
+                }
+            })
+            .catch(error => {
+                if (contentDiv) contentDiv.innerHTML = `<div class="alert alert-danger">请求失败: ${error.message}</div>`;
+            })
+            .finally(() => {
+                if (loadingDiv) loadingDiv.style.display = 'none';
+            });
     }
 
-    // 显示加载状态
-    const feedbackDiv = document.getElementById(`ai_feedback_${questionId}`);
-    const loadingDiv = document.getElementById(`ai_loading_${questionId}`);
-    const contentDiv = document.getElementById(`ai_feedback_content_${questionId}`);
-    
-    if (feedbackDiv) feedbackDiv.classList.add('show');
-    if (loadingDiv) loadingDiv.style.display = 'block';
-    if (contentDiv) contentDiv.innerHTML = '';
-    
-    fetch('/wrongbook/ai_check', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            question_id: questionId,
-            student_answer: answer
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // 提交成功后刷新页面
-            window.location.reload();
-        } else {
-            if (contentDiv) contentDiv.innerHTML = `<div class="alert alert-danger">${data.error || 'AI纠错服务暂时不可用'}</div>`;
-        }
-    })
-    .catch(error => {
-        if (contentDiv) contentDiv.innerHTML = `<div class="alert alert-danger">请求失败: ${error.message}</div>`;
-    })
-    .finally(() => {
-        if (loadingDiv) loadingDiv.style.display = 'none';
-    });
-}
 
+    // 获取学生答案
+    function getStudentAnswer(questionId) {
+        const answerInputs = document.getElementsByName(`answer_${questionId}`);
 
-// 获取学生答案
-function getStudentAnswer(questionId) {
-    const answerInputs = document.getElementsByName(`answer_${questionId}`);
-    
-    if (answerInputs.length === 0) return null;
-    
-    // 处理选择题和判断题
-    if (answerInputs[0].type === 'radio') {
-        for (const input of answerInputs) {
-            if (input.checked) return input.value;
+        if (answerInputs.length === 0) return null;
+
+        // 处理选择题和判断题
+        if (answerInputs[0].type === 'radio') {
+            for (const input of answerInputs) {
+                if (input.checked) return input.value;
+            }
+            return null;
         }
+
+        // 处理简答题
+        if (answerInputs[0].tagName === 'TEXTAREA') {
+            return answerInputs[0].value.trim();
+        }
+
         return null;
     }
-    
-    // 处理简答题
-    if (answerInputs[0].tagName === 'TEXTAREA') {
-        return answerInputs[0].value.trim();
-    }
-    
-    return null;
-}
 
-function toggleAnswer(answerId) {
-    const answerDiv = document.getElementById(answerId);
-    if (answerDiv.classList.contains('show')) {
-        answerDiv.classList.remove('show');
-    } else {
-        answerDiv.classList.add('show');
+    function toggleAnswer(answerId) {
+        const answerDiv = document.getElementById(answerId);
+        if (answerDiv.classList.contains('show')) {
+            answerDiv.classList.remove('show');
+        } else {
+            answerDiv.classList.add('show');
+        }
     }
-}
 </script>
 {% endblock %}

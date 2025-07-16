@@ -31,13 +31,13 @@ def generate_assessment_with_ai(course_id: int, num_questions: int = 10) -> List
         # 构造提示词
         prompt = f"""
 你是一位经验丰富的教师，需要为课程《{course.name}》设计一套考核题目。
-请根据以下课程知识库内容，生成{num_questions}道题目，包含选择题、判断题和简答题：
+请根据以下课程知识库内容，生成{num_questions}道题目，包含选择题、判断题、简答题和编程题：
 
 课程知识库内容：
 {knowledge_content}
 
 要求：
-1. 题目类型多样，包含选择题、判断题和简答题
+1. 题目类型多样，包含选择题、判断题、简答题和编程题（当课程知识库内容涉及编程时）
 2. 题目难度适中，覆盖课程核心知识点
 3. 每道题包含题目内容、正确答案和详细解析
 4. 返回严格的JSON格式数据，注意选择题的题目内容需要包含选项内容
@@ -65,6 +65,12 @@ def generate_assessment_with_ai(course_id: int, num_questions: int = 10) -> List
         }},
         {{
             "type": "简答题",
+            "content": "题目内容",
+            "answer": "参考答案",
+            "analysis": "解析说明"
+        }},
+         {{
+            "type": "编程题",
             "content": "题目内容",
             "answer": "参考答案",
             "analysis": "解析说明"

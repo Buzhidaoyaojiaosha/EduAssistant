@@ -110,7 +110,8 @@ def generate_ai_feedback(question_context, question_answer, student_answer, ques
     question_type_map = {
         1: "选择题",
         2: "判断题", 
-        3: "简答题"
+        3: "简答题",
+        4: "编程题"
     }
     
     prompt = f"""

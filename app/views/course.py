@@ -587,7 +587,7 @@ def edit_ai_question(question_id):
                 
             elif ai_question.status == 2:  # 判断题
                 ai_question.context = request.form.get('context', '')
-            else:  # 简答题
+            else:  # 简答题或编程题
                 ai_question.context = request.form.get('context', '')
             
             ai_question.save()
@@ -619,7 +619,8 @@ def edit_ai_question(question_id):
                          question_types={
                              1: '选择题',
                              2: '判断题', 
-                             3: '简答题'
+                             3: '简答题',
+                             4: '编程题'
                          })
 
 # 添加审核路由
@@ -723,7 +724,7 @@ def submit_assignment(assignment_id):
                     if stored_answer == correct_answer:
                         earned_score = question.score
                     student_answer = stored_answer  # 使用转换后的答案进行存储
-                else:  # 简答题
+                else:  # 简答题和编程题
                     try:
                         earned_score = AssignmentService.grade_short_answer_with_deepseek(
                             question=question.context,
@@ -1246,6 +1247,7 @@ def add_question(assignment_id):
 def edit_question(question_id):
     question = Question.get_by_id(question_id)
     user_id = session['user_id']
+    
     # 验证权限
     if question.assignment.course.teacher_id != user_id:
         flash('只有课程教师可以更新题目', 'warning')
@@ -1256,11 +1258,32 @@ def edit_question(question_id):
             # 保存旧的分数用于比较
             old_score = question.score
             
-            question.question_name = request.form.get('name')
-            question.context = request.form.get('context')
-            question.answer = request.form.get('answer')
-            question.score = float(request.form.get('score'))
-            question.status = int(request.form.get('type'))
+            # 获取表单数据并更新
+            question.question_name = request.form.get('name', question.question_name)
+            question.answer = request.form.get('answer', question.answer)
+            question.analysis = request.form.get('analysis', question.analysis)
+            question.status = int(request.form.get('type', question.status))
+            question.score = float(request.form.get('score', question.score))
+            
+            # 处理题目内容
+            if question.status == 1:  # 选择题
+                options = request.form.getlist('options[]')
+                question_stem = request.form.get('context', '')
+                
+                # 为每个选项添加字母前缀 (A., B., C., ...)
+                prefixed_options = []
+                for i, option in enumerate(options):
+                    letter = chr(65 + i)  # A, B, C, ...
+                    prefixed_options.append(f"{letter}. {option.strip()}")
+                
+                # 合并题干和选项
+                question.context = question_stem + '\n' + '\n'.join(prefixed_options)
+                
+            elif question.status == 2:  # 判断题
+                question.context = request.form.get('context', '')
+            else:  # 简答题或编程题
+                question.context = request.form.get('context', '')
+            
             question.save()
             
             # 如果分数有变化，更新作业总分
@@ -1269,10 +1292,36 @@ def edit_question(question_id):
             
             flash('题目更新成功', 'success')
             return redirect(url_for('course.view_assignment', assignment_id=question.assignment.id))
+            
         except Exception as e:
             flash(f'更新题目失败: {str(e)}', 'danger')
     
-    return render_template('course/edit_question.html', question=question)
+    # 准备编辑表单数据
+    question_stem = ""
+    options = []
+    if question.status == 1:  # 如果是选择题
+        parts = question.context.split('\n')
+        question_stem = parts[0] if parts else ""
+        options = []
+        
+        # 提取选项内容（去掉字母前缀）
+        for part in parts[1:]:
+            # 匹配 "A. 选项内容" 格式
+            if re.match(r'^[A-Z]\.\s', part):
+                options.append(part[3:].strip())  # 去掉前3个字符（如"A. "）
+            else:
+                options.append(part.strip())
+    
+    return render_template('course/edit_question.html',
+                         question=question,
+                         question_stem=question_stem,
+                         options=options,
+                         question_types={
+                             1: '选择题',
+                             2: '判断题',
+                             3: '简答题',
+                             4: '编程题'
+                         })
 
 @course_bp.route('/question/<int:question_id>/delete', methods=['POST'])
 def delete_question(question_id):
@@ -1638,6 +1687,9 @@ def save_assessment(course_id):
             if question_type == '简答题':
                 score = 10.0
                 status = 3  # 简答题
+            elif question_type == '编程题':
+                score = 10.0
+                status = 4  # 编程题
             elif question_type == '判断题':
                 score = 5.0
                 status = 2  # 判断题

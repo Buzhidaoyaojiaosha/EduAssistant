@@ -88,6 +88,7 @@
                                             {{ '选择题' if question.status == 1
                                             else '判断题' if question.status == 2
                                             else '简答题' if question.status == 3
+                                            else '编程题' if question.status == 4
                                             }}
                                         </span>
                                     </div>
@@ -138,6 +139,13 @@
                                                 <label class="form-check-label"
                                                     for="false_{{ question.question_id }}">错误</label>
                                             </div>
+                                            {% endif %}
+                                            {% elif question.status == 4 %} <!-- 编程题 -->
+                                            <p class="mb-2">{{ question.context }}</p>
+                                            {% if not is_teacher %}
+                                            <textarea class="form-control" name="answer_{{ question.question_id }}"
+                                                rows="{{ 3 if question.status == 3 else 5 }}" placeholder="请输入您的答案..."
+                                                required></textarea>
                                             {% endif %}
                                             {% else %} <!-- 简答题 -->
                                             <p class="mb-2">{{ question.context }}</p>

@@ -67,7 +67,7 @@ def create_questions():
     questions = []
     
     # 题目类型
-    question_types = [1, 2, 3, 4]  # 1:选择题, 2:判断题, 3:简答题 
+    question_types = [1, 2, 3, 4]  # 1:选择题, 2:判断题, 3:简答题,4:编程题
     
     print("\n创建试题数据...")
     

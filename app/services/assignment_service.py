@@ -212,7 +212,7 @@ class AssignmentService:
                 - submission_id (int): 提交ID
                 - question_id (int): 题目ID
                 - question_name (str): 题目名称
-                - question_type (int): 题目类型(1:选择题, 2:判断题, 3:简答题, 其他:主观题)
+                - question_type (int): 题目类型(1:选择题, 2:判断题, 3:简答题,4:编程题, 其他:主观题)
                 - context (str): 题目内容
                 - answer (str): 正确答案
                 - commit_answer (str): 学生提交的答案
@@ -590,7 +590,7 @@ class AssignmentService:
 
     @staticmethod
     def grade_short_answer_with_deepseek(question: str, student_answer: str, max_score: float, model="deepseek-chat") -> float:
-        """使用DeepSeek API对简答题进行自动评分
+        """使用DeepSeek API对简答题和编程题进行自动评分
         
         Args:
             question (str): 题目内容
@@ -625,7 +625,7 @@ class AssignmentService:
             """
             
             messages = [
-                {"role": "system", "content": "你是一个专业的教学助理，负责对学生的简答题答案进行评分。"},
+                {"role": "system", "content": "你是一个专业的教学助理，负责对学生的简答题和编程题答案进行评分。"},
                 {"role": "user", "content": prompt}
             ]
             
@@ -647,11 +647,11 @@ class AssignmentService:
             # 确保分数在合理范围内
             score = max(0, min(max_score, score))
             
-            logger.info(f"简答题评分完成 - 题目: {question[:50]}... | 得分: {score}/{max_score}")
+            logger.info(f"简答题/编程题评分完成 - 题目: {question[:50]}... | 得分: {score}/{max_score}")
             return score
             
         except Exception as e:
-            logger.error(f"简答题自动评分失败: {str(e)}")
+            logger.error(f"简答题/编程题自动评分失败: {str(e)}")
             raise ValueError(f"自动评分失败: {str(e)}")
  
 
@@ -715,7 +715,8 @@ class AssignmentService:
         types = {
             1: "选择题",
             2: "判断题",
-            3: "简答题"
+            3: "简答题",
+            4: "编程题",
         }
         return types.get(status, "未知类型")
 
