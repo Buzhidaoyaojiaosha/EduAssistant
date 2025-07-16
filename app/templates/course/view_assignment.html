@@ -26,6 +26,9 @@
             data-bs-target="#deleteAssignmentModal">
             <i class="fas fa-trash me-1"></i>删除作业
         </button>
+        <button type="button" class="btn btn-warning ms-2" data-bs-toggle="modal" data-bs-target="#editDueDateModal">
+            <i class="fas fa-calendar me-1"></i>修改截止时间
+        </button>
         {% endif %}
         <a href="{{ url_for('course.view', course_id=assignment.course.id) }}" class="btn btn-outline-primary">
             <i class="fas fa-arrow-left me-1"></i>返回课程
@@ -468,7 +471,33 @@
         </div>
     </div>
 </div>
-
+<!-- 添加修改截止时间的模态框 -->
+<div class="modal fade" id="editDueDateModal" tabindex="-1" aria-labelledby="editDueDateModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-white">
+                <h5 class="modal-title" id="editDueDateModalLabel">
+                    <i class="fas fa-calendar me-2"></i>修改截止时间
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <form method="post" action="{{ url_for('course.edit_assignment_due_date', assignment_id=assignment.id) }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="new_due_date" class="form-label">新的截止时间</label>
+                        <input type="datetime-local" class="form-control" id="new_due_date" name="new_due_date"
+                            value="{{ assignment.due_date.strftime('%Y-%m-%dT%H:%M') }}" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-warning">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 <!-- 初始化工具提示 -->
 <script>
     document.addEventListener('DOMContentLoaded', function () {

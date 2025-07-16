@@ -1732,3 +1732,48 @@ def save_assessment(course_id):
             'success': False,
             'error': '保存失败，请稍后重试'
         }), 500
+
+@course_bp.route('/assignment/<int:assignment_id>/edit_due_date', methods=['GET', 'POST'])
+def edit_assignment_due_date(assignment_id):
+    """修改作业截止时间"""
+    if 'user_id' not in session:
+        flash('请先登录', 'warning')
+        return redirect(url_for('auth.login'))
+    
+    try:
+        assignment = Assignment.get_by_id(assignment_id)
+        user_id = session['user_id']
+        
+        # 验证权限 - 只有课程教师可以修改
+        if assignment.course.teacher_id != user_id:
+            flash('只有课程教师可以修改截止时间', 'warning')
+            return redirect(url_for('course.view_assignment', assignment_id=assignment_id))
+        
+        if request.method == 'POST':
+            # 获取表单数据
+            new_due_date_str = request.form.get('new_due_date')
+            # 将字符串转换为datetime对象
+            new_due_date = datetime.fromisoformat(new_due_date_str)
+            
+            # 更新作业的截止时间
+            AssignmentService.update_due_date(assignment_id,new_due_date)
+            
+            flash('截止时间已更新', 'success')
+            return redirect(url_for('course.view_assignment', assignment_id=assignment_id))
+        
+        # GET请求 - 显示修改表单
+        # 将datetime对象转换为字符串格式，用于填充表单
+        current_due_date = assignment.due_date.strftime('%Y-%m-%dT%H:%M')
+        return render_template('course/edit_due_date.html', 
+                             assignment=assignment,
+                             current_due_date=current_due_date)
+    
+    except DoesNotExist:
+        flash('作业不存在', 'danger')
+        return redirect(url_for('dashboard.index'))
+    except ValueError as e:
+        flash(f'日期格式错误: {str(e)}', 'danger')
+        return redirect(url_for('course.edit_assignment_due_date', assignment_id=assignment_id))
+    except Exception as e:
+        flash(f'更新失败: {str(e)}', 'danger')
+        return redirect(url_for('course.view_assignment', assignment_id=assignment_id))

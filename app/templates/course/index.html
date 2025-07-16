@@ -80,7 +80,7 @@
             <div class="card-footer bg-transparent border-0">
                 <div class="d-flex justify-content-between">
                     <a href="{{ url_for('course.view', course_id=course.id) }}" class="btn btn-sm btn-primary">进入课程</a>
-                    {% if session.get('user_id') == course.teacher.id %}
+                    {% if is_admin or session.get('user_id') == course.teacher.id %}
                     <a href="{{ url_for('analytics.course_analytics', course_id=course.id) }}"
                         class="btn btn-sm btn-outline-primary">查看分析</a>
                     <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal"

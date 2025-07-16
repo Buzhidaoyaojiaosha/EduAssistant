@@ -54,6 +54,14 @@ class AssignmentService:
         return Assignment.get_by_id(assignment_id)
     
     @staticmethod
+    def update_due_date(assignment_id, new_due_date):
+        """更新作业截止时间"""
+        assignment = Assignment.get_by_id(assignment_id)
+        assignment.due_date = new_due_date
+        assignment.save()
+        return assignment
+    
+    @staticmethod
     def assign_to_students(assignment_id):
         """将作业分配给所有选课学生。
         
