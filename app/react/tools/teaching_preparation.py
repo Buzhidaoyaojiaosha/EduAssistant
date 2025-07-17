@@ -20,11 +20,12 @@ from app.services.course_service import CourseService
 from app.utils.llm.deepseek import chat_deepseek
 import re
 
-def generate_teaching_outline(course_id: int) -> Dict:
+def generate_teaching_outline(course_id: int,selected_knowledge_ids: List[int] = None) -> Dict:
     """生成AI驱动的备课提纲
     
     Args:
         course_id (int): 课程ID
+        selected_knowledge_ids (List[int], optional): 选中的知识库ID列表
         
     Returns:
         Dict: 包含生成的备课提纲内容和文件信息
@@ -35,7 +36,7 @@ def generate_teaching_outline(course_id: int) -> Dict:
             return {"error": "课程不存在"}
         
         # 1. 获取本课程的知识库资料
-        relevant_docs = _get_course_knowledge_content(course_id)
+        relevant_docs = _get_selected_knowledge_content(course_id, selected_knowledge_ids)
         
         # 2. 构造DeepSeek API提示词
         prompt = f"""
@@ -97,6 +98,60 @@ def generate_teaching_outline(course_id: int) -> Dict:
         logger.error(f"生成备课提纲失败: {str(e)}")
         return {"error": f"生成失败: {str(e)}"}
 
+def _get_selected_knowledge_content(course_id: int, selected_ids: List[int] = None) -> str:
+    """获取选中的知识库内容作为AI生成参考
+    
+    Args:
+        course_id (int): 课程ID
+        selected_ids (List[int]): 选中的知识库ID列表
+        
+    Returns:
+        str: 格式化的知识库内容
+    """
+    try:
+        # 如果没有提供选中的ID，获取所有知识库内容
+        if not selected_ids:
+            all_knowledge = CourseService.get_knowledge_base_by_course(course_id=course_id)
+        else:
+            # 获取选中的知识库内容
+            all_knowledge = KnowledgeBaseService.get_knowledge_by_ids(selected_ids)
+        
+        if not all_knowledge:
+            return "没有选择任何课程资料，将基于基础模板生成内容。"
+        
+        # 格式化内容
+        formatted_content = []
+ 
+        for item in all_knowledge:
+            # 判断内容类型：下载链接还是纯文本
+            if item.content.startswith(('http://', 'https://', 'ftp://')):
+                # 这是一个下载链接
+                content_desc = f"文件链接: {item.content}"
+                content_type = "可下载资源"
+            else:
+                # 这是纯文本内容
+                content_preview = item.content[:500] + "..." if len(item.content) > 500 else item.content
+                content_desc = f"文本内容: {content_preview}"
+                content_type = "纯文本资源"
+            
+            formatted_item = f"""
+【{item.title}】
+类别: {item.category or '未分类'}
+资源类型: {content_type}
+内容: {content_desc}
+创建时间: {item.created_at.strftime('%Y-%m-%d')}
+---
+"""
+            formatted_content.append(formatted_item)
+        
+        result = f"以下是《课程ID:{course_id}》的相关教学资料（共{len(all_knowledge)}项）：\n\n"
+        result += "\n".join(formatted_content)
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"获取选中知识库内容失败: {str(e)}")
+        return "获取课程资料失败，将基于基础模板生成内容。"
 
 def _get_course_knowledge_content(course_id: int) -> str:
     """获取本课程的知识库内容作为AI生成参考

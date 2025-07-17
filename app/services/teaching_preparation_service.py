@@ -11,7 +11,7 @@ class TeachingPreparationService:
     
     @register_as_tool(roles=["teacher"])
     @staticmethod
-    def generate_outline(course_id: int) -> str:
+    def generate_outline(course_id: int,selected_knowledge_ids: List[int] = None) -> str:
         """生成备课提纲
         
         Args:
@@ -22,7 +22,7 @@ class TeachingPreparationService:
         Returns:
             str: 生成的备课提纲
         """
-        return generate_teaching_outline(course_id)
+        return generate_teaching_outline(course_id,selected_knowledge_ids)
     
     @register_as_tool(roles=["teacher"])
     @staticmethod

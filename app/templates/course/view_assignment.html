@@ -26,8 +26,8 @@
             data-bs-target="#deleteAssignmentModal">
             <i class="fas fa-trash me-1"></i>删除作业
         </button>
-        <button type="button" class="btn btn-warning ms-2" data-bs-toggle="modal" data-bs-target="#editDueDateModal">
-            <i class="fas fa-calendar me-1"></i>修改截止时间
+        <button type="button" class="btn btn-warning ms-2" data-bs-toggle="modal" data-bs-target="#editAssignmentModal">
+            <i class="fas fa-edit me-1"></i>编辑作业
         </button>
         {% endif %}
         <a href="{{ url_for('course.view', course_id=assignment.course.id) }}" class="btn btn-outline-primary">
@@ -173,6 +173,10 @@
                                         class="d-inline" onsubmit="return confirm('确定要删除这个题目吗？此操作不可恢复。');">
                                         <button type="submit" class="btn btn-sm btn-outline-danger ms-1">删除</button>
                                     </form>
+                                    <button class="btn btn-sm btn-outline-info ms-1 generate-similar-btn"
+                                        data-question-id="{{ question.question_id }}">
+                                        <i class="fas fa-robot me-1"></i>AI生成相似题目
+                                    </button>
                                     {% endif %}
                                 </div>
                                 {% endif %}
@@ -445,6 +449,27 @@
 
 
 </div>
+<!-- 添加AI生成进度模态框 -->
+<div class="modal fade" id="generateProgressModal" tabindex="-1" aria-labelledby="generateProgressModalLabel"
+    aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="generateProgressModalLabel">正在生成相似题目</h5>
+            </div>
+            <div class="modal-body text-center">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">生成中...</span>
+                </div>
+                <p class="mb-0">AI正在分析题目并生成相似题目，请稍候...</p>
+                <div class="progress mt-3">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
+                        style="width: 100%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- 添加删除确认模态框 -->
 <div class="modal fade" id="deleteAssignmentModal" tabindex="-1" aria-labelledby="deleteAssignmentModalLabel"
@@ -471,21 +496,30 @@
         </div>
     </div>
 </div>
-<!-- 添加修改截止时间的模态框 -->
-<div class="modal fade" id="editDueDateModal" tabindex="-1" aria-labelledby="editDueDateModalLabel" aria-hidden="true">
+<!-- 编辑作业的模态框 -->
+<div class="modal fade" id="editAssignmentModal" tabindex="-1" aria-labelledby="editAssignmentModalLabel"
+    aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header bg-warning text-white">
-                <h5 class="modal-title" id="editDueDateModalLabel">
-                    <i class="fas fa-calendar me-2"></i>修改截止时间
+                <h5 class="modal-title" id="editAssignmentModalLabel">
+                    <i class="fas fa-calendar me-2"></i>编辑作业
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                     aria-label="Close"></button>
             </div>
-            <form method="post" action="{{ url_for('course.edit_assignment_due_date', assignment_id=assignment.id) }}">
+            <form method="post" action="{{ url_for('course.edit_assignment', assignment_id=assignment.id) }}">
                 <div class="modal-body">
+                    <!-- 作业名称输入框 -->
                     <div class="mb-3">
-                        <label for="new_due_date" class="form-label">新的截止时间</label>
+                        <label for="title" class="form-label">作业名称</label>
+                        <input type="text" class="form-control" id="title" name="title" value="{{ assignment.title }}"
+                            required>
+                    </div>
+
+                    <!-- 截止时间输入框 -->
+                    <div class="mb-3">
+                        <label for="new_due_date" class="form-label">截止时间</label>
                         <input type="datetime-local" class="form-control" id="new_due_date" name="new_due_date"
                             value="{{ assignment.due_date.strftime('%Y-%m-%dT%H:%M') }}" required>
                     </div>
@@ -525,5 +559,51 @@
             console.log(`注意: 题目分值总和(${calculatedTotal})与作业总分(${assignmentTotal})不一致`);
         }
     });
+    document.addEventListener('DOMContentLoaded', function () {
+        // 检查是否有flash消息，如果有则滚动到顶部
+        const flashMessages = document.querySelectorAll('.alert, .flash-message');
+        if (flashMessages.length > 0) {
+            // 页面加载完成后立即滚动到顶部
+            window.scrollTo(0, 0);
+        }
+        // 获取所有生成按钮
+        const generateButtons = document.querySelectorAll('.generate-similar-btn');
+
+        // 为每个按钮添加点击事件
+        generateButtons.forEach(button => {
+            button.addEventListener('click', function () {
+                const questionId = this.getAttribute('data-question-id');
+
+                // 显示模态框
+                const modal = new bootstrap.Modal(document.getElementById('generateProgressModal'));
+                modal.show();
+
+                // 发送AJAX请求
+                fetch(`/course/question/${questionId}/generate_similar`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    redirect: 'manual' // 手动处理重定向
+                })
+                    .then(response => {
+                        // 关闭模态框
+                        modal.hide();
+                        // 处理重定向，刷新页面
+                        window.location.reload();
+                        return;
+                    })
+                    .catch(error => {
+                        // 关闭模态框
+                        modal.hide();
+
+                        // 处理错误
+                        console.error('生成相似题目时发生错误:', error);
+                        alert('请求失败，请稍后重试');
+                    });
+            });
+        });
+    });
+
 </script>
 {% endblock %}

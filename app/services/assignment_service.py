@@ -54,6 +54,14 @@ class AssignmentService:
         return Assignment.get_by_id(assignment_id)
     
     @staticmethod
+    def update_title(assignment_id, new_title):
+        """更新作业名字"""
+        assignment = Assignment.get_by_id(assignment_id)
+        assignment.title = new_title
+        assignment.save()
+        return assignment
+    
+    @staticmethod
     def update_due_date(assignment_id, new_due_date):
         """更新作业截止时间"""
         assignment = Assignment.get_by_id(assignment_id)
