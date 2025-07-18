@@ -77,11 +77,8 @@
             </div>
         </div>
 
-        <!-- 知识点列表 (仅教师可见) -->
-        {% if is_teacher %}
+        <!-- 知识点列表 -->
         <div class="card shadow-sm mb-4">
-
-
             <div class="card-header bg-light d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="fas fa-lightbulb me-2"></i>知识点</h5>
                 <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal"
@@ -116,7 +113,9 @@
                                 <th>名称</th>
                                 <th>描述</th>
                                 <th>所属</th>
+                                {% if is_teacher %}
                                 <th>操作</th>
+                                {% endif %}
                             </tr>
                         </thead>
                         <tbody>
@@ -131,6 +130,7 @@
                                     <span class="text-muted">顶级</span>
                                     {% endif %}
                                 </td>
+                                {% if is_teacher %}
                                 <td>
                                     <button type="button" class="btn btn-sm btn-outline-primary"
                                         onclick="editKnowledgePoint({{ kp.id }}, '{{ kp.name }}', '{{ kp.description }}', {% if kp.parent %}{{ kp.parent.id }}{% else %}null{% endif %})">
@@ -141,6 +141,7 @@
                                         删除
                                     </button>
                                 </td>
+                                {% endif %}
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -151,7 +152,6 @@
                 {% endif %}
             </div>
         </div>
-        {% endif %}
 
         <!-- 作业列表 -->
         <div class="card shadow-sm mb-4">
