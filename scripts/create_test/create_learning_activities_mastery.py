@@ -13,7 +13,7 @@ from app.models.assignment import *
 from app.models.learning_data import *
 from app.models.knowledge_base import *
 # Current reference date - using the provided date
-CURRENT_DATE = datetime.datetime(2025, 3, 20, 9, 42, 30)
+CURRENT_DATE = datetime.datetime(2025, 7, 18, 9, 42, 30)
 
 def setup_database():
     """Connect to the database."""

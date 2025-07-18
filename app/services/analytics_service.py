@@ -1,8 +1,13 @@
 import pandas as pd
 from datetime import datetime, timedelta
+
+from sympy.physics.units import days
+
 from app.models.learning_data import LearningActivity, StudentKnowledgePoint, KnowledgePoint
 from app.models.assignment import StudentAssignment, Assignment
 from app.models.course import Course
+from app.models.user import User
+from app.models.teaching_data import TeachingActivity
 from app.react.tools_register import register_as_tool
 
 class AnalyticsService:
@@ -229,3 +234,78 @@ class AnalyticsService:
             'has_issues': len(issues) > 0,
             'issues': issues
         }
+
+    @staticmethod
+    def get_all_student_activity():
+        """获取所有学生的日、周活跃度（次数），基于updated_at字段"""
+        now = datetime.now()
+        today_start = datetime(now.year, now.month, now.day)
+        week_start = now - timedelta(days=7)
+
+        # 查询所有学生ID
+        student_ids = (LearningActivity
+                       .select(LearningActivity.student_id)
+                       .distinct())
+
+        result = {}
+        for sid_obj in student_ids:
+            sid = sid_obj.student_id
+            # 今日活跃度（次数），基于updated_at
+            today_count = (LearningActivity
+                           .select()
+                           .where(
+                               (LearningActivity.student_id == sid) &
+                               (LearningActivity.updated_at >= today_start)
+                           )
+                           .count())
+            # 近一周活跃度（次数），基于updated_at
+            week_count = (LearningActivity
+                          .select()
+                          .where(
+                              (LearningActivity.student_id == sid) &
+                              (LearningActivity.updated_at >= week_start)
+                          )
+                          .count())
+            result[sid] = {
+                "daily": today_count,
+                "weekly": week_count
+            }
+        
+        return result 
+        
+    @staticmethod
+    def get_all_teacher_activity():
+        """获取所有教师的日、周活跃度（次数），基于TeachingActivity表的updated_at字段"""
+        now = datetime.now()
+        today_start = datetime(now.year, now.month, now.day)
+        week_start = now - timedelta(days=7)
+
+        # 查询所有教师ID
+        teacher_ids = (TeachingActivity
+                       .select(TeachingActivity.teacher_id)
+                       .distinct())
+
+        result = {}
+        for tid_obj in teacher_ids:
+            tid = tid_obj.teacher_id
+            # 今日活跃度（次数），基于updated_at
+            today_count = (TeachingActivity
+                           .select()
+                           .where(
+                               (TeachingActivity.teacher_id == tid) &
+                               (TeachingActivity.timestamp >= today_start)
+                           )
+                           .count())
+            # 近一周活跃度（次数），基于updated_at
+            week_count = (TeachingActivity
+                          .select()
+                          .where(
+                              (TeachingActivity.teacher_id == tid) &
+                              (TeachingActivity.timestamp >= week_start)
+                          )
+                          .count())
+            result[tid] = {
+                "daily": today_count,
+                "weekly": week_count
+            }
+        return result

@@ -1,4 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session
+
+from app.services.analytics_service import AnalyticsService
 from app.services.user_service import UserService
 from app.models.user import User, Role, UserRole
 from app.models.user import User
@@ -35,8 +37,23 @@ def index():
         'assignment_count': Assignment.select().count(),
         'knowledge_count': KnowledgeBase.select().count()
     }
+    
+    student_activities = AnalyticsService.get_all_student_activity()
+    teacher_activities = AnalyticsService.get_all_teacher_activity()
+    print(f"学生活动数据如下:{student_activities}")
+    print(f"教师活动数据如下:{teacher_activities}")
+    
+     # 只查有活跃度的学生
+    student_ids = list(student_activities.keys())
+    students = User.select().where(User.id.in_(student_ids))
+    print(f"学生数据如下:{students}")
+    
+    teacher_ids = list(teacher_activities.keys())
+    teachers = User.select().where(User.id.in_(teacher_ids))
+    print(f"教师数据如下:{teachers}")
+    
     print(f"\n统计数据: {stats}\n")
-    return render_template('admin/dashboard.html', **stats)
+    return render_template('admin/dashboard.html',students=students,teachers = teachers,course_activity = student_activities, teacher_activities = teacher_activities,**stats)
 
 
 @admin_bp.route('/users')
@@ -44,6 +61,19 @@ def index():
 def users():
     all_users = User.select()
     return render_template('admin/users.html', users=all_users)
+
+# @admin_bp.route('/dashboard')
+# def admin_dashboard():
+#     # 获取学生活动数据
+#     student_activities = AnalyticsService.get_all_student_activity()
+#     print(f"学生数据如下:{student_activities}")
+#     # 获取教师活动数据
+#     # teacher_activities = AnalyticsService.get_all_teacher_activity()
+
+#     return render_template('admin/dashboard.html', 
+#                          students=student_activities['students'], 
+#                         #  teachers=teacher_activities['teachers'], 
+#                          course_activity=student_activities['course_activity']) #| teacher_activities['course_activity'])
 
 
 @admin_bp.route('/users/<int:user_id>', methods=['GET', 'POST'])
