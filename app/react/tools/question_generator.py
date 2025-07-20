@@ -7,10 +7,10 @@ from app.models.learning_data import KnowledgePoint
 import json
 from app.utils.llm.deepseek import chat_deepseek
 from app.services.course_service import CourseService
-from app.react.tools.teaching_preparation import _get_course_knowledge_content
+from app.services.knowledge_base_service import KnowledgeBaseService
 
 @register_as_tool(roles=["teacher"])
-def generate_assessment_with_ai(course_id: int, num_questions: int = 10) -> List[Dict]:
+def generate_assessment_with_ai(course_id: int, question_settings: Dict[str, int],selected_knowledge_ids: List[int] = None) -> List[Dict]:
     """使用AI根据课程知识库生成考核题目
     
     Args:
@@ -21,23 +21,42 @@ def generate_assessment_with_ai(course_id: int, num_questions: int = 10) -> List
         List[Dict]: 生成的题目列表，包含题目内容、答案和解析
     """
     try:
-        course = Course.get_by_id(course_id)
-        if not course:
+        logger.info(f"开始生成考核题目: course_id={course_id}, question_settings={question_settings}")
+        # 验证题目设置
+        if not question_settings:
             return []
+    
+        # 计算总题目数
+        total_questions = sum(question_settings.values())
+        if total_questions == 0:
+            return []
+    
+        # 验证题目类型
+        valid_types = ["选择题", "判断题", "简答题", "编程题"]
+        for q_type in question_settings.keys():
+            if q_type not in valid_types:
+                logger.warning(f"无效的题目类型: {q_type}")
+                return []
+            course = Course.get_by_id(course_id)
+            if not course:
+                return []
         
         # 获取课程知识库内容
-        knowledge_content = _get_course_knowledge_content(course_id=course_id)
+        knowledge_content = _get_selected_knowledge_content(course_id, selected_knowledge_ids)
+        logger.info(f"获取知识库内容完成, 长度: {len(knowledge_content)}字符")
+
+        question_count_desc = "、".join([f"{count}道{type}" for type, count in question_settings.items() if count > 0])
         
         # 构造提示词
         prompt = f"""
 你是一位经验丰富的教师，需要为课程《{course.name}》设计一套考核题目。
-请根据以下课程知识库内容，生成{num_questions}道题目，包含选择题、判断题、简答题和编程题：
+请根据以下课程知识库内容，生成{question_count_desc}：
 
 课程知识库内容：
 {knowledge_content}
 
 要求：
-1. 题目类型多样，包含选择题、判断题、简答题和编程题（当课程知识库内容涉及编程时）
+1. 题目类型和数量严格按照要求：{question_count_desc}
 2. 题目难度适中，覆盖课程核心知识点
 3. 每道题包含题目内容、正确答案和详细解析
 4. 返回严格的JSON格式数据，注意选择题的题目内容需要包含选项内容
@@ -78,7 +97,7 @@ def generate_assessment_with_ai(course_id: int, num_questions: int = 10) -> List
     ]
 }}
 """
-        
+        logger.debug(f"构造的prompt:\n{prompt[:500]}...")  # 只记录前500字符
         messages = [
             {"role": "system", "content": "你是一位专业教师，擅长设计教学考核题目。"},
             {"role": "user", "content": prompt}
@@ -92,6 +111,7 @@ def generate_assessment_with_ai(course_id: int, num_questions: int = 10) -> List
             response_text = response_text[7:-3].strip()
         
         # 解析JSON响应
+        logger.info("开始解析JSON响应...")
         response_data = json.loads(response_text)
         questions = response_data.get("questions", [])
         
@@ -101,6 +121,61 @@ def generate_assessment_with_ai(course_id: int, num_questions: int = 10) -> List
         logger.error(f"生成考核题目失败: {str(e)}")
         return []
 
+def _get_selected_knowledge_content(course_id: int, selected_ids: List[int] = None) -> str:
+    """获取选中的知识库内容作为AI生成参考
+    
+    Args:
+        course_id (int): 课程ID
+        selected_ids (List[int]): 选中的知识库ID列表
+        
+    Returns:
+        str: 格式化的知识库内容
+    """
+    try:
+        # 如果没有提供选中的ID，获取所有知识库内容
+        if not selected_ids:
+            all_knowledge = CourseService.get_knowledge_base_by_course(course_id=course_id)
+        else:
+            # 获取选中的知识库内容
+            all_knowledge = KnowledgeBaseService.get_knowledge_by_ids(selected_ids)
+        
+        if not all_knowledge:
+            return "没有选择任何课程资料，将基于基础模板生成内容。"
+        
+        # 格式化内容
+        formatted_content = []
+ 
+        for item in all_knowledge:
+            # 判断内容类型：下载链接还是纯文本
+            if item.content.startswith(('http://', 'https://', 'ftp://')):
+                # 这是一个下载链接
+                content_desc = f"文件链接: {item.content}"
+                content_type = "可下载资源"
+            else:
+                # 这是纯文本内容
+                content_preview = item.content[:500] + "..." if len(item.content) > 500 else item.content
+                content_desc = f"文本内容: {content_preview}"
+                content_type = "纯文本资源"
+            
+            formatted_item = f"""
+【{item.title}】
+类别: {item.category or '未分类'}
+资源类型: {content_type}
+内容: {content_desc}
+创建时间: {item.created_at.strftime('%Y-%m-%d')}
+---
+"""
+            formatted_content.append(formatted_item)
+        
+        result = f"以下是《课程ID:{course_id}》的相关教学资料（共{len(all_knowledge)}项）：\n\n"
+        result += "\n".join(formatted_content)
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"获取选中知识库内容失败: {str(e)}")
+        return "获取课程资料失败，将基于基础模板生成内容。"
+    
 def generate_by_knowledge_point(knowledge_point_id: int, difficulty: str = "medium", num_questions: int = 5) -> List[Dict]:
     """根据知识点生成题目
     

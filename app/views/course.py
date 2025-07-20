@@ -1484,12 +1484,41 @@ def grade_student_answers(assignment_id, student_id):
         flash(f'评分失败: {str(e)}', 'danger')
     
     return redirect(url_for('course.view_assignment', assignment_id=assignment_id))
-
+@course_bp.route('/<int:course_id>/knowledge_entries', methods=['GET'])
+def get_knowledge_entries(course_id):
+    """获取课程知识库条目（用于前端选择）"""
+    try:
+        knowledge_entries = CourseService.get_knowledge_base_by_course(course_id)
+        
+        # 格式化返回数据
+        formatted_entries = []
+        for entry in knowledge_entries:
+            # 创建内容预览（截断长文本）
+            content_preview = entry.content
+            if not entry.content.startswith(('http://', 'https://', 'ftp://')):
+                content_preview = entry.content[:150] + '...' if len(entry.content) > 150 else entry.content
+            else:
+                content_preview = "链接资源"
+            
+            formatted_entries.append({
+                'id': entry.id,
+                'title': entry.title,
+                'category': entry.category or '未分类',
+                'type': '可下载资源' if entry.content.startswith(('http://', 'https://', 'ftp://')) else '纯文本资源',
+                'content_preview': content_preview,
+                'created_at': entry.created_at.strftime('%Y-%m-%d')
+            })
+        
+        return jsonify(formatted_entries)
+    
+    except Exception as e:
+        logger.error(f"获取知识库条目失败: {str(e)}")
+        return jsonify({'error': '获取知识库内容失败'}), 500
+    
 @course_bp.route('/api/generate_teaching_outline', methods=['POST'])
 def api_generate_teaching_outline():
-    """API端点：生成教学大纲"""
     try:
-        # 检查用户是否登录（使用session）
+        # 检查用户是否登录
         if 'user_id' not in session:
             return jsonify({'error': '用户未登录，请先登录'}), 401
         
@@ -1499,13 +1528,15 @@ def api_generate_teaching_outline():
         
         # 获取请求数据
         data = request.get_json()
+        course_id = data['course_id']
+        material_type = data.get('material_type', 'syllabus')  # 新增：大纲或PPT
+        selected_knowledge_ids = data.get('selected_knowledge_ids', [])
+
         if not data:
             return jsonify({'error': '请求数据为空'}), 400
             
         if 'course_id' not in data:
             return jsonify({'error': '缺少必要的参数: course_id'}), 400
-        
-        course_id = data['course_id']
         
         # 验证course_id格式
         try:
@@ -1518,16 +1549,14 @@ def api_generate_teaching_outline():
         if not course:
             return jsonify({'error': '课程不存在'}), 404
         
-        # 检查用户权限（可选：如果需要权限验证）
-        # current_user_id = session.get('user_id')
-        # 这里可以添加具体的权限检查逻辑
-        # 例如：检查用户是否是该课程的教师
-        # if course.teacher_id != current_user_id:
-        #     return jsonify({'error': '没有权限访问该课程'}), 403
-        
-        # 调用教学准备服务生成大纲
+        # 调用教学准备服务生成大纲（传递选中的知识库ID）
         try:
-            result = TeachingPreparationService.generate_outline(course_id)
+            result = TeachingPreparationService.generate_outline(
+                course_id, 
+                material_type=material_type,  # 传递材料类型
+                selected_knowledge_ids=selected_knowledge_ids
+            )
+            
         except Exception as service_error:
             logger.error(f"TeachingPreparationService.generate_outline 失败: {str(service_error)}")
             return jsonify({'error': '教学大纲生成服务暂时不可用，请稍后重试'}), 500
@@ -1541,7 +1570,7 @@ def api_generate_teaching_outline():
             return jsonify({'error': result['error']}), 500
         
         # 验证返回数据的完整性
-        required_fields = ['content', 'pdf_base64', 'filename', 'title', 'download_ready']
+        required_fields = ['content', 'file_base64', 'filename', 'title', 'download_ready']
         for field in required_fields:
             if field not in result:
                 logger.error(f"生成结果缺少必要字段: {field}")
@@ -1551,10 +1580,12 @@ def api_generate_teaching_outline():
         return jsonify({
             'success': True,
             'content': result['content'],
-            'pdf_base64': result['pdf_base64'],
+            'file_base64': result['file_base64'],  # 统一字段名
             'filename': result['filename'],
             'title': result['title'],
-            'download_ready': result['download_ready']
+            'download_ready': result['download_ready'],
+            'material_type': result.get('material_type', 'syllabus'),  # 新增
+            'file_type': result.get('file_type', 'pdf')  # 新增
         }), 200
         
     except Exception as e:
@@ -1565,12 +1596,16 @@ def api_generate_teaching_outline():
 def generate_assessment(course_id):
     """生成考核题目接口"""
     try:
-        # 从请求中获取题目数量，默认为10
         data = request.get_json()
-        num_questions = data.get('num_questions', 10)
+        question_settings = data.get('question_settings', {})  # 获取题目设置
+        selected_knowledge_ids = data.get('selected_knowledge_ids', [])
         
-        # 调用生成函数
-        questions = QuestionGeneratorService.generate_questions_with_ai(course_id, num_questions)
+        # 调用生成函数，传递题目设置
+        questions = QuestionGeneratorService.generate_questions_with_ai(
+            course_id, 
+            question_settings,
+            selected_knowledge_ids=selected_knowledge_ids
+        )
         
         return jsonify({
             'success': True,
@@ -1580,7 +1615,7 @@ def generate_assessment(course_id):
         current_app.logger.error(f"生成考核题目失败: {str(e)}")
         return jsonify({
             'success': False,
-            'error': str(e)  # 或者更友好的错误消息
+            'error': str(e)
         }), 500
 
 
@@ -1674,7 +1709,7 @@ def save_assessment(course_id):
                 }), 404
         
         # 保存题目
-        total_points = 0.0
+        total_points = assignment.total_points
         created_questions = []
         
         for question_data in questions:
@@ -1734,8 +1769,8 @@ def save_assessment(course_id):
         }), 500
 
 @course_bp.route('/assignment/<int:assignment_id>/edit_due_date', methods=['GET', 'POST'])
-def edit_assignment_due_date(assignment_id):
-    """修改作业截止时间"""
+def edit_assignment(assignment_id):
+    """编辑作业"""
     if 'user_id' not in session:
         flash('请先登录', 'warning')
         return redirect(url_for('auth.login'))
@@ -1746,19 +1781,27 @@ def edit_assignment_due_date(assignment_id):
         
         # 验证权限 - 只有课程教师可以修改
         if assignment.course.teacher_id != user_id:
-            flash('只有课程教师可以修改截止时间', 'warning')
+            flash('只有课程教师可以编辑作业', 'warning')
             return redirect(url_for('course.view_assignment', assignment_id=assignment_id))
         
         if request.method == 'POST':
             # 获取表单数据
+            new_title = request.form.get('title')
             new_due_date_str = request.form.get('new_due_date')
             # 将字符串转换为datetime对象
             new_due_date = datetime.fromisoformat(new_due_date_str)
+
+            # 验证数据
+            if not new_title or not new_due_date_str:
+                flash('作业名称和截止时间不能为空', 'danger')
+                return redirect(url_for('course.edit_assignment', assignment_id=assignment_id))
             
+            # 更新作业的截止时间
+            AssignmentService.update_title(assignment_id,new_title)
             # 更新作业的截止时间
             AssignmentService.update_due_date(assignment_id,new_due_date)
             
-            flash('截止时间已更新', 'success')
+            flash('作业信息已更新', 'success')
             return redirect(url_for('course.view_assignment', assignment_id=assignment_id))
         
         # GET请求 - 显示修改表单
@@ -1777,3 +1820,73 @@ def edit_assignment_due_date(assignment_id):
     except Exception as e:
         flash(f'更新失败: {str(e)}', 'danger')
         return redirect(url_for('course.view_assignment', assignment_id=assignment_id))
+    
+@course_bp.route('/question/<int:question_id>/generate_similar', methods=['POST'])
+def generate_similar_questions(question_id):
+    """为指定题目生成相似题目"""
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'error': '用户未登录'}), 401
+    
+    try:
+        # 获取题目和用户信息
+        question = Question.get_by_id(question_id)
+        user_id = session['user_id']
+        
+        # 验证权限
+        if question.assignment.course.teacher_id != user_id:
+            return jsonify({
+                'success': False,
+                'error': '只有课程教师可以生成相似题目'
+            }), 403
+        
+        # 调用生成函数
+        generated_questions = AssignmentService.generate_similar_questions_with_ai(
+            original_question=question,
+            assignment=question.assignment,
+            num_questions=3
+        )
+        
+        if generated_questions:
+            flash(f'成功生成 {len(generated_questions)}道相似题目', 'success')
+        else:
+            flash(f'生成相似题目失败，请检查题目内容', 'danger')
+
+        return redirect(url_for('course.view_assignment', assignment_id=question.assignment.id))
+            
+    except DoesNotExist:
+        flash(f'生成相似题目失败，题目不存在', 'danger')
+        return redirect(url_for('course.view_assignment', assignment_id=question.assignment.id))
+        
+    except Exception as e:
+        flash(f'生成相似题目失败，请检查题目内容', 'danger')
+        return redirect(url_for('course.view_assignment', assignment_id=question.assignment.id))
+
+# 添加保存教学资料的路由
+@course_bp.route('/save_teaching_material', methods=['POST'])
+def save_teaching_material():
+    try:
+        data = request.json
+        result = TeachingPreparationService.save_teaching_material(
+            course_id=data['course_id'],
+            title=data['title'],
+            file_base64=data['file_base64'],
+            filename=data['filename']
+        )
+        
+        if result['success']:
+            return jsonify({
+                "success": True,
+                "message": "教学资料已保存至知识库"
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "error": result.get('error', '保存失败')
+            }), 400
+            
+    except Exception as e:
+        current_app.logger.error(f"保存教学资料失败: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": "服务器内部错误"
+        }), 500

@@ -1,5 +1,5 @@
 /**
- * 教学分析助手主JavaScript文件
+ * 启智AI伴学主JavaScript文件
  */
 
 document.addEventListener('DOMContentLoaded', () => {

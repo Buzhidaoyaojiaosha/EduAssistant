@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}系统初始化 - 教学分析助手{% endblock %}
+{% block title %}系统初始化 - 启智AI伴学{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
@@ -11,7 +11,7 @@
             </div>
             <div class="card-body">
                 <div class="alert alert-info">
-                    <p><i class="fas fa-info-circle me-2"></i>欢迎使用教学分析助手系统！请先创建管理员账户以完成系统初始化。</p>
+                    <p><i class="fas fa-info-circle me-2"></i>欢迎使用启智AI伴学系统！请先创建管理员账户以完成系统初始化。</p>
                 </div>
                 
                 <form method="post" action="{{ url_for('admin.initialize_system') }}">

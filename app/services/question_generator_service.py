@@ -11,7 +11,7 @@ class QuestionGeneratorService:
     """题目生成服务，提供按知识点和课程生成题目的功能"""
     @register_as_tool(roles=["teacher"])
     @staticmethod
-    def generate_questions_with_ai(course_id: int, num_questions: int = 10) -> List[Dict]:
+    def generate_questions_with_ai(course_id: int, question_settings: Dict[str, int],selected_knowledge_ids: List[int] = None) -> List[Dict]:
         """根据知识库生成题目
         
         Args:
@@ -21,7 +21,7 @@ class QuestionGeneratorService:
         Returns:
             List[Dict]: 生成的题目列表
         """
-        return generate_assessment_with_ai(course_id=course_id,num_questions=num_questions)
+        return generate_assessment_with_ai(course_id=course_id,question_settings=question_settings,selected_knowledge_ids=selected_knowledge_ids)
     
     @register_as_tool(roles=["teacher"])
     @staticmethod

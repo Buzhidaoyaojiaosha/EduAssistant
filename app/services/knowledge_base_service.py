@@ -6,6 +6,7 @@ from pathlib import Path
 import os
 from urllib.parse import quote
 from urllib.parse import urlparse
+from typing import List
 class KnowledgeBaseService:
     """知识库服务, 处理FAQ和知识内容的存储、检索。
     
@@ -223,6 +224,14 @@ class KnowledgeBaseService:
         # 删除数据库记录
         knowledge.delete_instance()
         return True
+    
+    @staticmethod
+    def get_knowledge_by_ids(knowledge_ids: List[int]) -> List[KnowledgeBase]:
+        """根据ID列表获取知识库条目"""
+        if not knowledge_ids:
+            return []
+        
+        return list(KnowledgeBase.select().where(KnowledgeBase.id.in_(knowledge_ids)))
     
     @staticmethod
     def update_knowledge(knowledge_id, title=None, content=None, 
