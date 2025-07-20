@@ -10,7 +10,7 @@ from app.services.course_service import CourseService
 from app.services.knowledge_base_service import KnowledgeBaseService
 
 @register_as_tool(roles=["teacher"])
-def generate_assessment_with_ai(course_id: int, num_questions: int = 10,selected_knowledge_ids: List[int] = None) -> List[Dict]:
+def generate_assessment_with_ai(course_id: int, question_settings: Dict[str, int],selected_knowledge_ids: List[int] = None) -> List[Dict]:
     """使用AI根据课程知识库生成考核题目
     
     Args:
@@ -21,23 +21,42 @@ def generate_assessment_with_ai(course_id: int, num_questions: int = 10,selected
         List[Dict]: 生成的题目列表，包含题目内容、答案和解析
     """
     try:
-        course = Course.get_by_id(course_id)
-        if not course:
+        logger.info(f"开始生成考核题目: course_id={course_id}, question_settings={question_settings}")
+        # 验证题目设置
+        if not question_settings:
             return []
+    
+        # 计算总题目数
+        total_questions = sum(question_settings.values())
+        if total_questions == 0:
+            return []
+    
+        # 验证题目类型
+        valid_types = ["选择题", "判断题", "简答题", "编程题"]
+        for q_type in question_settings.keys():
+            if q_type not in valid_types:
+                logger.warning(f"无效的题目类型: {q_type}")
+                return []
+            course = Course.get_by_id(course_id)
+            if not course:
+                return []
         
         # 获取课程知识库内容
         knowledge_content = _get_selected_knowledge_content(course_id, selected_knowledge_ids)
+        logger.info(f"获取知识库内容完成, 长度: {len(knowledge_content)}字符")
+
+        question_count_desc = "、".join([f"{count}道{type}" for type, count in question_settings.items() if count > 0])
         
         # 构造提示词
         prompt = f"""
 你是一位经验丰富的教师，需要为课程《{course.name}》设计一套考核题目。
-请根据以下课程知识库内容，生成{num_questions}道题目，包含选择题、判断题、简答题和编程题：
+请根据以下课程知识库内容，生成{question_count_desc}：
 
 课程知识库内容：
 {knowledge_content}
 
 要求：
-1. 题目类型多样，包含选择题、判断题、简答题和编程题（当课程知识库内容涉及编程时）
+1. 题目类型和数量严格按照要求：{question_count_desc}
 2. 题目难度适中，覆盖课程核心知识点
 3. 每道题包含题目内容、正确答案和详细解析
 4. 返回严格的JSON格式数据，注意选择题的题目内容需要包含选项内容
@@ -78,7 +97,7 @@ def generate_assessment_with_ai(course_id: int, num_questions: int = 10,selected
     ]
 }}
 """
-        
+        logger.debug(f"构造的prompt:\n{prompt[:500]}...")  # 只记录前500字符
         messages = [
             {"role": "system", "content": "你是一位专业教师，擅长设计教学考核题目。"},
             {"role": "user", "content": prompt}
@@ -92,6 +111,7 @@ def generate_assessment_with_ai(course_id: int, num_questions: int = 10,selected
             response_text = response_text[7:-3].strip()
         
         # 解析JSON响应
+        logger.info("开始解析JSON响应...")
         response_data = json.loads(response_text)
         questions = response_data.get("questions", [])
         

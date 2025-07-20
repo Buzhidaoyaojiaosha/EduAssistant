@@ -28,7 +28,7 @@
         <!-- 第二行按钮 -->
         <div>
             <button type="button" class="btn btn-secondary me-2" id="generateTeachingOutlineBtn">
-                <i class="fas fa-graduation-cap me-1"></i>自动生成教学内容
+                <i class="fas fa-graduation-cap me-1"></i>智能备课
             </button>
             <button type="button" class="btn btn-warning me-2" id="generateAssessmentBtn">
                 <i class="fas fa-clipboard-check me-1"></i>自动生成考核内容
@@ -515,19 +515,19 @@
         </div>
     </div>
 </div>
-<!-- 教学大纲生成进度模态框 -->
+<!-- 备课资料生成进度模态框 -->
 <div class="modal fade" id="generateProgressModal" tabindex="-1" aria-labelledby="generateProgressModalLabel"
     aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="generateProgressModalLabel">正在生成教学大纲</h5>
+                <h5 class="modal-title" id="generateProgressModalLabel">正在生成备课资料</h5>
             </div>
             <div class="modal-body text-center">
                 <div class="spinner-border text-primary mb-3" role="status">
                     <span class="visually-hidden">生成中...</span>
                 </div>
-                <p class="mb-0">AI正在分析课程资料并生成教学大纲，请稍候...</p>
+                <p class="mb-0">AI正在分析课程资料并生成备课资料，请稍候...</p>
                 <div class="progress mt-3">
                     <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
                         style="width: 100%"></div>
@@ -542,14 +542,33 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="knowledgeSelectionModalLabel">选择教学资料</h5>
+                <h5 class="modal-title" id="knowledgeSelectionModalLabel">智能备课</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-info">
                     <i class="fas fa-info-circle me-2"></i>
-                    请选择要用于自动生成教学大纲的知识条目（可多选）
+                    请选择要用于备课的知识条目（可多选）和生成的教学材料类型
                 </div>
+                <!-- 材料类型选择 -->
+                <div class="mb-3">
+                    <h6><i class="fas fa-tasks me-2"></i>生成类型:</h6>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="materialType" id="materialTypeSyllabus"
+                            value="syllabus" checked>
+                        <label class="form-check-label" for="materialTypeSyllabus">
+                            <i class="fas fa-file-alt me-1"></i>教学大纲
+                        </label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="materialType" id="materialTypePPT"
+                            value="ppt">
+                        <label class="form-check-label" for="materialTypePPT">
+                            <i class="fas fa-file-powerpoint me-1"></i>教学PPT
+                        </label>
+                    </div>
+                </div>
+                <h6><i class="fas fa-lightbulb me-2"></i>选择知识条目</h6>
                 <div id="knowledgeItemsContainer" class="list-group" style="max-height: 400px; overflow-y: auto;">
                     <!-- 知识库条目将通过JavaScript动态添加 -->
                 </div>
@@ -557,7 +576,7 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
                 <button type="button" class="btn btn-primary" id="startGenerationBtn">
-                    <i class="fas fa-play me-1"></i>开始生成
+                    <i class="fas fa-play me-1"></i>开始备课
                 </button>
             </div>
         </div>
@@ -569,18 +588,23 @@
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="generateResultModalLabel">教学大纲生成完成</h5>
+                <h5 class="modal-title" id="generateResultModalLabel">备课完成</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div id="generateResultContent">
                     <!-- 生成的内容将在这里显示 -->
                 </div>
+
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
-                <button type="button" class="btn btn-primary" id="downloadPdfBtn">
-                    <i class="fas fa-download me-1"></i>下载PDF
+                <button type="button" class="btn btn-primary" id="downloadFileBtn">
+                    <i class="fas fa-download me-1"></i>下载文件
+                </button>
+                <!-- 新增保存按钮 -->
+                <button type="button" class="btn btn-info" id="saveToKnowledgeBtn">
+                    <i class="fas fa-save me-1"></i>保存至知识库
                 </button>
             </div>
         </div>
@@ -607,22 +631,50 @@
         </div>
     </div>
 </div>
-<!-- 添加考核进度知识库选择模态框 -->
+<!-- 添加考核内容知识库选择模态框 -->
 <div class="modal fade" id="knowledgeSelectionModal2" tabindex="-1" aria-labelledby="knowledgeSelectionModalLabel2"
     aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="knowledgeSelectionModalLabel2">选择教学资料</h5>
+                <h5 class="modal-title" id="knowledgeSelectionModalLabel2">生成考核内容设置</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-info">
                     <i class="fas fa-info-circle me-2"></i>
-                    请选择要用于自动生成考核内容的知识条目（可多选）
+                    请选择要用于自动生成考核内容的知识条目（可多选）并设置题目类型和数量
                 </div>
+                <h6><i class="fas fa-lightbulb me-2"></i>选择知识条目</h6>
                 <div id="knowledgeItemsContainer2" class="list-group" style="max-height: 400px; overflow-y: auto;">
                     <!-- 知识库条目将通过JavaScript动态添加 -->
+                </div>
+
+                <!-- 新增题目类型和数量设置 -->
+                <div class="mt-4">
+                    <h6><i class="fas fa-tasks me-2"></i>题目设置</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="choiceCount" class="form-label">选择题数量</label>
+                                <input type="number" min="0" class="form-control" id="choiceCount" value="3">
+                            </div>
+                            <div class="mb-3">
+                                <label for="judgmentCount" class="form-label">判断题数量</label>
+                                <input type="number" min="0" class="form-control" id="judgmentCount" value="3">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="shortAnswerCount" class="form-label">简答题数量</label>
+                                <input type="number" min="0" class="form-control" id="shortAnswerCount" value="3">
+                            </div>
+                            <div class="mb-3">
+                                <label for="programmingCount" class="form-label">编程题数量</label>
+                                <input type="number" min="0" class="form-control" id="programmingCount" value="3">
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -867,7 +919,7 @@
         const progressModal = new bootstrap.Modal(document.getElementById('generateProgressModal'));
         const resultModal = new bootstrap.Modal(document.getElementById('generateResultModal'));
         const errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
-        const downloadBtn = document.getElementById('downloadPdfBtn');
+        const downloadBtn = document.getElementById('downloadFileBtn');
 
         let generatedData = null;
         const courseId = "{{ course.id }}";
@@ -941,6 +993,9 @@
                 document.querySelectorAll('.knowledge-checkbox:checked')
             ).map(checkbox => parseInt(checkbox.value));
 
+            // 获取材料类型
+            const materialType = document.querySelector('input[name="materialType"]:checked').value;
+
             // 关闭选择模态框
             const selectionModal = bootstrap.Modal.getInstance(document.getElementById('knowledgeSelectionModal'));
             selectionModal.hide();
@@ -949,12 +1004,12 @@
             const progressModal = new bootstrap.Modal(document.getElementById('generateProgressModal'));
             progressModal.show();
 
-            // 开始生成教学大纲
-            generateTeachingOutline(selectedKnowledgeIds);
-        });
+            // 开始生成教学材料
+            generateTeachingMaterial(selectedKnowledgeIds, materialType);
 
+        });
         // 生成教学大纲函数
-        function generateTeachingOutline(selectedIds) {
+        function generateTeachingMaterial(selectedIds, materialType) {
             const courseId = "{{ course.id }}";
             const btn = document.getElementById('generateTeachingOutlineBtn');
 
@@ -967,7 +1022,8 @@
                 },
                 body: JSON.stringify({
                     course_id: parseInt(courseId),
-                    selected_knowledge_ids: selectedIds
+                    selected_knowledge_ids: selectedIds,
+                    material_type: materialType
                 }),
                 credentials: 'same-origin'
             })
@@ -1022,73 +1078,121 @@
                     showError(errorMessage);
                 });
         }
-
-        // 下载PDF
-        downloadBtn.addEventListener('click', function () {
-            if (!generatedData || !generatedData.pdf_base64) {
-                showError('PDF文件不存在，请重新生成。');
+        // 保存至知识库按钮事件
+        document.getElementById('saveToKnowledgeBtn').addEventListener('click', function () {
+            if (!generatedData) {
+                showError('没有可保存的数据');
                 return;
             }
 
+            const btn = this;
+            const originalText = btn.innerHTML;
+            let nameext = (generatedData.material_type === 'syllabus' ? '-教学大纲PDF' : '-教学PPT');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>保存中...';
+
+            fetch("{{ url_for('course.save_teaching_material') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    course_id: "{{ course.id }}",
+                    title: generatedData.title + nameext,
+                    material_type: generatedData.material_type,
+                    file_base64: generatedData.file_base64,
+                    filename: generatedData.filename
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showSuccessToast('已保存至知识库');
+                    } else {
+                        showError(data.error || '保存失败');
+                    }
+                })
+                .catch(error => {
+                    showError('请求失败: ' + error.message);
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                });
+        });
+        // 下载PDF或PPT
+        downloadBtn.addEventListener('click', function () {
+            if (!generatedData || !generatedData.file_base64) {
+                showError('文件不存在，请重新生成。');
+                return;
+            }
+
+            // 根据文件类型处理
+            const fileExtension = generatedData.file_type || 'pdf';
+            const mimeType = fileExtension === 'pptx' ?
+                'application/vnd.openxmlformats-officedocument.presentationml.presentation' :
+                'application/pdf';
+
             try {
                 // 创建下载链接
-                const byteCharacters = atob(generatedData.pdf_base64);
+                const byteCharacters = atob(generatedData.file_base64);
                 const byteNumbers = new Array(byteCharacters.length);
                 for (let i = 0; i < byteCharacters.length; i++) {
                     byteNumbers[i] = byteCharacters.charCodeAt(i);
                 }
                 const byteArray = new Uint8Array(byteNumbers);
-                const blob = new Blob([byteArray], { type: 'application/pdf' });
+                const blob = new Blob([byteArray], { type: mimeType });
 
                 // 创建下载链接
                 const url = window.URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = url;
-                link.download = generatedData.filename || '教学大纲.pdf';
+                link.download = generatedData.filename || `教学材料.${fileExtension}`;
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
                 window.URL.revokeObjectURL(url);
 
                 // 显示下载成功提示
-                showSuccessToast('PDF文件已开始下载');
+                showSuccessToast('文件已开始下载');
             } catch (error) {
                 console.error('下载失败:', error);
-                showError('PDF下载失败，请重新生成后再试。');
+                showError('文件下载失败，请重新生成后再试。');
             }
         });
 
         // 显示生成结果
         function showResult(data) {
             const contentDiv = document.getElementById('generateResultContent');
-
             // 格式化内容显示
             let formattedContent = data.content;
 
-            // 简单的markdown到HTML转换
-            formattedContent = formattedContent
-                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                .replace(/^# (.*$)/gm, '<h1>$1</h1>')
-                .replace(/^## (.*$)/gm, '<h2>$1</h2>')
-                .replace(/^### (.*$)/gm, '<h3>$1</h3>')
-                .replace(/^#### (.*$)/gm, '<h4>$1</h4>')
-                .replace(/^\* (.*$)/gm, '<li>$1</li>')
-                .replace(/^(\d+\.) (.*$)/gm, '<li>$2</li>')
-                .replace(/\n\n/g, '</p><p>')
-                .replace(/\n/g, '<br>');
+            if (data.material_type === 'syllabus') {
+                // 简单的markdown到HTML转换
+                formattedContent = formattedContent
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                    .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+                    .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+                    .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+                    .replace(/^#### (.*$)/gm, '<h4>$1</h4>')
+                    .replace(/^\* (.*$)/gm, '<li>$1</li>')
+                    .replace(/^(\d+\.) (.*$)/gm, '<li>$2</li>')
+                    .replace(/\n\n/g, '</p><p>')
+                    .replace(/\n/g, '<br>');
 
-            // 处理列表
-            formattedContent = formattedContent.replace(/(<li>.*<\/li>)/g, function (match) {
-                return '<ul>' + match.replace(/<\/li><li>/g, '</li><li>') + '</ul>';
-            });
+                // 处理列表
+                formattedContent = formattedContent.replace(/(<li>.*<\/li>)/g, function (match) {
+                    return '<ul>' + match.replace(/<\/li><li>/g, '</li><li>') + '</ul>';
+                });
 
-            // 包装段落
-            if (!formattedContent.includes('<p>')) {
-                formattedContent = '<p>' + formattedContent + '</p>';
-            }
+                // 包装段落
+                if (!formattedContent.includes('<p>')) {
+                    formattedContent = '<p>' + formattedContent + '</p>';
+                }
 
-            contentDiv.innerHTML = `
+                contentDiv.innerHTML = `
             <div class="teaching-outline-content">
                 <div class="alert alert-success" role="alert">
                     <i class="fas fa-check-circle me-2"></i>
@@ -1101,9 +1205,36 @@
                 </div>
             </div>
         `;
+            }
+            else {
+                contentDiv.innerHTML = `
+                <div class="teaching-outline-content">
+                    <div class="alert alert-success" role="alert">
+                        <i class="fas fa-check-circle me-2"></i>
+                        教学PPT已成功生成！标题：<strong>${data.title}</strong>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <i class="fas fa-file-powerpoint me-2"></i>PPT内容大纲
+                        </div>
+                        <div class="card-body">
+                            <pre>${data.content}</pre>
+                        </div>
+                    </div>
+                </div>
+            `;
+            }
 
+            // 更新下载按钮
+            downloadBtn.innerHTML = `<i class="fas fa-download me-1"></i>下载${data.material_type === 'syllabus' ? 'PDF' : 'PPT'}`;
+
+            // 保存生成的数据
+            generatedData = data;
+
+            // 显示结果模态框
             resultModal.show();
         }
+
 
         // 显示错误信息
         function showError(message) {
@@ -1116,20 +1247,18 @@
             }
         }
 
-        // 显示成功提示
+
         function showSuccessToast(message) {
-            // 创建临时提示
             const toast = document.createElement('div');
             toast.className = 'alert alert-success position-fixed';
             toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
             toast.innerHTML = `
-            <i class="fas fa-check-circle me-2"></i>
-            ${message}
-        `;
+        <i class="fas fa-check-circle me-2"></i>
+        ${message}
+    `;
 
             document.body.appendChild(toast);
 
-            // 3秒后自动移除
             setTimeout(() => {
                 if (toast.parentNode) {
                     toast.parentNode.removeChild(toast);
@@ -1214,6 +1343,34 @@
             document.querySelectorAll('.knowledge-checkbox:checked')
         ).map(checkbox => parseInt(checkbox.value));
 
+        // 检查是否选择了知识条目
+        if (selectedAssessmentKnowledgeIds.length === 0) {
+            showError('请至少选择一个知识条目');
+            // 关闭选择模态框
+            const selectionModal = bootstrap.Modal.getInstance(document.getElementById('knowledgeSelectionModal2'));
+            selectionModal.hide();
+            return;
+        }
+
+        // 获取题目类型和数量设置
+        const questionSettings = {
+            "选择题": parseInt(document.getElementById('choiceCount').value) || 0,
+            "判断题": parseInt(document.getElementById('judgmentCount').value) || 0,
+            "简答题": parseInt(document.getElementById('shortAnswerCount').value) || 0,
+            "编程题": parseInt(document.getElementById('programmingCount').value) || 0
+        };
+
+        // 计算总题目数
+        const totalQuestions = Object.values(questionSettings).reduce((sum, count) => sum + count, 0);
+
+        if (totalQuestions === 0) {
+            showError('请至少设置一种题目类型并设置数量');
+            // 关闭选择模态框
+            const selectionModal = bootstrap.Modal.getInstance(document.getElementById('knowledgeSelectionModal2'));
+            selectionModal.hide();
+            return;
+        }
+
         // 关闭选择模态框
         const selectionModal = bootstrap.Modal.getInstance(document.getElementById('knowledgeSelectionModal2'));
         selectionModal.hide();
@@ -1223,14 +1380,12 @@
         progressModal.show();
 
         // 开始生成考核内容
-        generateAssessmentQuestions(selectedAssessmentKnowledgeIds);
+        generateAssessmentQuestions(selectedAssessmentKnowledgeIds, questionSettings);
     });
-
     // 生成考核内容函数
-    function generateAssessmentQuestions(selectedIds) {
+    function generateAssessmentQuestions(selectedIds, questionSettings) {
         const courseId = "{{ course.id }}";
         const btn = document.getElementById('generateAssessmentBtn');
-
         // 发送生成请求
         fetch(`/course/${courseId}/generate_assessment`, {
             method: 'POST',
@@ -1239,7 +1394,7 @@
                 'X-Requested-With': 'XMLHttpRequest'
             },
             body: JSON.stringify({
-                num_questions: 10, // 默认10题
+                question_settings: questionSettings,  // 传递题目设置
                 selected_knowledge_ids: selectedIds
             }),
             credentials: 'same-origin'
@@ -1511,6 +1666,7 @@
             }, 5000);
         }
     }
+
 </script>
 {% endif %}
 {% endblock %}

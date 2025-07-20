@@ -1528,14 +1528,15 @@ def api_generate_teaching_outline():
         
         # 获取请求数据
         data = request.get_json()
+        course_id = data['course_id']
+        material_type = data.get('material_type', 'syllabus')  # 新增：大纲或PPT
+        selected_knowledge_ids = data.get('selected_knowledge_ids', [])
+
         if not data:
             return jsonify({'error': '请求数据为空'}), 400
             
         if 'course_id' not in data:
             return jsonify({'error': '缺少必要的参数: course_id'}), 400
-        
-        course_id = data['course_id']
-        selected_knowledge_ids = data.get('selected_knowledge_ids', [])
         
         # 验证course_id格式
         try:
@@ -1552,8 +1553,10 @@ def api_generate_teaching_outline():
         try:
             result = TeachingPreparationService.generate_outline(
                 course_id, 
+                material_type=material_type,  # 传递材料类型
                 selected_knowledge_ids=selected_knowledge_ids
             )
+            
         except Exception as service_error:
             logger.error(f"TeachingPreparationService.generate_outline 失败: {str(service_error)}")
             return jsonify({'error': '教学大纲生成服务暂时不可用，请稍后重试'}), 500
@@ -1567,7 +1570,7 @@ def api_generate_teaching_outline():
             return jsonify({'error': result['error']}), 500
         
         # 验证返回数据的完整性
-        required_fields = ['content', 'pdf_base64', 'filename', 'title', 'download_ready']
+        required_fields = ['content', 'file_base64', 'filename', 'title', 'download_ready']
         for field in required_fields:
             if field not in result:
                 logger.error(f"生成结果缺少必要字段: {field}")
@@ -1577,10 +1580,12 @@ def api_generate_teaching_outline():
         return jsonify({
             'success': True,
             'content': result['content'],
-            'pdf_base64': result['pdf_base64'],
+            'file_base64': result['file_base64'],  # 统一字段名
             'filename': result['filename'],
             'title': result['title'],
-            'download_ready': result['download_ready']
+            'download_ready': result['download_ready'],
+            'material_type': result.get('material_type', 'syllabus'),  # 新增
+            'file_type': result.get('file_type', 'pdf')  # 新增
         }), 200
         
     except Exception as e:
@@ -1592,13 +1597,13 @@ def generate_assessment(course_id):
     """生成考核题目接口"""
     try:
         data = request.get_json()
-        num_questions = data.get('num_questions', 10)
-        selected_knowledge_ids = data.get('selected_knowledge_ids', [])  # 获取选中的知识库ID
+        question_settings = data.get('question_settings', {})  # 获取题目设置
+        selected_knowledge_ids = data.get('selected_knowledge_ids', [])
         
-        # 调用生成函数，传递选中的知识库ID
+        # 调用生成函数，传递题目设置
         questions = QuestionGeneratorService.generate_questions_with_ai(
             course_id, 
-            num_questions,
+            question_settings,
             selected_knowledge_ids=selected_knowledge_ids
         )
         
@@ -1610,7 +1615,7 @@ def generate_assessment(course_id):
         current_app.logger.error(f"生成考核题目失败: {str(e)}")
         return jsonify({
             'success': False,
-            'error': str(e)  # 或者更友好的错误消息
+            'error': str(e)
         }), 500
 
 
@@ -1855,3 +1860,33 @@ def generate_similar_questions(question_id):
     except Exception as e:
         flash(f'生成相似题目失败，请检查题目内容', 'danger')
         return redirect(url_for('course.view_assignment', assignment_id=question.assignment.id))
+
+# 添加保存教学资料的路由
+@course_bp.route('/save_teaching_material', methods=['POST'])
+def save_teaching_material():
+    try:
+        data = request.json
+        result = TeachingPreparationService.save_teaching_material(
+            course_id=data['course_id'],
+            title=data['title'],
+            file_base64=data['file_base64'],
+            filename=data['filename']
+        )
+        
+        if result['success']:
+            return jsonify({
+                "success": True,
+                "message": "教学资料已保存至知识库"
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "error": result.get('error', '保存失败')
+            }), 400
+            
+    except Exception as e:
+        current_app.logger.error(f"保存教学资料失败: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": "服务器内部错误"
+        }), 500
