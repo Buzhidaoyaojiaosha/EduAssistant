@@ -191,6 +191,50 @@
             </div>
             <div class="card-body">
                 {% if knowledge_points|length > 0 %}
+
+                {% set low_mastery_points = [] %}
+                    {% for point in knowledge_points %}
+                        {% if point.id in course_masteries %}
+                            {% set point_masteries = [] %}
+                            {% for student_id, mastery in course_masteries[point.id].items() %}
+                                {% if student_id != 'average' %}
+                                    {% if point_masteries.append(mastery) %}{% endif %}
+                                {% endif %}
+                            {% endfor %}
+                            {% set avg_mastery = (point_masteries|sum / point_masteries|length) if point_masteries else 0 %}
+                            
+                            {% if avg_mastery < 0.4 %}
+                                {% if low_mastery_points.append(point.name) %}{% endif %}
+                            
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
+                    
+
+
+                <div class="alert alert-danger" role="alert" {% if low_mastery_points|length == 0 %}style="display: none"{% endif %}>
+                    <h6 class="alert-heading">以下知识点学生掌握度较低,建议重新讲解并使用更多示例和练习巩固:</h6>
+                    <ul>
+                        {% for point in knowledge_points %}
+                            {% if point.id in course_masteries %}
+                                {% set point_masteries = [] %}
+                                {% for student_id, mastery in course_masteries[point.id].items() %}
+                                    {% if student_id != 'average' %}
+                                        {% if point_masteries.append(mastery) %}{% endif %}
+                                    {% endif %}
+                                {% endfor %}
+                                {% set avg_mastery = (point_masteries|sum / point_masteries|length) if point_masteries else 0 %}
+                                {% if avg_mastery < 0.4 %}
+                                    <li>
+                                        <span>{{ point.name }}</span> - 
+                                        <span>{{ "%.0f"|format(avg_mastery * 100) }}%</span>
+                                    </li>
+                                {% endif %}
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                </div>
+                
                 <div class="table-responsive">
                     <table class="table table-hover">
                              <thead>
@@ -252,7 +296,7 @@
                     <p class="mb-0 text-muted"><i class="fas fa-spinner fa-spin me-2"></i> 正在加载 AI 教学建议...</p>
                 </div>
                 <div id="markdown-content" class="py-5">
-                    <p class="mb-0 text-muted">暂无 AI 教学建议，请点击上方按钮获取建议</p>
+                    <p class="mb-0 text-muted">暂无 AI 教学建议，请点击上方按钮获取</p>
                 </div>
             </div>
         </div>
