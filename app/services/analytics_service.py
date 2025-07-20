@@ -1,6 +1,7 @@
 import pandas as pd
 from datetime import datetime, timedelta
 
+import requests
 from sympy.physics.units import days
 
 from app.models.learning_data import LearningActivity, StudentKnowledgePoint, KnowledgePoint
@@ -98,6 +99,45 @@ class AnalyticsService:
             
         return results
     
+    @register_as_tool(roles=["teacher"])
+    @staticmethod
+    def get_course_knowledge_mastery(course_id, students):
+        """计算课程下每个知识点学生的掌握情况。
+
+        Args:
+            course_id (int): 课程ID
+            students (list): 课程学生列表
+
+        Returns:
+            dict: 以知识点ID为键，包含每个学生掌握度和平均值的字典
+        """
+        # 收集所有学生的知识点掌握数据
+        student_masteries = {}
+        for student in students:
+            mastery = AnalyticsService.get_student_knowledge_mastery(student.id, course_id)
+            student_masteries[student.id] = mastery
+
+        # 获取课程所有知识点
+        knowledge_points = AnalyticsService.get_course_knowledge_points(course_id)
+
+        # 计算每个知识点学生的掌握情况
+        course_masteries = {}
+        for point in knowledge_points:
+            point_masteries = {} 
+            mastery_values = [] 
+            for student in students:
+                if point.id in student_masteries[student.id].keys():
+                    mastery2 = student_masteries[student.id][point.id]['mastery_level']
+                    point_masteries[student.id] = mastery2
+                    mastery_values.append(mastery2) 
+            if mastery_values:
+                point_masteries['average'] = sum(mastery_values) / len(mastery_values)
+            else:
+                point_masteries['average'] = 0
+            course_masteries[point.id] = point_masteries 
+
+        return course_masteries
+    
     @register_as_tool(roles=["student", "teacher"])
     @staticmethod
     def get_student_activity_summary(student_id, course_id=None, days=360):
@@ -160,6 +200,19 @@ class AnalyticsService:
             'activity_types': activity_types,
             'daily_activities': daily_activities
         }
+    
+    @register_as_tool(roles=["student", "teacher"])
+    @staticmethod
+    def get_course_knowledge_points(course_id):
+        """获取课程下的所有知识点。
+
+        Args:
+            course_id (int): 课程ID
+
+        Returns:
+            list: 课程下的所有知识点列表
+        """
+        return KnowledgePoint.select().where(KnowledgePoint.course_id == course_id)
     
     @register_as_tool(roles=["student", "teacher"])
     @staticmethod
@@ -309,3 +362,72 @@ class AnalyticsService:
                 "weekly": week_count
             }
         return result
+    
+    
+    @staticmethod
+    def get_teaching_suggestions(course_id, students):
+        """根据学生知识点掌握情况生成教学建议。
+    
+        Args:
+            course_id (int): 课程ID
+            students (list): 课程学生列表
+    
+        Returns:
+            str: DeepSeek API 返回的教学建议
+        """
+        import os
+        course = Course.get_by_id(course_id)
+    
+        # 检查环境变量是否存在
+        api_key = os.getenv('DEEPSEEK_API_KEY')
+        api_url = "https://api.deepseek.com/chat/completions"
+
+        if not api_key :
+            raise ValueError("DeepSeek API key or URL is not set in environment variables.")
+    
+        # 获取课程知识点掌握情况
+        course_masteries = AnalyticsService.get_course_knowledge_mastery(course_id, students)
+    
+        # 获取每个学生的知识点掌握情况
+        student_masteries = {}
+        for student in students:
+            student_masteries[student.name] = AnalyticsService.get_student_knowledge_mastery(student.id, course_id)
+    
+        # 构建请求消息
+        messages = [
+            {
+                "role": "user",
+                "content": f"以下是课程 {course.name} 的知识点掌握情况：{course_masteries}。每个学生的知识点掌握情况：{student_masteries}。请根据这些数据给出教学建议。"
+            }
+        ]
+    
+        # 调用 DeepSeek API
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "model": "deepseek-chat",
+            "messages": messages,
+            "stream": False
+        }
+    
+        try:
+            response = requests.post(api_url, headers=headers, json=payload)
+            response.raise_for_status()
+            response_data = response.json()
+    
+            # 检查响应数据是否包含预期字段
+            if "choices" not in response_data or not response_data["choices"]:
+                raise ValueError("Invalid response from DeepSeek API: missing 'choices' field.")
+
+            print(response_data["choices"][0]["message"]["content"])
+            return response_data["choices"][0]["message"]["content"]
+    
+        except requests.exceptions.RequestException as e:
+            print(f"Error while calling DeepSeek API: {e}")
+            raise
+    
+        except ValueError as e:
+            print(f"Error in DeepSeek API response: {e}")
+            raise

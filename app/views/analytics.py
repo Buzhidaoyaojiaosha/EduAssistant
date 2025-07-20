@@ -128,6 +128,7 @@ def course_analytics(course_id):
     current_user = User.get_by_id(user_id)
     course = Course.get_by_id(course_id)
     
+    
     # 获取用户角色
     roles = [ur.role.name for ur in current_user.roles]
     print(f"调试信息 - 用户角色: {roles}")  # 添加调试输出
@@ -147,6 +148,7 @@ def course_analytics(course_id):
     for student in students:
         mastery = AnalyticsService.get_student_knowledge_mastery(student.id, course_id)
         student_masteries[student.id] = mastery
+        # print(f"调试信息 - 学生ID: {student.id}, 知识点掌握数据: {mastery}")
     
     # 计算课程活跃度
     course_activity = {}
@@ -154,13 +156,52 @@ def course_analytics(course_id):
         activity = AnalyticsService.get_student_activity_summary(student.id, course_id)
         course_activity[student.id] = activity
     
+    
+    # 计算课程所有知识点学生的掌握情况
+    course_masteries = AnalyticsService.get_course_knowledge_mastery(course_id, students)
+    
+    # 获取课程所有知识点
+    knowledge_points = AnalyticsService.get_course_knowledge_points(course_id)
+    
+    
+    
+    
     return render_template('analytics/course.html',
                          current_user=current_user,
                          course=course,
                          students=students,
                          student_masteries=student_masteries,
                          course_activity=course_activity,
+                         course_masteries=course_masteries,
+                         knowledge_points=knowledge_points,
                          is_admin=is_admin)
+
+
+@analytics_bp.route('/course/<int:course_id>/get_suggestions', methods=['GET'])
+def get_teaching_suggestions(course_id):
+    """获取 AI 教学建议的 API 端点"""
+    if 'user_id' not in session:
+        return jsonify(success=False, message="未登录"), 401
+
+    user_id = session['user_id']
+    current_user = User.get_by_id(user_id)
+    course = Course.get_by_id(course_id)
+
+    # 验证权限：管理员或课程教师可以查看
+    roles = [ur.role.name for ur in current_user.roles]
+    is_admin = 'admin' in roles
+    if not is_admin and course.teacher_id != user_id:
+        return jsonify(success=False, message="无权限访问该课程"), 403
+
+    # 获取课程学生
+    students = CourseService.get_students_by_course(course_id)
+
+    try:
+        # 调用 AI 教学建议服务
+        teaching_suggestions = AnalyticsService.get_teaching_suggestions(course_id, students)
+        return jsonify(success=True, teaching_suggestions=teaching_suggestions)
+    except Exception as e:
+        return jsonify(success=False, message=f"获取教学建议失败：{str(e)}"), 500
 
 
 @analytics_bp.route('/record-activity', methods=['POST'])
