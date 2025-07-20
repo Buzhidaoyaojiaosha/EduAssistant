@@ -163,6 +163,14 @@ def course_analytics(course_id):
     # 获取课程所有知识点
     knowledge_points = AnalyticsService.get_course_knowledge_points(course_id)
     
+   # 根据角色获取不同的课程数据
+    if is_admin:
+        all_courses = CourseService.get_all_courses()
+    else:
+        # 检查是否为教师角色
+        is_teacher = 'teacher' in [ur.role.name for ur in current_user.roles]
+        all_courses = CourseService.get_courses_by_teacher(user_id) if is_teacher else []
+    
     
     
     
@@ -174,7 +182,9 @@ def course_analytics(course_id):
                          course_activity=course_activity,
                          course_masteries=course_masteries,
                          knowledge_points=knowledge_points,
-                         is_admin=is_admin)
+                         is_admin=is_admin,
+                         all_courses=all_courses,
+                        )
 
 
 @analytics_bp.route('/course/<int:course_id>/get_suggestions', methods=['GET'])

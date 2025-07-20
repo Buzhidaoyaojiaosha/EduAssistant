@@ -4,27 +4,68 @@
 
 {% block extra_css %}
 <link href="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.css" rel="stylesheet">
+<style>
+    /* 让下拉框高度与按钮一致 */
+    .form-select.form-select-sm.d-inline-block {
+        height: calc(1.5em + 0.75rem + 2px);
+        padding-top: 0.375rem;
+        padding-bottom: 0.375rem;
+        /* 新增样式，让下拉框和按钮 margin 一致 */
+        margin: 0;
+        vertical-align: middle;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+        font-size: 0.875rem;
+    }
+
+    .btn.btn-sm {
+        height: calc(1.5em + 0.75rem + 2px);
+        padding-top: 0.375rem;
+        padding-bottom: 0.375rem;
+    }
+
+</style>
 {% endblock %}
 
 {% block content %}
 <div class="row mb-4">
-    <div class="col">
+     <div class="col">
         <h2>课程学习分析</h2>
         <p class="text-muted">{{ course.name }} ({{ course.code }})</p>
     </div>
     <div class="col-auto">
-        <!-- 如果是管理员或教师才显示更新按钮 -->
-        {% if is_admin or current_user.id == course.teacher_id %}
+        <!-- 如果是管理员 -->
+        {% if is_admin %}
         <button type="button" class="btn btn-success me-2" onclick="updateKnowledgeMastery()">
             <i class="fas fa-brain me-1"></i>更新知识点掌握度
         </button>
+        <select id="courseSelector" class="form-select form-select-sm d-inline-block" style="width: auto;" onchange="redirectToCourse(this.value)">
+            <option value="" selected>{{ course.name }}</option>
+            {% for admin_course in all_courses %}
+            <option value="{{ url_for('analytics.course_analytics', course_id=admin_course.id) }}" {% if admin_course.id == course.id %}selected{% endif %}>{{ admin_course.name }}</option>
+            {% endfor %}
+        </select>
         {% endif %}
-        
+
+        <!-- 如果是教师 -->
+        {% if not is_admin and current_user.id == course.teacher_id %}
+        <button type="button" class="btn btn-success me-2" onclick="updateKnowledgeMastery()">
+            <i class="fas fa-brain me-1"></i>更新知识点掌握度
+        </button>
+        <select id="courseSelector" class="form-select form-select-sm d-inline-block me-2" style="width: auto;" onchange="redirectToCourse(this.value)">
+            <option value="" selected>{{ course.name }}</option>
+            {% for teacher_course in all_courses %}
+            <option value="{{ url_for('analytics.course_analytics', course_id=teacher_course.id) }}" {% if teacher_course.id == course.id %}selected{% endif %}>{{ teacher_course.name }}</option>
+            {% endfor %}
+        </select>
         <a href="{{ url_for('course.view', course_id=course.id) }}" class="btn btn-outline-primary">
             <i class="fas fa-arrow-left me-1"></i>返回课程
         </a>
+        {% endif %}
     </div>
 </div>
+
+
 
 <!-- 更新进度提示 -->
 <div id="updateProgress" class="alert alert-info" style="display: none;">
@@ -455,7 +496,15 @@ function updateKnowledgeMastery() {
         resultMessage.textContent = '更新失败，请稍后重试。错误信息：' + error.message;
     });
 
-
 }
+
+//课程跳转
+function redirectToCourse(url) {
+        if (url) {
+            window.location.href = url;
+        }
+    }
 </script>
 {% endblock %}
+
+
