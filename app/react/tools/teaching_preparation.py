@@ -24,6 +24,9 @@ from app.utils.llm.deepseek import chat_deepseek
 import re
 from pptx import Presentation
 
+# 配置背景图片路径
+BACKGROUND_IMAGE_PATH = r"app\static\images\ppt_background.png"
+
 def generate_teaching_material(course_id: int, material_type: str, selected_knowledge_ids: List[int] = None) -> Dict:
     """生成AI驱动的备课资料
     
@@ -402,10 +405,10 @@ def _check_marp_installed() -> bool:
     except Exception as e:
         logger.error(f"检查 Marp 安装时出错: {str(e)}")
         return False
-
+    
 def _process_marp_markdown(content: str, title: str, course: Course) -> str:
     """处理和优化Marp Markdown内容"""
-    
+
     # 如果内容不包含Marp头部，添加默认配置
     if not content.strip().startswith('---\nmarp: true'):
         marp_header = f"""---
@@ -414,7 +417,57 @@ theme: default
 class: lead
 paginate: true
 backgroundColor: #fff
-backgroundImage: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675"><rect width="1200" height="675" fill="%23f8f9fa"/></svg>')
+style: |
+  section {{
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    color: #333;
+  }}
+  section.lead {{
+    text-align: center;
+    color: #fff;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+  }}
+  section.lead h1 {{
+    color: #fff;
+    font-size: 3em;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+  }}
+  section.lead h2 {{
+    color: #f0f0f0;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+  }}
+  section h1 {{
+    color: #2c3e50;
+    border-bottom: 3px solid #3498db;
+    padding-bottom: 10px;
+    background: rgba(255,255,255,0.9);
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+  }}
+  section h2 {{
+    color: #2c3e50;
+    background: rgba(255,255,255,0.8);
+    padding: 10px;
+    border-radius: 8px;
+  }}
+  section ul, section p {{
+    background: rgba(255,255,255,0.85);
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  }}
+  section li {{
+    margin-bottom: 8px;
+    line-height: 1.6;
+  }}
+  section strong {{
+    color: #e74c3c;
+    font-weight: bold;
+  }}
 ---
 
 """
@@ -840,7 +893,7 @@ def save_teaching_material_to_kb(course_id: int, title: str, file_base64: str, f
     except Exception as e:
         current_app.logger.error(f"保存教学资料到知识库失败: {str(e)}")
         return {"success": False, "error": str(e)}
-    
+
 def get_marp_themes() -> List[str]:
     """获取可用的Marp主题列表"""
     return [

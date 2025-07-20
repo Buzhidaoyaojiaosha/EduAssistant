@@ -17,6 +17,11 @@
         <p class="text-muted">{{ assignment.course.name }} ({{ assignment.course.code }})</p>
     </div>
     <div class="col-auto">
+        <!-- 导出按钮添加在这里 -->
+        <a href="{{ url_for('course.export_assignment', assignment_id=assignment.id, course_id=assignment.course.id) }}" 
+           class="btn btn-info me-2" title="导出作业">
+            <i class="fas fa-file-export me-1"></i>导出作业
+        </a>
         {% if is_teacher %}
         <a href="{{ url_for('course.assignment_knowledge_points', assignment_id=assignment.id) }}"
             class="btn btn-success">
@@ -185,7 +190,7 @@
                         </div>
                     </div>
 
-                    {% if not is_teacher %}
+                    {% if not is_teacher and not is_admin %}
                     <div class="d-grid mb-4">
                         <button type="submit" class="btn btn-primary btn-lg">提交作业</button>
                     </div>
@@ -203,7 +208,7 @@
                 </div>
                 {% endif %}
 
-                {% if not is_teacher %}
+                {% if not is_teacher and not is_admin %}
                 <!-- 提交状态显示 -->
                 <div class="card border-light bg-light">
                     <div class="card-body">

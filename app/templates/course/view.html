@@ -52,7 +52,7 @@
                 <p>{{ course.description }}</p>
                 <hr>
                 <p><strong>教师:</strong> {{ course.teacher.name }}</p>
-                {% if is_student %}
+                {% if is_student  %}
                 <div class="alert alert-success mt-3">
                     <i class="fas fa-check-circle me-2"></i>您已加入该课程
                     <form action="{{ url_for('course.unenroll', course_id=course.id) }}" method="post"
@@ -63,6 +63,8 @@
                         </button>
                     </form>
                 </div>
+                {% elif is_admin %}
+
                 {% elif not is_teacher %}
                 <div class="alert alert-info mt-3">
                     <i class="fas fa-info-circle me-2"></i>您尚未加入该课程
@@ -76,7 +78,8 @@
                 {% endif %}
             </div>
         </div>
-
+        {%if is_admin %}
+        {%else%}
         <!-- 知识点列表 -->
         <div class="card shadow-sm mb-4">
             <div class="card-header bg-light d-flex justify-content-between align-items-center">
@@ -152,7 +155,7 @@
                 {% endif %}
             </div>
         </div>
-
+        {% endif %}
         <!-- 作业列表 -->
         <div class="card shadow-sm mb-4">
             <div class="card-header bg-light">
@@ -196,6 +199,8 @@
                                 <td>
                                     <a href="{{ url_for('course.view_assignment', assignment_id=assignment.id) }}"
                                         class="btn btn-sm btn-outline-primary">查看</a>
+                                    <a href="{{ url_for('course.export_assignment', assignment_id=assignment.id, course_id=assignment.course.id) }}"
+                                        class="btn btn-sm btn-outline-primary">导出</a>
                                 </td>
                             </tr>
                             {% endfor %}

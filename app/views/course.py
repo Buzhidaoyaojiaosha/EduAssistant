@@ -42,6 +42,12 @@ def index():
     user_id = session['user_id']
     user = User.get_by_id(user_id)
     
+    roles = [ur.role.name for ur in user.roles]
+    print(f"调试信息 - 用户角色: {roles}")  # 添加调试输出
+  
+    is_student = 'student' in roles
+    is_admin = 'admin' in roles
+    is_teacher = 'teacher' in roles
     # 获取搜索关键词
     search_query = request.args.get('q', '').strip()
     
@@ -221,7 +227,9 @@ def delete(course_id):
     
     # GET请求 - 显示确认删除页面
     return render_template('course/delete_confirm.html', course=course)
-        
+
+
+# view.html
 @course_bp.route('/<int:course_id>')
 def view(course_id):
     if 'user_id' not in session:
@@ -230,7 +238,12 @@ def view(course_id):
     course = Course.get_by_id(course_id)
     user_id = session['user_id']
     user = User.get_by_id(user_id)
-    
+    roles = [ur.role.name for ur in user.roles]
+    print(f"调试信息 - 用户角色: {roles}")  # 添加调试输出
+  
+    is_student = 'student' in roles
+    is_admin = 'admin' in roles
+
     # 确认用户是课程的教师或学生
     is_teacher = course.teacher_id == user_id
     is_student = False
@@ -252,7 +265,7 @@ def view(course_id):
     
     # 如果是教师，获取学生列表
     students = None
-    if is_teacher:
+    if is_teacher or is_admin:
         students = CourseService.get_students_by_course(course_id)
     
     # 如果是学生，获取个人作业情况
@@ -312,6 +325,7 @@ def view(course_id):
                          course=course,
                          is_teacher=is_teacher,
                          is_student=is_student,
+                         is_admin=is_admin,
                          assignments=assignments,
                          students=students,
                          student_assignments=student_assignments,
@@ -502,6 +516,8 @@ def view_assignment(assignment_id):
     
     # 检查权限
     is_teacher = assignment.course.teacher_id == user_id
+    is_admin = UserService.has_role(User.get_by_id(user_id), 'admin')
+    print(f"调试信息 - 用户角色: {is_teacher}, {is_admin}")  # 添加调试输出
     student_assignment = None
     feedback = None  # 新增feedback变量
     
@@ -546,8 +562,9 @@ def view_assignment(assignment_id):
         ai_questions = AIQuestion.select().where(
             (AIQuestion.assignment == assignment) 
         ).order_by(AIQuestion.created_time.desc())
-
+    
     return render_template('course/view_assignment.html',
+                         is_admin = is_admin,
                          assignment=assignment,
                          questions=questions,
                          ai_questions=ai_questions,
@@ -1890,3 +1907,77 @@ def save_teaching_material():
             "success": False,
             "error": "服务器内部错误"
         }), 500
+    
+
+
+# 导出作业
+from io import BytesIO
+from docx import Document
+from flask import send_file
+from datetime import datetime
+
+@course_bp.route('/<int:course_id>/assignment/<int:assignment_id>/export')
+def export_assignment(assignment_id, course_id):
+    if 'user_id' not in session:
+        return redirect(url_for('auth.login'))
+    
+    assignment = Assignment.get_by_id(assignment_id)
+    questions = Question.select().where(Question.assignment == assignment).order_by(Question.status)
+    
+    user = User.get_by_id(session['user_id'])
+    print(f"调试信息 - 正在删除用户: {user.username}, ID: {user.id}")
+    roles = [ur.role.name for ur in user.roles]
+    print(f"调试信息 - 用户角色: {roles}")  # 添加调试输出
+
+    is_admin = 'admin' in roles
+    
+    print(f"调试信息 - 用户角色: {roles}")  # 添加调试输出
+
+    try:
+        # 创建Word文档
+        doc = Document()
+        
+        # 添加作业标题和基本信息
+        doc.add_heading(assignment.title, level=1)
+        doc.add_paragraph(f'课程: {assignment.course.name} ({assignment.course.code})')
+        doc.add_paragraph(f'截止日期: {assignment.due_date.strftime("%Y-%m-%d %H:%M")}')
+        doc.add_paragraph(f'总分: {assignment.total_points}')
+        if assignment.description:
+            doc.add_paragraph(f'描述: {assignment.description}')
+        
+        # 添加题目
+        doc.add_heading('题目列表', level=2)
+        for idx, question in enumerate(questions, start=1):
+            doc.add_heading(f'题目{idx}: {question.question_name} ({question.score}分)', level=3)
+            
+            # 处理题目内容
+            if question.status == 1:  # 选择题
+                lines = question.context.split('\n')
+                doc.add_paragraph(lines[0])  # 题目描述
+                for option in lines[1:]:
+                    if option.strip():
+                        doc.add_paragraph(option, style='List Bullet')
+            else:  # 其他类型题目
+                doc.add_paragraph(question.context)
+            
+            # 如果是教师，显示参考答案
+            if assignment.course.teacher_id == session['user_id'] or is_admin:
+                doc.add_paragraph(f'参考答案: {question.answer}', style='Intense Quote')
+        
+        # 保存到内存
+        file_stream = BytesIO()
+        doc.save(file_stream)
+        file_stream.seek(0)
+        
+        # 返回文件
+        filename = f"{assignment.title.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d')}.docx"
+        return send_file(
+            file_stream,
+            as_attachment=True,
+            download_name=filename,
+            mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        )
+    
+    except Exception as e:
+        flash(f'导出作业失败: {str(e)}', 'danger')
+        return redirect(url_for('course.view_assignment', assignment_id=assignment_id))
