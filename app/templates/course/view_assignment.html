@@ -190,7 +190,7 @@
                         </div>
                     </div>
 
-                    {% if not is_teacher %}
+                    {% if not is_teacher and not is_admin %}
                     <div class="d-grid mb-4">
                         <button type="submit" class="btn btn-primary btn-lg">提交作业</button>
                     </div>
@@ -208,7 +208,7 @@
                 </div>
                 {% endif %}
 
-                {% if not is_teacher %}
+                {% if not is_teacher and not is_admin %}
                 <!-- 提交状态显示 -->
                 <div class="card border-light bg-light">
                     <div class="card-body">
