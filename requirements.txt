@@ -81,4 +81,5 @@ httplib2~=0.22.0
 --extra-index-url https://download.pytorch.org/whl/cu113
 torch==1.12.1+cu113
 torchvision==0.13.1+cu113
-reportlab==4.4.2
+reportlab==4.4.2conda
+python-docx==1.2.0
