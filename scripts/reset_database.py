@@ -65,9 +65,11 @@ from scripts.create_test.create_courses_knowledge_points import main as step2
 from scripts.create_test.create_enrollments_assignments import main as step3
 from scripts.create_test.create_learning_activities_mastery import main as step4
 from scripts.create_test.create_questions_wrongbooks import main as step5
+from scripts.create_test.create_teaching_activity import main as step6
 
 step1()
 step2()
 step3()
 step4()
 step5()  # 添加第5步：创建题目、学生答题、教师反馈和错题本数据
+step6()  # 创建教师活动数据

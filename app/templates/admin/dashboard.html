@@ -91,6 +91,43 @@
         </div>
     </div>
 </div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>活跃度分析</h5>
+            </div>
+            <div class="card-body">
+              <!-- 顶部标签 -->
+              <ul class="nav nav-tabs mb-3" id="activityTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link active" id="student-tab" data-bs-toggle="tab" data-role="student" onclick="switchRole('student')">学生</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link" id="teacher-tab" data-bs-toggle="tab" data-role="teacher" onclick="switchRole('teacher')">教师</button>
+                </li>
+              </ul>
+
+              <!-- 时间粒度切换按钮组 -->
+              <div class="btn-group btn-group-sm mb-3" role="group" aria-label="活跃度类型选择">
+                <button type="button" class="btn btn-outline-primary active" id="daily-btn" onclick="switchType('daily')">日活跃度</button>
+                <button type="button" class="btn btn-outline-primary" id="weekly-btn" onclick="switchType('weekly')">周活跃度</button>
+              </div>
+
+              <!-- 图表容器 -->
+              <div class="chart-container">
+                <canvas id="student-daily-chart" height="300"></canvas>
+                <canvas id="student-weekly-chart" style="display: none;"></canvas>
+                <canvas id="teacher-daily-chart" style="display: none;"></canvas>
+                <canvas id="teacher-weekly-chart" style="display: none;"></canvas>
+              </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
 <!-- 
 待办事项
 <div class="row">
@@ -129,8 +166,198 @@
 </div> -->
 {% endblock %}
 
+
+{% block extra_css %}
+<style>
+
+    /* 标签页字体*/
+      .nav-tabs .nav-link {
+        color: #000 !important;
+    }
+
+    .nav-tabs .nav-link.active {
+        color: #0d6efd !important;
+    }
+
+
+    /* 覆盖按钮悬停样式 */
+    .btn-group .btn.btn-outline-primary:hover {
+        background-color: transparent;
+        border-color: #0d6efd;
+        color: #0d6efd;
+    }
+    /* 覆盖激活状态按钮悬停样式 */
+    .btn-group .btn.btn-outline-primary.active:hover {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+        color: #fff;
+    }
+</style>
+{% endblock %}
+
 {% block extra_js %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
 <script>
+    let studentDailyChart, studentWeeklyChart;
+    let teacherDailyChart, teacherWeeklyChart;
+
+    let currentRole = 'student';  // 'student' or 'teacher'
+    let currentType = 'daily';    // 'daily' or 'weekly'
+
+    // 统计总活动数
+    document.addEventListener('DOMContentLoaded', function() {
+        let totalActivities = 0;
+        {% for student in students %}
+            totalActivities += {{ course_activity[student.id].weekly }};
+        {% endfor %}
+        const totalDom = document.getElementById('totalActivityCount');
+        if (totalDom) totalDom.innerText = totalActivities;
+
+        // ========== 学生图表数据 ==========
+        window.studentNames = [];
+        window.studentDailyData = [];
+        window.studentWeeklyData = [];
+        {% for student in students %}
+            studentNames.push("{{ student.name }}");
+            studentDailyData.push({{ course_activity[student.id].daily }});
+            studentWeeklyData.push({{ course_activity[student.id].weekly }});
+        {% endfor %}
+
+        // 初始化只渲染当前显示的图表
+        renderStudentChart(currentType);
+        updateChartVisibility();
+    });
+
+    // 渲染学生图表
+    function renderStudentChart(type) {
+        const ctx = document.getElementById(`student-${type}-chart`).getContext('2d');
+        const data = (type === 'daily') ? studentDailyData : studentWeeklyData;
+        const label = (type === 'daily') ? '学生日活跃度' : '学生周活跃度';
+
+        // 如果已存在则销毁旧图表
+        if (type === 'daily' && studentDailyChart) studentDailyChart.destroy();
+        if (type === 'weekly' && studentWeeklyChart) studentWeeklyChart.destroy();
+
+        const chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: studentNames,
+                datasets: [{
+                    label: label,
+                    data: data,
+                    backgroundColor: type === 'daily' ? 'rgba(54, 162, 235, 0.6)' : 'rgba(75, 192, 192, 0.6)',
+                    borderColor: type === 'daily' ? 'rgba(54, 162, 235, 1)' : 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: commonOptions('学生')
+        });
+
+        if (type === 'daily') studentDailyChart = chart;
+        if (type === 'weekly') studentWeeklyChart = chart;
+    }
+
+    // ========== 教师图表数据 ==========
+    window.teacherNames = [];
+    window.teacherDailyData = [];
+    window.teacherWeeklyData = [];
+    {% for teacher in teachers %}
+        teacherNames.push("{{ teacher.name }}");
+        teacherDailyData.push({{ teacher_activities[teacher.id].daily }});
+        teacherWeeklyData.push({{ teacher_activities[teacher.id].weekly }});
+    {% endfor %}
+    
+    // 渲染教师图表
+    function renderTeacherChart(type) {
+        const ctx = document.getElementById(`teacher-${type}-chart`).getContext('2d');
+        const data = (type === 'daily') ? teacherDailyData : teacherWeeklyData;
+        const label = (type === 'daily') ? '教师日活跃度' : '教师周活跃度';
+    
+        if (type === 'daily' && teacherDailyChart) teacherDailyChart.destroy();
+        if (type === 'weekly' && teacherWeeklyChart) teacherWeeklyChart.destroy();
+    
+        const chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: teacherNames,
+                datasets: [{
+                    label: label,
+                    data: data,
+                    backgroundColor: type === 'daily' ? 'rgba(255, 159, 64, 0.6)' : 'rgba(255, 205, 86, 0.6)',
+                    borderColor: type === 'daily' ? 'rgba(255, 159, 64, 1)' : 'rgba(255, 205, 86, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: commonOptions('教师')
+        });
+    
+        if (type === 'daily') teacherDailyChart = chart;
+        if (type === 'weekly') teacherWeeklyChart = chart;
+    }
+    
+    // 切换角色
+    function switchRole(role) {
+        currentRole = role;
+        if (role === 'student') {
+            renderStudentChart(currentType);
+        } else {
+            renderTeacherChart(currentType);
+        }
+        updateChartVisibility();
+    }
+    
+    // 修改switchType，支持教师
+    function switchType(type) {
+        currentType = type;
+        if (currentRole === 'student') {
+            renderStudentChart(type);
+        } else {
+            renderTeacherChart(type);
+        }
+        updateChartVisibility();
+    
+        document.getElementById('daily-btn')?.classList.toggle('active', type === 'daily');
+        document.getElementById('weekly-btn')?.classList.toggle('active', type === 'weekly');
+    }
+
+    // 切换显示图表
+    function updateChartVisibility() {
+        const charts = ['student-daily', 'student-weekly', 'teacher-daily', 'teacher-weekly'];
+        charts.forEach(id => {
+            const el = document.getElementById(`${id}-chart`);
+            if (el) el.style.display = (id === `${currentRole}-${currentType}`) ? 'block' : 'none';
+        });
+    }
+
+
+    // 通用图表样式
+    function commonOptions(xLabel) {
+        return {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: {
+                duration: 1200,
+                easing: 'easeOutQuart'
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: '活动次数'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: xLabel
+                    }
+                }
+            }
+        };
+    }
+
     function refreshDashboard() {
         fetch("{{ url_for('admin.index') }}", {
             headers: {
@@ -148,8 +375,10 @@
             alert('刷新数据失败，请稍后再试');
         });
     }
-    
+
     // 自动刷新数据（每5分钟）
     setTimeout(refreshDashboard, 300000);
+
 </script>
+
 {% endblock %}
