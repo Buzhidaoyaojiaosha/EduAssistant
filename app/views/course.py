@@ -42,6 +42,12 @@ def index():
     user_id = session['user_id']
     user = User.get_by_id(user_id)
     
+    roles = [ur.role.name for ur in user.roles]
+    print(f"调试信息 - 用户角色: {roles}")  # 添加调试输出
+  
+    is_student = 'student' in roles
+    is_admin = 'admin' in roles
+    is_teacher = 'teacher' in roles
     # 获取搜索关键词
     search_query = request.args.get('q', '').strip()
     
@@ -119,7 +125,9 @@ def delete(course_id):
     
     # GET请求 - 显示确认删除页面
     return render_template('course/delete_confirm.html', course=course)
-        
+
+
+# view.html
 @course_bp.route('/<int:course_id>')
 def view(course_id):
     if 'user_id' not in session:
@@ -128,7 +136,12 @@ def view(course_id):
     course = Course.get_by_id(course_id)
     user_id = session['user_id']
     user = User.get_by_id(user_id)
-    
+    roles = [ur.role.name for ur in user.roles]
+    print(f"调试信息 - 用户角色: {roles}")  # 添加调试输出
+  
+    is_student = 'student' in roles
+    is_admin = 'admin' in roles
+
     # 确认用户是课程的教师或学生
     is_teacher = course.teacher_id == user_id
     is_student = False
@@ -150,7 +163,7 @@ def view(course_id):
     
     # 如果是教师，获取学生列表
     students = None
-    if is_teacher:
+    if is_teacher or is_admin:
         students = CourseService.get_students_by_course(course_id)
     
     # 如果是学生，获取个人作业情况
@@ -210,6 +223,7 @@ def view(course_id):
                          course=course,
                          is_teacher=is_teacher,
                          is_student=is_student,
+                         is_admin=is_admin,
                          assignments=assignments,
                          students=students,
                          student_assignments=student_assignments,
@@ -400,6 +414,8 @@ def view_assignment(assignment_id):
     
     # 检查权限
     is_teacher = assignment.course.teacher_id == user_id
+    is_admin = UserService.has_role(User.get_by_id(user_id), 'admin')
+    print(f"调试信息 - 用户角色: {is_teacher}, {is_admin}")  # 添加调试输出
     student_assignment = None
     feedback = None  # 新增feedback变量
     
@@ -444,8 +460,9 @@ def view_assignment(assignment_id):
         ai_questions = AIQuestion.select().where(
             (AIQuestion.assignment == assignment) 
         ).order_by(AIQuestion.created_time.desc())
-
+    
     return render_template('course/view_assignment.html',
+                         is_admin = is_admin,
                          assignment=assignment,
                          questions=questions,
                          ai_questions=ai_questions,
