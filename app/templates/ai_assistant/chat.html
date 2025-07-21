@@ -275,6 +275,7 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
     // 当前选中的聊天ID
     let currentChatId = null;
@@ -534,7 +535,7 @@
         messageDiv.className = `message message-${role}`;
 
         // 将普通文本中的换行符转换为HTML换行
-        const formattedText = content.replace(/\n/g, '<br>');
+        const formattedText = marked.parse(content.replace(/\n/g, '<br>'));
         messageDiv.innerHTML = formattedText;
 
         // 添加空值检查，确保元素存在
