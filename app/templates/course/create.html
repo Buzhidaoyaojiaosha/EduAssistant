@@ -5,31 +5,61 @@
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-8">
-        <div class="card shadow">
-            <div class="card-header bg-primary text-white">
-                <h4 class="mb-0">创建新课程</h4>
+        <div class="card">
+            <div class="card-header bg-transparent border-0 text-center pt-4">
+                <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
+                    style="width: 60px; height: 60px; background: rgba(78, 84, 200, 0.1);">
+                    <i class="fas fa-plus text-primary fa-lg"></i>
+                </div>
+                <h3 class="font-weight-bold text-primary mb-2">创建新课程</h3>
+                <p class="text-muted mb-0">请填写以下信息创建课程</p>
             </div>
-            <div class="card-body">
+            <div class="card-body px-4 py-4">
                 <form method="post">
-                    <div class="mb-3">
-                        <label for="name" class="form-label">课程名称</label>
-                        <input type="text" class="form-control" id="name" name="name" required>
+                    <div class="mb-4">
+                        <label for="name" class="form-label small text-muted mb-1">课程名称</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text border-0 bg-light">
+                                <i class="fas fa-book text-primary"></i>
+                            </span>
+                            <input type="text" class="form-control border-0 bg-light" id="name" name="name"
+                                placeholder="请输入课程名称" required>
+                        </div>
                     </div>
-                    
-                    <div class="mb-3">
-                        <label for="code" class="form-label">课程代码</label>
-                        <input type="text" class="form-control" id="code" name="code" required>
-                        <div class="form-text">课程代码必须唯一，例如: "CS101"</div>
+
+                    <div class="mb-4">
+                        <label for="code" class="form-label small text-muted mb-1">课程代码</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text border-0 bg-light">
+                                <i class="fas fa-hashtag text-primary"></i>
+                            </span>
+                            <input type="text" class="form-control border-0 bg-light" id="code" name="code"
+                                placeholder="请输入课程代码" required>
+                        </div>
+                        <div class="form-text text-muted mt-2">
+                            <i class="fas fa-info-circle me-1"></i>
+                            课程代码必须唯一，例如: "CS101"
+                        </div>
                     </div>
-                    
-                    <div class="mb-3">
-                        <label for="description" class="form-label">课程描述</label>
-                        <textarea class="form-control" id="description" name="description" rows="4"></textarea>
+
+                    <div class="mb-4">
+                        <label for="description" class="form-label small text-muted mb-1">课程描述</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text border-0 bg-light">
+                                <i class="fas fa-align-left text-primary"></i>
+                            </span>
+                            <textarea class="form-control border-0 bg-light" id="description" name="description"
+                                rows="4" placeholder="请输入课程描述"></textarea>
+                        </div>
                     </div>
-                    
-                    <div class="d-flex justify-content-between">
-                        <a href="{{ url_for('course.index') }}" class="btn btn-secondary">取消</a>
-                        <button type="submit" class="btn btn-primary">创建课程</button>
+
+                    <div class="d-flex gap-3 mt-5">
+                        <a href="{{ url_for('course.index') }}" class="btn btn-light flex-grow-1">
+                            <i class="fas fa-arrow-left me-1"></i>返回
+                        </a>
+                        <button type="submit" class="btn btn-primary flex-grow-1">
+                            <i class="fas fa-check me-1"></i>创建课程
+                        </button>
                     </div>
                 </form>
             </div>

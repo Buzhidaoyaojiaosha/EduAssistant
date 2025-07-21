@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
-  
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}启智AI伴学{% endblock %}</title>
     {% block head %}
@@ -12,12 +12,221 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <!-- 自定义CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #4e54c8 0%, #8f94fb 100%);
+            --secondary-gradient: linear-gradient(135deg, #00cdac 0%, #8ddad5 100%);
+            --background-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            --card-background: rgba(255, 255, 255, 0.9);
+            --hover-background: rgba(78, 84, 200, 0.1);
+        }
+
+        body {
+            background: var(--background-gradient);
+            min-height: 100vh;
+        }
+
+        /* 导航栏样式 */
+        .navbar-custom {
+            background: var(--primary-gradient);
+            box-shadow: 0 2px 15px rgba(78, 84, 200, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .navbar-custom .nav-link {
+            color: rgba(255, 255, 255, 0.9) !important;
+            transition: all 0.3s ease;
+            padding: 0.5rem 1rem !important;
+            margin: 0 0.2rem;
+            border-radius: 8px;
+        }
+
+        .navbar-custom .nav-link:hover {
+            color: #ffffff !important;
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .navbar-custom .nav-link.active {
+            color: #ffffff !important;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .navbar-custom .navbar-brand {
+            color: #ffffff !important;
+            font-weight: 600;
+        }
+
+        .navbar-custom .dropdown-menu {
+            border: none;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-custom .dropdown-item:hover {
+            background: var(--hover-background);
+        }
+
+        /* 卡片样式 */
+        .card {
+            border: none;
+            background: var(--card-background);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+        }
+
+        /* 按钮样式 */
+        .btn-primary {
+            background: var(--primary-gradient);
+            border: none;
+            box-shadow: 0 4px 15px rgba(78, 84, 200, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(78, 84, 200, 0.3);
+        }
+
+        /* 输入框样式 */
+        .form-control {
+            border: none;
+            background-color: #f8f9fa;
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            background-color: #ffffff;
+            box-shadow: 0 0 0 2px rgba(78, 84, 200, 0.2);
+        }
+
+        .input-group-text {
+            border: none;
+            background-color: #f8f9fa;
+        }
+
+        /* 页面内容区域 */
+        .content-wrapper {
+            padding: 2rem 0;
+            min-height: calc(100vh - 60px);
+        }
+
+        /* 登录页面特殊样式 */
+        .auth-page {
+            min-height: 100vh;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .auth-page .navbar {
+            margin: 0;
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+        }
+
+        .auth-page main {
+            flex: 1;
+            display: flex;
+            padding: 0;
+            margin: 0;
+        }
+
+        /* 装饰性背景元素 */
+        .decorative-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .decorative-bg .circle {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+        }
+
+        .decorative-bg .circle-1 {
+            width: 300px;
+            height: 300px;
+            background: var(--primary-gradient);
+            opacity: 0.3;
+            top: -100px;
+            left: -100px;
+        }
+
+        .decorative-bg .circle-2 {
+            width: 250px;
+            height: 250px;
+            background: var(--secondary-gradient);
+            opacity: 0.2;
+            bottom: -50px;
+            right: -50px;
+        }
+
+        /* Alert 样式 */
+        .alert {
+            border: none;
+            background: var(--card-background);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        /* 表格样式 */
+        .table {
+            background: var(--card-background);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .table thead th {
+            background: rgba(78, 84, 200, 0.05);
+            border-bottom: none;
+        }
+
+        /* 分页样式 */
+        .pagination .page-link {
+            border: none;
+            background: var(--card-background);
+            color: #4e54c8;
+            margin: 0 2px;
+            border-radius: 6px;
+        }
+
+        .pagination .page-link:hover {
+            background: var(--hover-background);
+        }
+
+        .pagination .page-item.active .page-link {
+            background: var(--primary-gradient);
+        }
+    </style>
     {% endblock %}
     {% block extra_css %}{% endblock %}
 </head>
-<body class="vh-100 d-flex flex-column">
+
+<body class="{% block body_class %}{% endblock %}">
+    <!-- 装饰性背景 -->
+    <div class="decorative-bg">
+        <div class="circle circle-1"></div>
+        <div class="circle circle-2"></div>
+    </div>
+
     <!-- 导航栏 -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <nav class="navbar navbar-expand-lg navbar-custom {% block nav_class %}mb-1{% endblock %}">
         <div class="container">
             <a class="navbar-brand" href="{{ url_for('dashboard.index') }}">
                 <i class="fas fa-graduation-cap me-2"></i>启智AI伴学
@@ -29,44 +238,53 @@
                 {% if session.get('user_id') %}
                 <ul class="navbar-nav">
                     <li class="nav-item">
-                        <a class="nav-link {{ 'active' if request.endpoint == 'ai_assistant.chat' }}" href="{{ url_for('ai_assistant.chat') }}">
+                        <a class="nav-link {{ 'active' if request.endpoint == 'ai_assistant.chat' }}"
+                            href="{{ url_for('ai_assistant.chat') }}">
                             <i class="fas fa-robot me-1"></i>AI助手
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {{ 'active' if request.endpoint == 'dashboard.index' }}" href="{{ url_for('dashboard.index') }}">
+                        <a class="nav-link {{ 'active' if request.endpoint == 'dashboard.index' }}"
+                            href="{{ url_for('dashboard.index') }}">
                             <i class="fas fa-tachometer-alt me-1"></i>仪表盘
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {{ 'active' if request.endpoint == 'course.index' }}" href="{{ url_for('course.index') }}">
+                        <a class="nav-link {{ 'active' if request.endpoint == 'course.index' }}"
+                            href="{{ url_for('course.index') }}">
                             <i class="fas fa-book me-1"></i>课程
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {{ 'active' if request.endpoint == 'analytics.index' }}" href="{{ url_for('analytics.index') }}">
+                        <a class="nav-link {{ 'active' if request.endpoint == 'analytics.index' }}"
+                            href="{{ url_for('analytics.index') }}">
                             <i class="fas fa-chart-line me-1"></i>数据分析
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {{ 'active' if request.endpoint == 'search.index' }}" href="{{ url_for('search.index') }}">
+                        <a class="nav-link {{ 'active' if request.endpoint == 'search.index' }}"
+                            href="{{ url_for('search.index') }}">
                             <i class="fas fa-search me-1"></i>知识库
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {{ 'active' if request.endpoint == 'recommend.index' }}" href="{{ url_for('recommend.index') }}">
+                        <a class="nav-link {{ 'active' if request.endpoint == 'recommend.index' }}"
+                            href="{{ url_for('recommend.index') }}">
                             <i class="fa fa-globe me-1"></i>资源推荐
                         </a>
                     </li>
                 </ul>
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+                            data-bs-toggle="dropdown">
                             <i class="fas fa-user-circle me-1"></i>{{ session.get('username', '用户') }}
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li><a class="dropdown-item" href="{{ url_for('dashboard.profile') }}">个人资料</a></li>
-                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
                             <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">退出登录</a></li>
                         </ul>
                     </li>
@@ -84,31 +302,25 @@
             </div>
         </div>
     </nav>
+
     <!-- 消息提示 -->
     <div class="container mt-3">
         {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-            {% for category, message in messages %}
-            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="关闭"></button>
-            </div>
-            {% endfor %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="关闭"></button>
+        </div>
+        {% endfor %}
         {% endif %}
         {% endwith %}
     </div>
 
     <!-- 主要内容 -->
-    <main class="{% block main_class %}container my-4{% endblock %}">
+    <main class="{% block main_class %}container content-wrapper{% endblock %}">
         {% block content %}{% endblock %}
     </main>
-
-    <!-- 页脚 -->
-    <footer class="footer mt-auto py-3 bg-light">
-        <div class="container">
-            <span class="text-muted">© 2025 启智AI伴学</span>
-        </div>
-    </footer>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -118,4 +330,5 @@
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     {% block extra_js %}{% endblock %}
 </body>
+
 </html>

@@ -5,8 +5,15 @@
 {% block content %}
 <div class="row mb-4">
     <div class="col">
-        <h2>学习数据分析</h2>
-        <p class="text-muted">查看学生学习数据和课程统计</p>
+        <div class="d-flex align-items-center">
+            <div class="rounded-circle p-3 me-3" style="background: rgba(253, 126, 20, 0.1);">
+                <i class="fas fa-chart-line" style="color: #fd7e14;"></i>
+            </div>
+            <div>
+                <h2 class="text-primary mb-1">数据分析</h2>
+                <p class="text-muted mb-0">查看学生学习数据和课程统计</p>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -14,15 +21,22 @@
 <!-- 学生视图 -->
 <div class="row">
     <div class="col-12 mb-4">
-        <div class="card shadow-sm h-100">
-            <div class="card-header bg-light">
-                <h5 class="mb-0"><i class="fas fa-user-graduate me-2"></i>我的学习分析</h5>
+        <div class="card">
+            <div class="card-header bg-transparent border-0">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle p-2 me-2" style="background: rgba(25, 135, 84, 0.1);">
+                        <i class="fas fa-user-graduate" style="color: #198754;"></i>
+                    </div>
+                    <h5 class="mb-0">我的学习分析</h5>
+                </div>
             </div>
             <div class="card-body">
-                <p>查看您的学习活动、知识点掌握情况和学习预警。</p>
+                <p class="text-muted">查看您的学习活动、知识点掌握情况和学习预警。</p>
                 <div class="d-grid gap-2 mt-4">
-                    <a href="{{ url_for('analytics.student_analytics', student_id=session.get('user_id')) }}" class="btn btn-primary">
-                        查看我的学习数据
+                    <a href="{{ url_for('analytics.student_analytics', student_id=session.get('user_id')) }}"
+                        class="btn btn-primary"
+                        style="background: linear-gradient(135deg, #4e54c8 0%, #8f94fb 100%); border: none; box-shadow: 0 4px 15px rgba(78, 84, 200, 0.2);">
+                        <i class="fas fa-chart-bar me-2"></i>查看我的学习数据
                     </a>
                 </div>
             </div>
@@ -33,28 +47,31 @@
 <!-- 教师/管理员视图 -->
 <div class="row">
     <div class="col-md-6 mb-4">
-        <div class="card shadow-sm h-100">
-            <div class="card-header bg-light">
-                <h5 class="mb-0"><i class="fas fa-user-graduate me-2"></i>学生分析</h5>
+        <div class="card">
+            <div class="card-header bg-transparent border-0">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle p-2 me-2" style="background: rgba(25, 135, 84, 0.1);">
+                        <i class="fas fa-user-graduate" style="color: #198754;"></i>
+                    </div>
+                    <h5 class="mb-0">学生分析</h5>
+                </div>
             </div>
             <div class="card-body">
-                <p>查看学生的学习活动、知识点掌握情况和学习预警。</p>
-                
+                <p class="text-muted">查看学生的学习活动、知识点掌握情况和学习预警。</p>
+
                 <div class="mt-4">
                     <h6 class="mb-3">选择学生:</h6>
-                    <form id="studentSelectForm" class="mb-3">
-                        <select class="form-select" id="studentSelect" name="student_id">
+                    <form id="studentSelectForm">
+                        <select class="form-select border-0 bg-light dropup-false" id="studentSelect" name="student_id">
                             <option value="">-- 请选择学生 --</option>
                             {% if is_admin %}
-                                <!-- 管理员可以看到所有学生 -->
-                                {% for student in all_students %}
-                                <option value="{{ student.id }}">{{ student.name }} ({{ student.username }})</option>
-                                {% endfor %}
+                            {% for student in all_students %}
+                            <option value="{{ student.id }}">{{ student.name }} ({{ student.username }})</option>
+                            {% endfor %}
                             {% else %}
-                                <!-- 教师只能看到自己课程的学生 -->
-                                {% for student in all_students %}
-                                <option value="{{ student.id }}">{{ student.name }} ({{ student.username }})</option>
-                                {% endfor %}
+                            {% for student in all_students %}
+                            <option value="{{ student.id }}">{{ student.name }} ({{ student.username }})</option>
+                            {% endfor %}
                             {% endif %}
                         </select>
                     </form>
@@ -62,19 +79,24 @@
             </div>
         </div>
     </div>
-    
+
     <div class="col-md-6 mb-4">
-        <div class="card shadow-sm h-100">
-            <div class="card-header bg-light">
-                <h5 class="mb-0"><i class="fas fa-book me-2"></i>课程分析</h5>
+        <div class="card">
+            <div class="card-header bg-transparent border-0">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle p-2 me-2" style="background: rgba(111, 66, 193, 0.1);">
+                        <i class="fas fa-book" style="color: #6f42c1;"></i>
+                    </div>
+                    <h5 class="mb-0">课程分析</h5>
+                </div>
             </div>
             <div class="card-body">
-                <p>查看课程整体学习情况、作业完成率和学生进度。</p>
-                
+                <p class="text-muted">查看课程整体学习情况、作业完成率和学生进度。</p>
+
                 <div class="mt-4">
                     <h6 class="mb-3">选择要查看的课程:</h6>
                     <form id="courseSelectForm">
-                        <select class="form-select" id="courseSelect" name="course_id">
+                        <select class="form-select border-0 bg-light dropup-false" id="courseSelect" name="course_id">
                             <option value="">-- 请选择课程 --</option>
                             {% for course in courses %}
                             <option value="{{ course.id }}">{{ course.name }} ({{ course.code }})</option>
@@ -88,25 +110,79 @@
 </div>
 {% endif %}
 
-<!-- 说明部分保持不变 -->
+<!-- 说明部分 -->
 <div class="row">
     <div class="col-12">
-        <div class="card shadow-sm">
-            <div class="card-header bg-light">
-                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>关于学习数据分析</h5>
+        <div class="card">
+            <div class="card-header bg-transparent border-0">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle p-2 me-2" style="background: rgba(13, 202, 240, 0.1);">
+                        <i class="fas fa-info-circle" style="color: #0dcaf0;"></i>
+                    </div>
+                    <h5 class="mb-0">关于学习数据分析</h5>
+                </div>
             </div>
             <div class="card-body">
-               <p>启智AI伴学收集和分析学生的学习行为数据，帮助教师和学生了解学习进展情况。</p>
-                <p>我们的分析功能包括：</p>
-                <ul>
-                <li>学习活动追踪 - 记录和分析学习活动类型和时长</li>
-                <li>知识点掌握度评估 - 分析学生对课程知识点的理解和掌握情况</li>
-                <li>学习预警 - 识别潜在的学习问题并提供干预建议</li>
-                <li>课程整体分析 - 帮助教师了解课程整体效果和学生表现</li>
-                </ul>
-                <p class="mb-0 mt-3 text-muted">
-                <small><i class="fas fa-shield-alt me-1"></i>我们重视数据隐私，所有分析结果仅对相关教师和学生本人可见。</small>
-                </p>
+                <p class="text-muted">启智AI伴学收集和分析学生的学习行为数据，帮助教师和学生了解学习进展情况。</p>
+                <p class="text-muted">我们的分析功能包括：</p>
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center p-3"
+                            style="background: rgba(25, 135, 84, 0.1); border-radius: 12px;">
+                            <div class="rounded-circle p-2 me-3" style="background: rgba(25, 135, 84, 0.2);">
+                                <i class="fas fa-chart-line" style="color: #198754;"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">学习活动追踪</h6>
+                                <p class="mb-0 small text-muted">记录和分析学习活动类型和时长</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center p-3"
+                            style="background: rgba(111, 66, 193, 0.1); border-radius: 12px;">
+                            <div class="rounded-circle p-2 me-3" style="background: rgba(111, 66, 193, 0.2);">
+                                <i class="fas fa-brain" style="color: #6f42c1;"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">知识点掌握度评估</h6>
+                                <p class="mb-0 small text-muted">分析学生对课程知识点的理解和掌握情况</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center p-3"
+                            style="background: rgba(220, 53, 69, 0.1); border-radius: 12px;">
+                            <div class="rounded-circle p-2 me-3" style="background: rgba(220, 53, 69, 0.2);">
+                                <i class="fas fa-exclamation-triangle" style="color: #dc3545;"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">学习预警</h6>
+                                <p class="mb-0 small text-muted">识别潜在的学习问题并提供干预建议</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center p-3"
+                            style="background: rgba(13, 202, 240, 0.1); border-radius: 12px;">
+                            <div class="rounded-circle p-2 me-3" style="background: rgba(13, 202, 240, 0.2);">
+                                <i class="fas fa-chart-pie" style="color: #0dcaf0;"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">课程整体分析</h6>
+                                <p class="mb-0 small text-muted">帮助教师了解课程整体效果和学生表现</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="alert alert-light mt-4 mb-0">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle p-2 me-3" style="background: rgba(108, 117, 125, 0.1);">
+                            <i class="fas fa-shield-alt" style="color: #6c757d;"></i>
+                        </div>
+                        <p class="mb-0 small text-muted">我们重视数据隐私，所有分析结果仅对相关教师和学生本人可见。</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -114,21 +190,19 @@
 
 {% if is_teacher or is_admin %}
 <script>
-// 学生选择器自动跳转
-document.getElementById('studentSelect').addEventListener('change', function() {
-    const studentId = this.value;
-    if (studentId) {
-        window.location.href = `/analytics/student/${studentId}`;
-    }
-});
+    document.getElementById('studentSelect').addEventListener('change', function () {
+        const studentId = this.value;
+        if (studentId) {
+            window.location.href = `/analytics/student/${studentId}`;
+        }
+    });
 
-// 课程选择器自动跳转
-document.getElementById('courseSelect').addEventListener('change', function() {
-    const courseId = this.value;
-    if (courseId) {
-        window.location.href = `/analytics/course/${courseId}`;
-    }
-});
+    document.getElementById('courseSelect').addEventListener('change', function () {
+        const courseId = this.value;
+        if (courseId) {
+            window.location.href = `/analytics/course/${courseId}`;
+        }
+    });
 </script>
 {% endif %}
 {% endblock %}

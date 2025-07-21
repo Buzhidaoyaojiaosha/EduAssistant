@@ -5,85 +5,125 @@
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-8">
-        <div class="card shadow">
-            <div class="card-header bg-primary text-white">
-                <h4 class="mb-0">添加题目</h4>
-                <p class="mb-0 text-white-50">作业: {{ assignment.title }}</p>
+        <div class="card">
+            <div class="card-header bg-transparent border-0 text-center pt-4">
+                <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
+                    style="width: 60px; height: 60px; background: rgba(78, 84, 200, 0.1);">
+                    <i class="fas fa-question text-primary fa-lg"></i>
+                </div>
+                <h3 class="font-weight-bold text-primary mb-2">添加题目</h3>
+                <p class="text-muted mb-0">作业: {{ assignment.title }}</p>
             </div>
-            <div class="card-body">
+            <div class="card-body px-4 py-4">
                 <form method="post" id="questionForm">
-                    <div class="mb-3">
-                        <label for="name" class="form-label">题目名称</label>
-                        <input type="text" class="form-control" id="name" name="name" required>
+                    <div class="mb-4">
+                        <label for="name" class="form-label small text-muted mb-1">题目名称</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text border-0 bg-light">
+                                <i class="fas fa-heading text-primary"></i>
+                            </span>
+                            <input type="text" class="form-control border-0 bg-light" id="name" name="name" required>
+                        </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="type" class="form-label">题目类型</label>
-                        <select class="form-select" id="type" name="type" required>
-                            <option value="3">简答题</option>
-                            <option value="1">选择题</option>
-                            <option value="2">判断题</option>
-                            <option value="4">编程题</option>
-                        </select>
+                    <div class="mb-4">
+                        <label for="type" class="form-label small text-muted mb-1">题目类型</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text border-0 bg-light">
+                                <i class="fas fa-list-ul text-primary"></i>
+                            </span>
+                            <select class="form-select border-0 bg-light" id="type" name="type" required>
+                                <option value="3">简答题</option>
+                                <option value="1">选择题</option>
+                                <option value="2">判断题</option>
+                                <option value="4">编程题</option>
+                            </select>
+                        </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="context" class="form-label">题目内容</label>
-                        <textarea class="form-control" id="context" name="context" rows="4" required></textarea>
+                    <div class="mb-4">
+                        <label for="context" class="form-label small text-muted mb-1">题目内容</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text border-0 bg-light">
+                                <i class="fas fa-align-left text-primary"></i>
+                            </span>
+                            <textarea class="form-control border-0 bg-light" id="context" name="context" rows="4"
+                                required></textarea>
+                        </div>
                     </div>
 
                     <!-- 选择题选项区域 -->
-                    <div id="optionsContainer" class="mb-3 d-none">
-                        <label class="form-label">选项</label>
-                        <div id="optionsList">
+                    <div id="optionsContainer" class="mb-4 d-none">
+                        <label class="form-label small text-muted mb-1">选项</label>
+                        <div id="optionsList" class="mb-2">
                             <!-- 选项将通过JavaScript动态添加 -->
                         </div>
-                        <button type="button" id="addOption" class="btn btn-sm btn-outline-primary mt-2">
-                            <i class="fas fa-plus"></i> 添加选项
+                        <button type="button" id="addOption" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-plus me-1"></i>添加选项
                         </button>
                     </div>
 
                     <!-- 判断题答案区域 -->
-                    <div id="judgmentContainer" class="mb-3 d-none">
-                        <label class="form-label">题目正误</label>
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="judgmentAnswer" id="judgmentTrue"
-                                value="1" checked>
-                            <label class="form-check-label" for="judgmentTrue">正确</label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="judgmentAnswer" id="judgmentFalse"
-                                value="0">
-                            <label class="form-check-label" for="judgmentFalse">错误</label>
+                    <div id="judgmentContainer" class="mb-4 d-none">
+                        <label class="form-label small text-muted mb-1">题目正误</label>
+                        <div class="bg-light p-3 rounded">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="judgmentAnswer" id="judgmentTrue"
+                                    value="1" checked>
+                                <label class="form-check-label" for="judgmentTrue">正确</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="judgmentAnswer" id="judgmentFalse"
+                                    value="0">
+                                <label class="form-check-label" for="judgmentFalse">错误</label>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="answer" class="form-label">正确答案</label>
-                        <textarea class="form-control" id="answer" name="answer" rows="2" required></textarea>
-                        <small id="answerHelp" class="form-text text-muted">
+                    <div class="mb-4">
+                        <label for="answer" class="form-label small text-muted mb-1">正确答案</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text border-0 bg-light">
+                                <i class="fas fa-check-circle text-primary"></i>
+                            </span>
+                            <textarea class="form-control border-0 bg-light" id="answer" name="answer" rows="2"
+                                required></textarea>
+                        </div>
+                        <div class="form-text text-muted mt-2">
+                            <i class="fas fa-info-circle me-1"></i>
                             对于选择题，请输入正确选项的字母或编号；对于判断题，输入"1"表示正确，"0"表示错误。
-                        </small>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="analysis" class="form-label">答案解析</label>
-                        <textarea class="form-control" id="analysis" name="analysis" rows="2" required></textarea>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="score" class="form-label">分值</label>
-                        <input type="number" class="form-control" id="score" name="score" min="0" step="0.5"
-                            value="10.0" required>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-6">
-                            <button type="submit" class="btn btn-primary w-100">保存题目</button>
                         </div>
-                        <div class="col-6">
-                            <button type="button" class="btn btn-secondary w-100" id="cancelBtn">取消</button>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="analysis" class="form-label small text-muted mb-1">答案解析</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text border-0 bg-light">
+                                <i class="fas fa-lightbulb text-primary"></i>
+                            </span>
+                            <textarea class="form-control border-0 bg-light" id="analysis" name="analysis" rows="2"
+                                required></textarea>
                         </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="score" class="form-label small text-muted mb-1">分值</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text border-0 bg-light">
+                                <i class="fas fa-star text-primary"></i>
+                            </span>
+                            <input type="number" class="form-control border-0 bg-light" id="score" name="score" min="0"
+                                step="0.5" value="10.0" required>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-3 mt-5">
+                        <button type="button" class="btn btn-light flex-grow-1" id="cancelBtn">
+                            <i class="fas fa-arrow-left me-1"></i>返回
+                        </button>
+                        <button type="submit" class="btn btn-primary flex-grow-1">
+                            <i class="fas fa-check me-1"></i>保存题目
+                        </button>
                     </div>
                 </form>
             </div>
@@ -148,13 +188,13 @@
             const optionDiv = document.createElement('div');
             optionDiv.className = 'input-group mb-2';
             optionDiv.innerHTML = `
-                <span class="input-group-text">${optionLetter}</span>
-                <input type="text" class="form-control option-input" placeholder="选项${optionLetter}内容">
-                <div class="input-group-text">
+                <span class="input-group-text border-0 bg-light">${optionLetter}</span>
+                <input type="text" class="form-control border-0 bg-light option-input" placeholder="选项${optionLetter}内容">
+                <div class="input-group-text border-0 bg-light">
                     <input class="form-check-input option-correct" type="radio" name="correctOption" value="${optionLetter}">
                     <label class="form-check-label ms-1">正确答案</label>
                 </div>
-                <button type="button" class="btn btn-outline-danger remove-option">
+                <button type="button" class="btn btn-outline-danger btn-sm remove-option">
                     <i class="fas fa-times"></i>
                 </button>
             `;

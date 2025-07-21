@@ -5,33 +5,56 @@
 {% block extra_css %}
 <link href="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.css" rel="stylesheet">
 <style>
-    /* 让下拉框高度与按钮一致 */
+    .progress-low .progress-bar {
+        background: linear-gradient(135deg, #dc3545 0%, #ff6b6b 100%);
+    }
+
+    .progress-medium .progress-bar {
+        background: linear-gradient(135deg, #ffc107 0%, #ffdb4d 100%);
+    }
+
+    .progress-high .progress-bar {
+        background: linear-gradient(135deg, #198754 0%, #28a745 100%);
+    }
+
+    .chart-container {
+        height: 400px;
+        width: 100%;
+    }
+
     .form-select.form-select-sm.d-inline-block {
         height: calc(1.5em + 0.75rem + 2px);
         padding-top: 0.375rem;
         padding-bottom: 0.375rem;
-        /* 新增样式，让下拉框和按钮 margin 一致 */
         margin: 0;
         vertical-align: middle;
-        border: 1px solid #ced4da;
-        border-radius: 0.25rem;
+        border: none;
+        background-color: #f8f9fa;
+        border-radius: 12px;
         font-size: 0.875rem;
+        min-width: 200px;
     }
 
     .btn.btn-sm {
         height: calc(1.5em + 0.75rem + 2px);
-        padding-top: 0.375rem;
-        padding-bottom: 0.375rem;
+        padding: 0.375rem 1rem;
+        border-radius: 8px;
     }
-
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="row mb-4">
-     <div class="col">
-        <h2>课程学习分析</h2>
-        <p class="text-muted">{{ course.name }} ({{ course.code }})</p>
+    <div class="col">
+        <div class="d-flex align-items-center">
+            <div class="rounded-circle p-3 me-3" style="background: rgba(111, 66, 193, 0.1);">
+                <i class="fas fa-chart-bar" style="color: #6f42c1;"></i>
+            </div>
+            <div>
+                <h2 class="text-primary mb-1">课程学习分析</h2>
+                <p class="text-muted mb-0">{{ course.name }} ({{ course.code }})</p>
+            </div>
+        </div>
     </div>
     <div class="col-auto">
         <!-- 如果是管理员 -->
@@ -39,10 +62,12 @@
         <button type="button" class="btn btn-success me-2" onclick="updateKnowledgeMastery()">
             <i class="fas fa-brain me-1"></i>更新知识点掌握度
         </button>
-        <select id="courseSelector" class="form-select form-select-sm d-inline-block" style="width: auto;" onchange="redirectToCourse(this.value)">
+        <select id="courseSelector" class="form-select form-select-sm d-inline-block" style="width: auto;"
+            onchange="redirectToCourse(this.value)">
             <option value="" selected>{{ course.name }}</option>
             {% for admin_course in all_courses %}
-            <option value="{{ url_for('analytics.course_analytics', course_id=admin_course.id) }}" {% if admin_course.id == course.id %}selected{% endif %}>{{ admin_course.name }}</option>
+            <option value="{{ url_for('analytics.course_analytics', course_id=admin_course.id) }}" {% if
+                admin_course.id==course.id %}selected{% endif %}>{{ admin_course.name }}</option>
             {% endfor %}
         </select>
         {% endif %}
@@ -52,10 +77,12 @@
         <button type="button" class="btn btn-success me-2" onclick="updateKnowledgeMastery()">
             <i class="fas fa-brain me-1"></i>更新知识点掌握度
         </button>
-        <select id="courseSelector" class="form-select form-select-sm d-inline-block me-2" style="width: auto;" onchange="redirectToCourse(this.value)">
+        <select id="courseSelector" class="form-select form-select-sm d-inline-block me-2" style="width: auto;"
+            onchange="redirectToCourse(this.value)">
             <option value="" selected>{{ course.name }}</option>
             {% for teacher_course in all_courses %}
-            <option value="{{ url_for('analytics.course_analytics', course_id=teacher_course.id) }}" {% if teacher_course.id == course.id %}selected{% endif %}>{{ teacher_course.name }}</option>
+            <option value="{{ url_for('analytics.course_analytics', course_id=teacher_course.id) }}" {% if
+                teacher_course.id==course.id %}selected{% endif %}>{{ teacher_course.name }}</option>
             {% endfor %}
         </select>
         <a href="{{ url_for('course.view', course_id=course.id) }}" class="btn btn-outline-primary">
@@ -65,15 +92,16 @@
     </div>
 </div>
 
-
-
 <!-- 更新进度提示 -->
-<div id="updateProgress" class="alert alert-info" style="display: none;">
+<div id="updateProgress" class="alert alert-info"
+    style="display: none; background: rgba(13, 202, 240, 0.1); border: none;">
     <div class="d-flex align-items-center">
-        <div class="spinner-border spinner-border-sm me-2" role="status">
-            <span class="visually-hidden">Loading...</span>
+        <div class="rounded-circle p-2 me-3" style="background: rgba(13, 202, 240, 0.2);">
+            <div class="spinner-border spinner-border-sm" style="color: #0dcaf0;" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
         </div>
-        <span id="updateMessage">正在训练模型并更新知识点掌握度，请稍候...</span>
+        <span id="updateMessage" class="text-info">正在训练模型并更新知识点掌握度，请稍候...</span>
     </div>
 </div>
 
@@ -85,37 +113,53 @@
 <!-- 课程统计数据卡片 -->
 <div class="row mb-4">
     <div class="col-md-3">
-        <div class="card shadow-sm text-center">
-            <div class="card-body">
-                <h2 class="text-primary mb-0">{{ students|length }}</h2>
-                <p class="text-muted">学生人数</p>
+        <div class="card">
+            <div class="card-body text-center">
+                <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
+                    style="width: 60px; height: 60px; background: rgba(13, 110, 253, 0.1);">
+                    <i class="fas fa-users fa-lg" style="color: #0d6efd;"></i>
+                </div>
+                <h2 class="text-primary mb-1">{{ students|length }}</h2>
+                <p class="text-muted mb-0">学生人数</p>
             </div>
         </div>
     </div>
-    
+
     <div class="col-md-3">
-        <div class="card shadow-sm text-center">
-            <div class="card-body">
-                <h2 class="text-primary mb-0">{{ course.knowledge_points|length }}</h2>
-                <p class="text-muted">知识点数量</p>
+        <div class="card">
+            <div class="card-body text-center">
+                <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
+                    style="width: 60px; height: 60px; background: rgba(255, 193, 7, 0.1);">
+                    <i class="fas fa-lightbulb fa-lg" style="color: #ffc107;"></i>
+                </div>
+                <h2 class="text-primary mb-1">{{ course.knowledge_points|length }}</h2>
+                <p class="text-muted mb-0">知识点数量</p>
             </div>
         </div>
     </div>
-    
+
     <div class="col-md-3">
-        <div class="card shadow-sm text-center">
-            <div class="card-body">
-                <h2 class="text-primary mb-0">{{ course.assignments|length }}</h2>
-                <p class="text-muted">作业数量</p>
+        <div class="card">
+            <div class="card-body text-center">
+                <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
+                    style="width: 60px; height: 60px; background: rgba(111, 66, 193, 0.1);">
+                    <i class="fas fa-tasks fa-lg" style="color: #6f42c1;"></i>
+                </div>
+                <h2 class="text-primary mb-1">{{ course.assignments|length }}</h2>
+                <p class="text-muted mb-0">作业数量</p>
             </div>
         </div>
     </div>
-    
+
     <div class="col-md-3">
-        <div class="card shadow-sm text-center">
-            <div class="card-body">
-                <h2 class="text-primary mb-0" id="totalActivityCount">--</h2>
-                <p class="text-muted">总活动次数</p>
+        <div class="card">
+            <div class="card-body text-center">
+                <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
+                    style="width: 60px; height: 60px; background: rgba(25, 135, 84, 0.1);">
+                    <i class="fas fa-chart-line fa-lg" style="color: #198754;"></i>
+                </div>
+                <h2 class="text-primary mb-1" id="totalActivityCount">--</h2>
+                <p class="text-muted mb-0">总活动次数</p>
             </div>
         </div>
     </div>
@@ -124,9 +168,14 @@
 <div class="row mb-4">
     <!-- 学习活动热力图 -->
     <div class="col-12">
-        <div class="card shadow-sm">
-            <div class="card-header bg-light">
-                <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>课程活跃度分析</h5>
+        <div class="card">
+            <div class="card-header bg-transparent border-0">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle p-2 me-2" style="background: rgba(13, 110, 253, 0.1);">
+                        <i class="fas fa-chart-line" style="color: #0d6efd;"></i>
+                    </div>
+                    <h5 class="mb-0">课程活跃度分析</h5>
+                </div>
             </div>
             <div class="card-body">
                 {% if students|length > 0 %}
@@ -135,7 +184,11 @@
                 </div>
                 {% else %}
                 <div class="text-center py-5">
-                    <p class="mb-0 text-muted">暂无学生数据</p>
+                    <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
+                        style="width: 60px; height: 60px; background: rgba(13, 110, 253, 0.1);">
+                        <i class="fas fa-chart-line fa-lg" style="color: #0d6efd;"></i>
+                    </div>
+                    <p class="text-muted mb-0">暂无学生数据</p>
                 </div>
                 {% endif %}
             </div>
@@ -146,9 +199,14 @@
 <!-- 学生知识点掌握情况 -->
 <div class="row mb-4">
     <div class="col-12">
-        <div class="card shadow-sm">
-            <div class="card-header bg-light">
-                <h5 class="mb-0"><i class="fas fa-brain me-2"></i>学生知识点掌握概况</h5>
+        <div class="card">
+            <div class="card-header bg-transparent border-0">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle p-2 me-2" style="background: rgba(25, 135, 84, 0.1);">
+                        <i class="fas fa-brain" style="color: #198754;"></i>
+                    </div>
+                    <h5 class="mb-0">学生知识点掌握概况</h5>
+                </div>
             </div>
             <div class="card-body">
                 {% if students|length > 0 %}
@@ -160,34 +218,49 @@
                                 <th>平均掌握度</th>
                                 <th>最近活动</th>
                                 <th>活动总数</th>
-                                <th>操作</th>
+                                <th class="text-end">操作</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for student in students %}
                             <tr>
-                                <td>{{ student.name }}</td>
                                 <td>
-                                    {% if student.id in student_masteries and student_masteries[student.id]|length > 0 %}
+                                    <div class="d-flex align-items-center">
+                                        <div class="rounded-circle p-2 me-2"
+                                            style="background: rgba(25, 135, 84, 0.1);">
+                                            <i class="fas fa-user" style="color: #198754;"></i>
+                                        </div>
+                                        {{ student.name }}
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if student.id in student_masteries and student_masteries[student.id]|length > 0
+                                    %}
                                     {% set mastery_values = [] %}
                                     {% for point_id, point_data in student_masteries[student.id].items() %}
-                                        {% if mastery_values.append(point_data.mastery_level) %}{% endif %}
+                                    {% if mastery_values.append(point_data.mastery_level) %}{% endif %}
                                     {% endfor %}
                                     {% set avg_mastery = (mastery_values|sum / mastery_values|length) %}
-                                    <div class="progress {% if avg_mastery < 0.4 %}progress-low{% elif avg_mastery < 0.7 %}progress-medium{% else %}progress-high{% endif %}" style="height: 20px;">
-                                        <div class="progress-bar" role="progressbar" style="width: {{ avg_mastery*100 }}%">
-                                            {{ "%.0f"|format(avg_mastery*100) }}%
-                                        </div>
+                                    <div class="progress {% if avg_mastery < 0.4 %}progress-low{% elif avg_mastery < 0.7 %}progress-medium{% else %}progress-high{% endif %}"
+                                        style="height: 8px;">
+                                        <div class="progress-bar" role="progressbar"
+                                            style="width: {{ '%.0f'|format(avg_mastery*100) }}%"></div>
                                     </div>
+                                    <small class="mt-1 d-block text-center">{{ '%.0f'|format(avg_mastery*100)
+                                        }}%</small>
                                     {% else %}
                                     <span class="text-muted">无数据</span>
                                     {% endif %}
                                 </td>
                                 <td>
-                                    {% if student.id in course_activity and course_activity[student.id].total_activities > 0 %}
+                                    {% if student.id in course_activity and course_activity[student.id].total_activities
+                                    > 0 %}
                                     {% set daily_keys = course_activity[student.id].daily_activities.keys()|list %}
                                     {% if daily_keys %}
-                                    {{ daily_keys[-1] }}
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-calendar-alt me-2" style="color: #20c997;"></i>
+                                        {{ daily_keys[-1] }}
+                                    </div>
                                     {% else %}
                                     <span class="text-muted">无数据</span>
                                     {% endif %}
@@ -197,13 +270,18 @@
                                 </td>
                                 <td>
                                     {% if student.id in course_activity %}
-                                    {{ course_activity[student.id].total_activities }}
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-hashtag me-2" style="color: #0d6efd;"></i>
+                                        {{ course_activity[student.id].total_activities }}
+                                    </div>
                                     {% else %}
                                     0
                                     {% endif %}
                                 </td>
-                                <td>
-                                    <a href="{{ url_for('analytics.student_analytics', student_id=student.id, course_id=course.id) }}" class="btn btn-sm btn-outline-primary">
+                                <td class="text-end">
+                                    <a href="{{ url_for('analytics.student_analytics', student_id=student.id, course_id=course.id) }}"
+                                        class="btn btn-sm btn-light">
+                                        <i class="fas fa-chart-line" style="color: #6c757d;"></i>
                                         详细分析
                                     </a>
                                 </td>
@@ -214,7 +292,11 @@
                 </div>
                 {% else %}
                 <div class="text-center py-5">
-                    <p class="mb-0 text-muted">该课程暂无学生</p>
+                    <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
+                        style="width: 60px; height: 60px; background: rgba(25, 135, 84, 0.1);">
+                        <i class="fas fa-users fa-lg" style="color: #198754;"></i>
+                    </div>
+                    <p class="text-muted mb-0">该课程暂无学生</p>
                 </div>
                 {% endif %}
             </div>
@@ -222,63 +304,23 @@
     </div>
 </div>
 
-
 <!-- 课程知识点掌握情况 -->
 <div class="row mb-4">
     <div class="col-12">
-        <div class="card shadow-sm">
-            <div class="card-header bg-light">
-                <h5 class="mb-0"><i class="fas fa-brain me-2"></i>课程知识点掌握概况</h5>
+        <div class="card">
+            <div class="card-header bg-transparent border-0">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle p-2 me-2" style="background: rgba(255, 193, 7, 0.1);">
+                        <i class="fas fa-brain" style="color: #ffc107;"></i>
+                    </div>
+                    <h5 class="mb-0">课程知识点掌握概况</h5>
+                </div>
             </div>
             <div class="card-body">
                 {% if knowledge_points|length > 0 %}
-
-                {% set low_mastery_points = [] %}
-                    {% for point in knowledge_points %}
-                        {% if point.id in course_masteries %}
-                            {% set point_masteries = [] %}
-                            {% for student_id, mastery in course_masteries[point.id].items() %}
-                                {% if student_id != 'average' %}
-                                    {% if point_masteries.append(mastery) %}{% endif %}
-                                {% endif %}
-                            {% endfor %}
-                            {% set avg_mastery = (point_masteries|sum / point_masteries|length) if point_masteries else 0 %}
-                            
-                            {% if avg_mastery < 0.4 %}
-                                {% if low_mastery_points.append(point.name) %}{% endif %}
-                            
-                            {% endif %}
-                        {% endif %}
-                    {% endfor %}
-                    
-
-
-                <div class="alert alert-danger" role="alert" {% if low_mastery_points|length == 0 %}style="display: none"{% endif %}>
-                    <h6 class="alert-heading">以下知识点学生掌握度较低,建议重新讲解并使用更多示例和练习巩固:</h6>
-                    <ul>
-                        {% for point in knowledge_points %}
-                            {% if point.id in course_masteries %}
-                                {% set point_masteries = [] %}
-                                {% for student_id, mastery in course_masteries[point.id].items() %}
-                                    {% if student_id != 'average' %}
-                                        {% if point_masteries.append(mastery) %}{% endif %}
-                                    {% endif %}
-                                {% endfor %}
-                                {% set avg_mastery = (point_masteries|sum / point_masteries|length) if point_masteries else 0 %}
-                                {% if avg_mastery < 0.4 %}
-                                    <li>
-                                        <span>{{ point.name }}</span> - 
-                                        <span>{{ "%.0f"|format(avg_mastery * 100) }}%</span>
-                                    </li>
-                                {% endif %}
-                            {% endif %}
-                        {% endfor %}
-                    </ul>
-                </div>
-                
                 <div class="table-responsive">
                     <table class="table table-hover">
-                             <thead>
+                        <thead>
                             <tr>
                                 <th>知识点</th>
                                 <th>平均掌握度</th>
@@ -287,21 +329,29 @@
                         <tbody>
                             {% for point in course.knowledge_points %}
                             <tr>
-                                <td>{{ point.name }}</td>
                                 <td>
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-lightbulb me-2" style="color: #ffc107;"></i>
+                                        {{ point.name }}
+                                    </div>
+                                </td>
+                                <td style="width: 50%;">
                                     {% if point.id in course_masteries %}
                                     {% set point_masteries = [] %}
                                     {% for student_id, mastery in course_masteries[point.id].items() %}
-                                        {% if student_id != 'average' %}
-                                            {% if point_masteries.append(mastery) %}{% endif %}
-                                        {% endif %}
+                                    {% if student_id != 'average' %}
+                                    {% if point_masteries.append(mastery) %}{% endif %}
+                                    {% endif %}
                                     {% endfor %}
-                                    {% set avg_mastery = (point_masteries|sum / point_masteries|length) if point_masteries else 0 %}
-                                    <div class="progress {% if avg_mastery < 0.4 %}progress-low{% elif avg_mastery < 0.7 %}progress-medium{% else %}progress-high{% endif %}" style="height: 20px;">
-                                        <div class="progress-bar" role="progressbar" style="width: {{ avg_mastery*100 }}%">
-                                            {{ "%.0f"|format(avg_mastery*100) }}%
-                                        </div>
+                                    {% set avg_mastery = (point_masteries|sum / point_masteries|length) if
+                                    point_masteries else 0 %}
+                                    <div class="progress {% if avg_mastery < 0.4 %}progress-low{% elif avg_mastery < 0.7 %}progress-medium{% else %}progress-high{% endif %}"
+                                        style="height: 8px;">
+                                        <div class="progress-bar" role="progressbar"
+                                            style="width: {{ '%.0f'|format(avg_mastery*100) }}%"></div>
                                     </div>
+                                    <small class="mt-1 d-block text-center">{{ '%.0f'|format(avg_mastery*100)
+                                        }}%</small>
                                     {% else %}
                                     <span class="text-muted">无数据</span>
                                     {% endif %}
@@ -313,38 +363,60 @@
                 </div>
                 {% else %}
                 <div class="text-center py-5">
-                    <p class="mb-0 text-muted">该课程暂无知识点</p>
+                    <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
+                        style="width: 60px; height: 60px; background: rgba(255, 193, 7, 0.1);">
+                        <i class="fas fa-brain fa-lg" style="color: #ffc107;"></i>
+                    </div>
+                    <p class="text-muted mb-0">该课程暂无知识点</p>
                 </div>
                 {% endif %}
             </div>
         </div>
     </div>
 </div>
-
+</div>
 
 <!-- AI 建议模块 -->
 <div class="row mb-4">
     <div class="col-12">
-        <div class="card shadow-sm">
-            <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="fas fa-robot me-2"></i>AI 教学建议</h5>
-                <button id="refresh-suggestions" class="btn btn-sm btn-primary">
-                    <i class="fas fa-sync-alt"></i> 刷新建议
-                </button>
+        <div class="card">
+            <div class="card-header bg-transparent border-0">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle p-2 me-2" style="background: rgba(13, 202, 240, 0.1);">
+                            <i class="fas fa-robot" style="color: #0dcaf0;"></i>
+                        </div>
+                        <h5 class="mb-0">AI 教学建议</h5>
+                    </div>
+                    <button id="refresh-suggestions" class="btn btn-sm btn-primary"
+                        style="background: linear-gradient(135deg, #4e54c8 0%, #8f94fb 100%); border: none; box-shadow: 0 4px 15px rgba(78, 84, 200, 0.2);">
+                        <i class="fas fa-sync-alt me-1"></i>刷新建议
+                    </button>
+                </div>
             </div>
             <div class="card-body">
                 <div id="loading-suggestions" class="text-center py-5" style="display: none;">
-                    <p class="mb-0 text-muted"><i class="fas fa-spinner fa-spin me-2"></i> 正在加载 AI 教学建议...</p>
+                    <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
+                        style="width: 60px; height: 60px; background: rgba(13, 202, 240, 0.1);">
+                        <div class="spinner-border" style="color: #0dcaf0;" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                    <p class="text-muted mb-0">正在加载 AI 教学建议...</p>
                 </div>
                 <div id="markdown-content" class="py-5">
-                    <p class="mb-0 text-muted">暂无 AI 教学建议，请点击上方按钮获取</p>
+                    <div class="text-center">
+                        <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
+                            style="width: 60px; height: 60px; background: rgba(13, 202, 240, 0.1);">
+                            <i class="fas fa-robot fa-lg" style="color: #0dcaf0;"></i>
+                        </div>
+                        <p class="text-muted mb-0">暂无 AI 教学建议，请点击上方按钮获取</p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
-
 
 {% endblock %}
 
@@ -352,159 +424,200 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // 计算总活动数
-    let totalActivities = 0;
-    {% for student in students %}
+    document.addEventListener('DOMContentLoaded', function () {
+        // 计算总活动数
+        let totalActivities = 0;
+        {% for student in students %}
         {% if student.id in course_activity %}
-            totalActivities += {{ course_activity[student.id].total_activities }};
+        totalActivities += parseInt('{{ course_activity[student.id].total_activities }}', 10);
         {% endif %}
-    {% endfor %}
-    document.getElementById('totalActivityCount').innerText = totalActivities;
-    
-    {% if students|length > 0 %}
-    // 准备活动热力图数据
-    const ctx = document.getElementById('activityHeatmap').getContext('2d');
-    const studentNames = [];
-    const activityData = [];
-    
-    {% for student in students %}
-        studentNames.push("{{ student.name }}");
+        {% endfor %}
+        document.getElementById('totalActivityCount').innerText = totalActivities;
+
+        // 准备活动热力图数据
+        {% if students | length > 0 %}
+        const ctx = document.getElementById('activityHeatmap').getContext('2d');
+        const studentNames = [];
+        const activityData = [];
+
+        {% for student in students %}
+        studentNames.push('{{ student.name }}');
         {% if student.id in course_activity and course_activity[student.id].total_activities > 0 %}
-            activityData.push({{ course_activity[student.id].total_activities }});
+        activityData.push(parseInt('{{ course_activity[student.id].total_activities }}', 10));
         {% else %}
-            activityData.push(0);
+        activityData.push(0);
         {% endif %}
-    {% endfor %}
-    
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: studentNames,
-            datasets: [{
-                label: '学习活动次数',
-                data: activityData,
-                backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                borderColor: 'rgba(54, 162, 235, 1)',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    title: {
-                        display: true,
-                        text: '活动次数'
+        {% endfor %}
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: studentNames,
+                datasets: [{
+                    label: '学习活动次数',
+                    data: activityData,
+                    backgroundColor: 'rgba(13, 110, 253, 0.6)',
+                    borderColor: 'rgba(13, 110, 253, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top'
                     }
                 },
-                x: {
-                    title: {
-                        display: true,
-                        text: '学生'
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: '活动次数'
+                        },
+                        grid: {
+                            drawBorder: false,
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: '学生'
+                        },
+                        grid: {
+                            drawBorder: false,
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        }
                     }
                 }
             }
-        }
+        });
+        {% endif %}
+
+        // 刷新建议按钮事件
+        document.getElementById('refresh-suggestions').addEventListener('click', function () {
+            const courseId = parseInt('{{ course.id }}', 10);
+            const button = this;
+            const loadingElement = document.getElementById('loading-suggestions');
+            const markdownContent = document.getElementById('markdown-content');
+
+            button.disabled = true;
+            loadingElement.style.display = 'block';
+            markdownContent.style.display = 'none';
+
+            fetch(`/analytics/course/${courseId}/get_suggestions`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        markdownContent.innerHTML = marked.marked(data.teaching_suggestions);
+                    } else {
+                        markdownContent.innerHTML = `
+                        <div class="alert" style="background: rgba(220, 53, 69, 0.1); border: none;">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle p-2 me-2" style="background: rgba(220, 53, 69, 0.2);">
+                                    <i class="fas fa-exclamation-triangle" style="color: #dc3545;"></i>
+                                </div>
+                                <p class="mb-0 text-danger">获取教学建议失败，请稍后重试。</p>
+                            </div>
+                        </div>
+                    `;
+                    }
+                })
+                .catch(error => {
+                    console.error('获取教学建议失败:', error);
+                    markdownContent.innerHTML = `
+                    <div class="alert" style="background: rgba(220, 53, 69, 0.1); border: none;">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle p-2 me-2" style="background: rgba(220, 53, 69, 0.2);">
+                                <i class="fas fa-exclamation-triangle" style="color: #dc3545;"></i>
+                            </div>
+                            <p class="mb-0 text-danger">获取教学建议失败，请稍后重试。错误信息：${error.message}</p>
+                        </div>
+                    </div>
+                `;
+                })
+                .finally(() => {
+                    button.disabled = false;
+                    loadingElement.style.display = 'none';
+                    markdownContent.style.display = 'block';
+                });
+        });
     });
-    {% endif %}
-});
 
-document.addEventListener('DOMContentLoaded', function() {
-    // 点击刷新建议按钮时请求 AI 教学建议
-    document.getElementById('refresh-suggestions').addEventListener('click', function() {
-        const courseId = {{ course.id }};
-        const button = this;
-        const loadingElement = document.getElementById('loading-suggestions');
-        const markdownContent = document.getElementById('markdown-content');
+    // 更新知识点掌握度函数
+    function updateKnowledgeMastery() {
+        const courseId = parseInt('{{ course.id }}', 10);
+        const updateProgress = document.getElementById('updateProgress');
+        const updateResult = document.getElementById('updateResult');
+        const resultMessage = document.getElementById('resultMessage');
 
-        // 显示加载状态
-        button.disabled = true;
-        loadingElement.style.display = 'block';
-        markdownContent.style.display = 'none';
+        updateProgress.style.display = 'block';
+        updateResult.style.display = 'none';
 
-        // 发送请求到后端
-        fetch(`/analytics/course/${courseId}/get_suggestions`)
+        fetch(`/analytics/course/${courseId}/update_mastery`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
             .then(response => response.json())
             .then(data => {
+                updateProgress.style.display = 'none';
+                updateResult.style.display = 'block';
+
                 if (data.success) {
-                    markdownContent.innerHTML = marked.marked(data.teaching_suggestions);
+                    updateResult.className = 'alert';
+                    updateResult.style.background = 'rgba(25, 135, 84, 0.1)';
+                    updateResult.style.border = 'none';
+                    resultMessage.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle p-2 me-2" style="background: rgba(25, 135, 84, 0.2);">
+                        <i class="fas fa-check" style="color: #198754;"></i>
+                    </div>
+                    <span class="text-success">${data.message}</span>
+                </div>
+            `;
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 3000);
                 } else {
-                    markdownContent.innerHTML = '<p class="text-danger">获取教学建议失败，请稍后重试。</p>';
+                    updateResult.className = 'alert';
+                    updateResult.style.background = 'rgba(220, 53, 69, 0.1)';
+                    updateResult.style.border = 'none';
+                    resultMessage.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle p-2 me-2" style="background: rgba(220, 53, 69, 0.2);">
+                        <i class="fas fa-times" style="color: #dc3545;"></i>
+                    </div>
+                    <span class="text-danger">${data.message}</span>
+                </div>
+            `;
                 }
             })
             .catch(error => {
-                console.error('获取教学建议失败:', error);
-                markdownContent.innerHTML = `<p class="text-danger">获取教学建议失败，请稍后重试。错误信息：${error.message}</p>`;
-
-            })
-            .finally(() => {
-                // 恢复按钮状态
-                button.disabled = false;
-                loadingElement.style.display = 'none';
-                markdownContent.style.display = 'block';
+                updateProgress.style.display = 'none';
+                updateResult.style.display = 'block';
+                updateResult.className = 'alert';
+                updateResult.style.background = 'rgba(220, 53, 69, 0.1)';
+                updateResult.style.border = 'none';
+                resultMessage.innerHTML = `
+            <div class="d-flex align-items-center">
+                <div class="rounded-circle p-2 me-2" style="background: rgba(220, 53, 69, 0.2);">
+                    <i class="fas fa-times" style="color: #dc3545;"></i>
+                </div>
+                <span class="text-danger">更新失败，请稍后重试。错误信息：${error.message}</span>
+            </div>
+        `;
             });
-    });
-});
+    }
 
-// 更新知识点掌握度函数
-function updateKnowledgeMastery() {
-    const courseId = {{ course.id }};
-    const updateProgress = document.getElementById('updateProgress');
-    const updateResult = document.getElementById('updateResult');
-    const resultMessage = document.getElementById('resultMessage');
-    
-    // 显示进度提示
-    updateProgress.style.display = 'block';
-    updateResult.style.display = 'none';
-    
-    // 发送请求到后端
-    fetch(`/analytics/course/${courseId}/update_mastery`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        // 隐藏进度提示
-        updateProgress.style.display = 'none';
-        
-        // 显示结果
-        updateResult.style.display = 'block';
-        if (data.success) {
-            updateResult.className = 'alert alert-success';
-            resultMessage.textContent = data.message;
-            // 3秒后刷新页面以显示更新后的数据
-            setTimeout(() => {
-                window.location.reload();
-            }, 3000);
-        } else {
-            updateResult.className = 'alert alert-danger';
-            resultMessage.textContent = data.message;
-        }
-    })
-    .catch(error => {
-        // 隐藏进度提示
-        updateProgress.style.display = 'none';
-        
-        // 显示错误
-        updateResult.style.display = 'block';
-        updateResult.className = 'alert alert-danger';
-        resultMessage.textContent = '更新失败，请稍后重试。错误信息：' + error.message;
-    });
-
-}
-
-//课程跳转
-function redirectToCourse(url) {
+    // 课程跳转函数
+    function redirectToCourse(url) {
         if (url) {
             window.location.href = url;
         }
     }
 </script>
 {% endblock %}
-
-

@@ -3,21 +3,21 @@
 {% block title %}课程列表 - 启智AI伴学{% endblock %}
 
 {% block content %}
-<div class="row mb-4">
+<div class="row mb-4 align-items-center">
     <div class="col">
-        <h2>课程列表</h2>
+        <h2 class="text-primary fw-bold mb-0">课程列表</h2>
     </div>
     <div class="col-auto">
         <!-- 搜索表单 -->
         <form class="d-flex" action="{{ url_for('course.index') }}" method="GET">
             <div class="input-group me-2">
-                <input type="text" class="form-control" name="q" placeholder="搜索课程..."
+                <span class="input-group-text border-0">
+                    <i class="fas fa-search text-primary"></i>
+                </span>
+                <input type="text" class="form-control border-0" name="q" placeholder="搜索课程..."
                     value="{{ request.args.get('q', '') }}">
-                <button class="btn btn-outline-primary" type="submit">
-                    <i class="fas fa-search"></i>
-                </button>
                 {% if request.args.get('q') %}
-                <a href="{{ url_for('course.index') }}" class="btn btn-outline-secondary">
+                <a href="{{ url_for('course.index') }}" class="btn btn-light border-0" title="清除搜索">
                     <i class="fas fa-times"></i>
                 </a>
                 {% endif %}
@@ -30,29 +30,119 @@
         </a>
     </div>
 </div>
+
 {% if request.args.get('q') %}
-<div class="alert alert-info mb-3">
-    搜索关键词: <strong>"{{ request.args.get('q') }}"</strong>
-    <a href="{{ url_for('course.index') }}" class="float-end">清除搜索</a>
+<div class="alert mb-4">
+    <div class="d-flex align-items-center">
+        <i class="fas fa-search text-primary me-2"></i>
+        <div>
+            <p class="mb-0">
+                搜索关键词: <strong>"{{ request.args.get('q') }}"</strong>
+                <a href="{{ url_for('course.index') }}" class="text-primary text-decoration-none ms-2">
+                    <i class="fas fa-times me-1"></i>清除搜索
+                </a>
+            </p>
+        </div>
+    </div>
 </div>
 {% endif %}
 
-<div class="row">
+<div class="row g-4">
     {% if courses %}
     {% for course in courses %}
-    <!-- 课程卡片保持不变 -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="flex-shrink-0">
+                        <div class="rounded-circle p-3" style="background: rgba(78, 84, 200, 0.1);">
+                            <i class="fas fa-book text-primary"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h5 class="card-title mb-1">{{ course.name }}</h5>
+                        <h6 class="card-subtitle text-muted">{{ course.code }}</h6>
+                    </div>
+                </div>
+                <p class="card-text">{{ course.description|truncate(150) }}</p>
+                <div class="d-flex align-items-center text-muted mb-3">
+                    <i class="fas fa-user-tie me-2"></i>
+                    <span>{{ course.teacher.name }}</span>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-0 pt-0">
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('course.view', course_id=course.id) }}" class="btn btn-primary flex-grow-1">
+                        <i class="fas fa-arrow-right me-1"></i>进入课程
+                    </a>
+                    {% if is_admin or session.get('user_id') == course.teacher.id %}
+                    <a href="{{ url_for('analytics.course_analytics', course_id=course.id) }}" class="btn btn-light"
+                        title="查看分析">
+                        <i class="fas fa-chart-line"></i>
+                    </a>
+                    <button type="button" class="btn btn-light text-danger" data-bs-toggle="modal"
+                        data-bs-target="#deleteCourseModal{{ course.id }}" title="删除课程">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 删除课程确认模态框 -->
+    <div class="modal fade" id="deleteCourseModal{{ course.id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title text-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>确认删除课程
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>确定要删除课程 "<strong>{{ course.name }}</strong>" 吗？</p>
+                    <div class="alert alert-danger">
+                        <p class="mb-2">⚠️ 此操作将删除：</p>
+                        <ul class="mb-0">
+                            <li>课程下的所有作业和题目</li>
+                            <li>学生的答题记录和成绩</li>
+                            <li>错题本和学习数据</li>
+                            <li>所有相关的知识点</li>
+                        </ul>
+                    </div>
+                    <p class="text-danger"><strong>此操作不可恢复！</strong></p>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">取消</button>
+                    <form method="POST" action="{{ url_for('course.delete', course_id=course.id) }}"
+                        style="display: inline;">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash-alt me-1"></i>确认删除
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
     {% endfor %}
     {% else %}
     <div class="col-12">
-        <div class="alert alert-info text-center py-5">
-            <h4><i class="fas fa-info-circle me-2"></i>
-                {% if request.args.get('q') %}
-                没有找到匹配的课程
-                {% else %}
-                暂无课程
-                {% endif %}
-            </h4>
-            <p>
+        <div class="alert text-center py-5">
+            <div class="mb-3">
+                <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
+                    style="width: 80px; height: 80px; background: rgba(78, 84, 200, 0.1);">
+                    <i class="fas fa-book text-primary fa-2x"></i>
+                </div>
+                <h4 class="text-primary">
+                    {% if request.args.get('q') %}
+                    没有找到匹配的课程
+                    {% else %}
+                    暂无课程
+                    {% endif %}
+                </h4>
+            </div>
+            <p class="text-muted mb-0">
                 {% if request.args.get('q') %}
                 没有找到包含 "{{ request.args.get('q') }}" 的课程
                 {% else %}
@@ -63,80 +153,4 @@
     </div>
     {% endif %}
 </div>
-
-<div class="row">
-    {% if courses %}
-    {% for course in courses %}
-    <div class="col-md-4 mb-4">
-        <div class="card shadow-sm h-100 hover-effect">
-            <div class="card-body">
-                <h5 class="card-title">{{ course.name }}</h5>
-                <h6 class="card-subtitle mb-2 text-muted">{{ course.code }}</h6>
-                <p class="card-text">{{ course.description|truncate(150) }}</p>
-                <p class="text-muted">
-                    <small>教师: {{ course.teacher.name }}</small>
-                </p>
-            </div>
-            <div class="card-footer bg-transparent border-0">
-                <div class="d-flex justify-content-between">
-                    <a href="{{ url_for('course.view', course_id=course.id) }}" class="btn btn-sm btn-primary">进入课程</a>
-                    {% if is_admin or session.get('user_id') == course.teacher.id %}
-                    <a href="{{ url_for('analytics.course_analytics', course_id=course.id) }}"
-                        class="btn btn-sm btn-outline-primary">查看分析</a>
-                    <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal"
-                        data-bs-target="#deleteCourseModal{{ course.id }}">
-                        删除课程
-                    </button>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- 删除课程确认模态框 -->
-    <div class="modal fade" id="deleteCourseModal{{ course.id }}" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title" id="deleteAssignmentModalLabel">
-                        <i class="fas fa-exclamation-triangle me-2"></i>确认删除课程
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                        aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p>确定要删除课程 "<strong>{{ course.name }}</strong>" 吗？</p>
-                    <p class="text-danger">⚠️ 此操作将删除：</p>
-                    <ul class="text-danger">
-                        <li>课程下的所有作业和题目</li>
-                        <li>学生的答题记录和成绩</li>
-                        <li>错题本和学习数据</li>
-                        <li>所有相关的知识点</li>
-                    </ul>
-                    <p class="text-danger"><strong>此操作不可恢复！</strong></p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                    <form method="POST" action="{{ url_for('course.delete', course_id=course.id) }}"
-                        style="display: inline;">
-                        <button type="submit" class="btn btn-danger">确认删除</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endfor %}
-    {% else %}
-    {% if request.args.get('q') %}
-    <!-- 有搜索则不显示 -->
-    {% else %}
-    <div class="col-12">
-        <div class="alert alert-info text-center py-5">
-            <h4><i class="fas fa-info-circle me-2"></i>暂无课程</h4>
-            <p>还没有任何课程，请创建新课程或稍后再来查看。</p>
-        </div>
-    </div>
-    {% endif %}
-    {% endif %}
-</div>
-
 {% endblock %}

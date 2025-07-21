@@ -5,49 +5,80 @@
 {% block content %}
 <div class="row mb-4">
     <div class="col">
-        <h2>编辑用户</h2>
-        <p class="text-muted">{{ user.username }} (ID: {{ user.id }})</p>
+        <div class="d-flex align-items-center">
+            <div class="rounded-circle p-3 me-3" style="background: rgba(25, 135, 84, 0.1);">
+                <i class="fas fa-user-edit" style="color: #198754;"></i>
+            </div>
+            <div>
+                <h2 class="text-primary mb-1">编辑用户</h2>
+                <p class="text-muted mb-0">{{ user.username }} (ID: {{ user.id }})</p>
+            </div>
+        </div>
     </div>
     <div class="col-auto">
-        <a href="{{ url_for('admin.users') }}" class="btn btn-outline-primary">
-            <i class="fas fa-arrow-left me-1"></i>返回用户列表
+        <a href="{{ url_for('admin.users') }}" class="btn btn-light">
+            <i class="fas fa-arrow-left me-2"></i>返回用户列表
         </a>
     </div>
 </div>
 
 <div class="row">
     <div class="col-md-8">
-        <div class="card shadow-sm">
-            <div class="card-header bg-light">
-                <h5 class="mb-0"><i class="fas fa-user-edit me-2"></i>用户信息</h5>
+        <div class="card">
+            <div class="card-header bg-transparent border-0">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle p-2 me-2" style="background: rgba(25, 135, 84, 0.1);">
+                        <i class="fas fa-user" style="color: #198754;"></i>
+                    </div>
+                    <h5 class="mb-0">用户信息</h5>
+                </div>
             </div>
             <div class="card-body">
                 <form method="post">
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="username" class="form-label">用户名</label>
-                            <input type="text" class="form-control" id="username" name="username" value="{{ user.username }}" required>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-0">
+                                    <i class="fas fa-user" style="color: #198754;"></i>
+                                </span>
+                                <input type="text" class="form-control bg-light border-0" id="username" name="username"
+                                    value="{{ user.username }}" required>
+                            </div>
                         </div>
                         <div class="col-md-6">
                             <label for="email" class="form-label">电子邮箱</label>
-                            <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-0">
+                                    <i class="fas fa-envelope" style="color: #198754;"></i>
+                                </span>
+                                <input type="email" class="form-control bg-light border-0" id="email" name="email"
+                                    value="{{ user.email }}" required>
+                            </div>
                         </div>
                     </div>
                     <div class="mb-3">
                         <label for="name" class="form-label">姓名</label>
-                        <input type="text" class="form-control" id="name" name="name" value="{{ user.name }}" required>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-0">
+                                <i class="fas fa-id-card" style="color: #198754;"></i>
+                            </span>
+                            <input type="text" class="form-control bg-light border-0" id="name" name="name"
+                                value="{{ user.name }}" required>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">角色</label>
-                        <div class="row">
+                        <div class="row g-3">
                             {% for role in roles %}
                             <div class="col-md-4">
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" 
-                                           id="role-{{ role.id }}" name="roles" value="{{ role.id }}"
-                                           {% if role.id in user_roles %}checked{% endif %}>
+                                    <input class="form-check-input" type="checkbox" id="role-{{ role.id }}" name="roles"
+                                        value="{{ role.id }}" {% if role.id in user_roles %}checked{% endif %}>
                                     <label class="form-check-label" for="role-{{ role.id }}">
-                                        {{ role.name }} <small class="text-muted">({{ role.description }})</small>
+                                        <i class="fas fa-user-tag me-1" style="color: #6f42c1;"></i>
+                                        {{ role.name }}
+                                        <small class="text-muted d-block">{{ role.description }}</small>
                                     </label>
                                 </div>
                             </div>
@@ -55,57 +86,98 @@
                         </div>
                     </div>
                     <div class="mb-4">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="is_active" name="is_active" {% if user.is_active %}checked{% endif %}>
-                            <label class="form-check-label" for="is_active">账户激活</label>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="is_active" name="is_active" {% if
+                                user.is_active %}checked{% endif %}>
+                            <label class="form-check-label" for="is_active">
+                                <i class="fas fa-toggle-on me-1" style="color: #198754;"></i>账户激活
+                            </label>
                         </div>
                     </div>
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <small class="text-muted">创建时间: {{ user.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                            <small class="text-muted">
+                                <i class="fas fa-clock me-1"></i>创建时间: {{ user.created_at.strftime('%Y-%m-%d %H:%M') }}
+                            </small>
                         </div>
                         <div>
-                            <a href="{{ url_for('admin.users') }}" class="btn btn-secondary me-2">取消</a>
-                            <button type="submit" class="btn btn-primary">保存更改</button>
+                            <a href="{{ url_for('admin.users') }}" class="btn btn-light me-2">
+                                <i class="fas fa-times me-2"></i>取消
+                            </a>
+                            <button type="submit" class="btn btn-primary"
+                                style="background: linear-gradient(135deg, #198754 0%, #20c997 100%); border: none;">
+                                <i class="fas fa-save me-2"></i>保存更改
+                            </button>
                         </div>
                     </div>
                 </form>
             </div>
         </div>
     </div>
-    
+
     <div class="col-md-4">
-        <!-- 修改重置密码表单部分 -->
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-light">
-                <h5 class="mb-0"><i class="fas fa-shield-alt me-2"></i>重置密码</h5>
+        <!-- 重置密码卡片 -->
+        <div class="card mb-4">
+            <div class="card-header bg-transparent border-0">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle p-2 me-2" style="background: rgba(255, 193, 7, 0.1);">
+                        <i class="fas fa-key" style="color: #ffc107;"></i>
+                    </div>
+                    <h5 class="mb-0">重置密码</h5>
+                </div>
             </div>
             <div class="card-body">
                 <form method="post" action="{{ url_for('admin.reset_password', user_id=user.id) }}">
                     <div class="mb-3">
                         <label for="new_password" class="form-label">新密码</label>
-                        <input type="password" class="form-control" id="new_password" name="new_password" required>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-0">
+                                <i class="fas fa-lock" style="color: #ffc107;"></i>
+                            </span>
+                            <input type="password" class="form-control bg-light border-0" id="new_password"
+                                name="new_password" required>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label for="confirm_password" class="form-label">确认密码</label>
-                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-0">
+                                <i class="fas fa-lock" style="color: #ffc107;"></i>
+                            </span>
+                            <input type="password" class="form-control bg-light border-0" id="confirm_password"
+                                name="confirm_password" required>
+                        </div>
                     </div>
                     <div class="d-grid">
-                        <button type="submit" class="btn btn-warning">重置密码</button>
+                        <button type="submit" class="btn btn-warning"
+                            style="background: linear-gradient(135deg, #ffc107 0%, #ffb302 100%); border: none;">
+                            <i class="fas fa-key me-2"></i>重置密码
+                        </button>
                     </div>
                 </form>
             </div>
         </div>
-        
-        <div class="card shadow-sm">
-            <div class="card-header bg-light">
-                <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>危险区域</h5>
+
+        <!-- 危险区域卡片 -->
+        <div class="card">
+            <div class="card-header bg-transparent border-0">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle p-2 me-2" style="background: rgba(220, 53, 69, 0.1);">
+                        <i class="fas fa-exclamation-triangle" style="color: #dc3545;"></i>
+                    </div>
+                    <h5 class="mb-0">危险区域</h5>
+                </div>
             </div>
             <div class="card-body">
-                <p>删除用户将移除所有相关数据，此操作无法撤销。</p>
+                <div class="alert" style="background: rgba(220, 53, 69, 0.1); border: none;">
+                    <div class="d-flex">
+                        <i class="fas fa-exclamation-triangle me-3" style="color: #dc3545;"></i>
+                        <p class="mb-0">删除用户将移除所有相关数据，此操作无法撤销。</p>
+                    </div>
+                </div>
                 <div class="d-grid">
                     <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteUserModal">
-                        删除此用户
+                        <i class="fas fa-trash-alt me-2"></i>删除此用户
                     </button>
                 </div>
             </div>
@@ -115,16 +187,21 @@
 
 <!-- 删除用户确认弹窗 -->
 <div class="modal fade" id="deleteUserModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">确认删除</h5>
+            <div class="modal-header border-0">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle p-2 me-2" style="background: rgba(220, 53, 69, 0.1);">
+                        <i class="fas fa-exclamation-triangle" style="color: #dc3545;"></i>
+                    </div>
+                    <h5 class="modal-title mb-0">确认删除</h5>
+                </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
             </div>
             <div class="modal-body">
                 <p>确定要删除用户 "{{ user.username }}" 吗？此操作不可撤销。</p>
-                <div class="alert alert-danger">
-                    <i class="fas fa-exclamation-triangle me-2"></i>删除用户将永久移除此用户的：
+                <div class="alert" style="background: rgba(220, 53, 69, 0.1); border: none;">
+                    <i class="fas fa-exclamation-triangle me-2" style="color: #dc3545;"></i>删除用户将永久移除此用户的：
                     <ul class="mb-0 mt-2">
                         <li>所有个人信息和账户设置</li>
                         <li>课程数据和学习记录</li>
@@ -139,32 +216,174 @@
                     </label>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                <button type="button" class="btn btn-danger" disabled id="confirmDeleteBtn">删除用户</button>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>取消
+                </button>
+                <button type="button" class="btn btn-danger" disabled id="confirmDeleteBtn">
+                    <i class="fas fa-trash-alt me-2"></i>删除用户
+                </button>
             </div>
         </div>
     </div>
 </div>
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #4e54c8 0%, #8f94fb 100%);
+        --secondary-gradient: linear-gradient(135deg, #00cdac 0%, #8ddad5 100%);
+        --background-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        --card-background: rgba(255, 255, 255, 0.9);
+        --hover-background: rgba(78, 84, 200, 0.1);
+    }
+
+    body {
+        background: var(--background-gradient);
+        min-height: 100vh;
+    }
+
+    .card {
+        border: none;
+        background: var(--card-background);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+    }
+
+    .form-control,
+    .input-group-text {
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .input-group .form-control {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+    }
+
+    .input-group-text {
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+
+    .form-control:focus {
+        box-shadow: 0 0 0 3px rgba(25, 135, 84, 0.1);
+        border: none;
+    }
+
+    .btn {
+        padding: 0.75rem 1.5rem;
+        font-weight: 500;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-light {
+        background: rgba(255, 255, 255, 0.8);
+        border: none;
+    }
+
+    .btn-light:hover {
+        background: rgba(255, 255, 255, 0.9);
+        transform: translateY(-1px);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(25, 135, 84, 0.2);
+    }
+
+    .btn-warning:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(255, 193, 7, 0.2);
+    }
+
+    .btn-danger {
+        background: linear-gradient(135deg, #dc3545 0%, #ff6b6b 100%);
+        border: none;
+    }
+
+    .btn-danger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(220, 53, 69, 0.2);
+    }
+
+    .form-check-input:checked {
+        background-color: #198754;
+        border-color: #198754;
+    }
+
+    .form-switch .form-check-input:checked {
+        background-color: #198754;
+        border-color: #198754;
+    }
+
+    .modal-content {
+        border: none;
+        border-radius: 12px;
+        background: var(--card-background);
+        backdrop-filter: blur(10px);
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .card {
+        animation: fadeIn 0.5s ease-out;
+    }
+
+    .card:nth-child(2) {
+        animation-delay: 0.1s;
+    }
+
+    .card:nth-child(3) {
+        animation-delay: 0.2s;
+    }
+</style>
 {% endblock %}
 
 {% block extra_js %}
 <script>
     // 删除确认复选框
-    document.getElementById('confirmDelete').addEventListener('change', function() {
+    document.getElementById('confirmDelete').addEventListener('change', function () {
         document.getElementById('confirmDeleteBtn').disabled = !this.checked;
     });
-    
+
     // 密码重置表单验证
-    document.querySelector('.card-body form').addEventListener('submit', function(e) {
+    document.querySelector('form[action*="reset_password"]').addEventListener('submit', function (e) {
         const password = document.getElementById('new_password').value;
         const confirmPassword = document.getElementById('confirm_password').value;
-        
+
         if (password !== confirmPassword) {
             e.preventDefault();
-            alert('两次输入的密码不一致，请重新输入');
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-danger mt-3';
+            alert.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i>两次输入的密码不一致，请重新输入';
+            this.appendChild(alert);
+
+            setTimeout(() => {
+                alert.remove();
+            }, 3000);
         }
     });
 </script>
 {% endblock %}
-
+{% endblock %}

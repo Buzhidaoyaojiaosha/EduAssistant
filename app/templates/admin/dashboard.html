@@ -5,88 +5,137 @@
 {% block content %}
 <div class="row mb-4">
     <div class="col">
-        <h2>系统管理</h2>
-        <p class="text-muted">管理用户、角色和系统设置</p>
+        <div class="d-flex align-items-center">
+            <div class="rounded-circle p-3 me-3" style="background: rgba(78, 84, 200, 0.1);">
+                <i class="fas fa-tachometer-alt" style="color: #4e54c8;"></i>
+            </div>
+            <div>
+                <h2 class="text-primary mb-1">系统管理</h2>
+                <p class="text-muted mb-0">管理用户、角色和系统设置</p>
+            </div>
+        </div>
     </div>
 </div>
 
 <div class="row mb-4">
     <!-- 快速操作卡片 -->
     <div class="col-md-4 mb-4">
-        <div class="card shadow-sm h-100">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0"><i class="fas fa-cog me-2"></i>快速操作</h5>
+        <div class="card h-100">
+            <div class="card-header bg-transparent border-0">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle p-2 me-2" style="background: rgba(78, 84, 200, 0.1);">
+                        <i class="fas fa-cog" style="color: #4e54c8;"></i>
+                    </div>
+                    <h5 class="mb-0">快速操作</h5>
+                </div>
             </div>
             <div class="card-body">
-                <div class="list-group">
-                    <a href="{{ url_for('admin.users') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                        <div>
-                            <i class="fas fa-users me-2"></i>用户管理
-                            <small class="d-block text-muted">当前用户数: {{ user_count }}</small>
+                <div class="d-grid gap-3">
+                    <a href="{{ url_for('admin.users') }}" class="btn btn-light text-start">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle p-2 me-3" style="background: rgba(25, 135, 84, 0.1);">
+                                    <i class="fas fa-users" style="color: #198754;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0">用户管理</h6>
+                                    <small class="text-muted">当前用户数: {{ user_count }}</small>
+                                </div>
+                            </div>
+                            <i class="fas fa-chevron-right text-muted"></i>
                         </div>
-                        <span class="badge bg-primary rounded-pill">查看</span>
                     </a>
-                    <a href="{{ url_for('admin.roles') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                        <div>
-                            <i class="fas fa-user-tag me-2"></i>角色管理
+                    <a href="{{ url_for('admin.roles') }}" class="btn btn-light text-start">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle p-2 me-3" style="background: rgba(111, 66, 193, 0.1);">
+                                    <i class="fas fa-user-tag" style="color: #6f42c1;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0">角色管理</h6>
+                                    <small class="text-muted">管理系统角色</small>
+                                </div>
+                            </div>
+                            <i class="fas fa-chevron-right text-muted"></i>
                         </div>
-                        <span class="badge bg-primary rounded-pill">查看</span>
                     </a>
-                    <a href="{{ url_for('search.manage_knowledge') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                        <div>
-                            <i class="fas fa-book me-2"></i>知识库管理
-                            <small class="d-block text-muted">条目数: {{ knowledge_count }}</small>
+                    <a href="{{ url_for('search.manage_knowledge') }}" class="btn btn-light text-start">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle p-2 me-3" style="background: rgba(32, 201, 151, 0.1);">
+                                    <i class="fas fa-book" style="color: #20c997;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0">知识库管理</h6>
+                                    <small class="text-muted">条目数: {{ knowledge_count }}</small>
+                                </div>
+                            </div>
+                            <i class="fas fa-chevron-right text-muted"></i>
                         </div>
-                        <span class="badge bg-primary rounded-pill">查看</span>
                     </a>
                 </div>
             </div>
         </div>
     </div>
-    
+
     <!-- 系统状态卡片 -->
     <div class="col-md-8 mb-4">
-        <div class="card shadow-sm h-100">
-            <div class="card-header bg-light">
-                <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>系统概览</h5>
+        <div class="card h-100">
+            <div class="card-header bg-transparent border-0">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle p-2 me-2" style="background: rgba(253, 126, 20, 0.1);">
+                        <i class="fas fa-chart-pie" style="color: #fd7e14;"></i>
+                    </div>
+                    <h5 class="mb-0">系统概览</h5>
+                </div>
             </div>
             <div class="card-body">
-                <div class="row text-center">
-                    <div class="col-md-3 mb-3">
-                        <div class="bg-light rounded p-3">
-                            <h3 class="text-primary mb-1">{{ user_count }}</h3>
+                <div class="row g-4">
+                    <div class="col-md-3">
+                        <div class="p-3" style="background: rgba(78, 84, 200, 0.1); border-radius: 12px;">
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="rounded-circle p-2 me-2" style="background: rgba(78, 84, 200, 0.2);">
+                                    <i class="fas fa-users" style="color: #4e54c8;"></i>
+                                </div>
+                                <h3 class="mb-0 text-primary">{{ user_count }}</h3>
+                            </div>
                             <p class="mb-0 text-muted">用户数</p>
-                           
                         </div>
                     </div>
-                    <div class="col-md-3 mb-3">
-                        <div class="bg-light rounded p-3">
-                            <h3 class="text-primary mb-1">{{ course_count }}</h3>
+                    <div class="col-md-3">
+                        <div class="p-3" style="background: rgba(32, 201, 151, 0.1); border-radius: 12px;">
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="rounded-circle p-2 me-2" style="background: rgba(32, 201, 151, 0.2);">
+                                    <i class="fas fa-book" style="color: #20c997;"></i>
+                                </div>
+                                <h3 class="mb-0" style="color: #20c997;">{{ course_count }}</h3>
+                            </div>
                             <p class="mb-0 text-muted">课程数</p>
-                           
                         </div>
                     </div>
-                    <div class="col-md-3 mb-3">
-                        <div class="bg-light rounded p-3">
-                            <h3 class="text-primary mb-1">{{ assignment_count }}</h3>
+                    <div class="col-md-3">
+                        <div class="p-3" style="background: rgba(111, 66, 193, 0.1); border-radius: 12px;">
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="rounded-circle p-2 me-2" style="background: rgba(111, 66, 193, 0.2);">
+                                    <i class="fas fa-tasks" style="color: #6f42c1;"></i>
+                                </div>
+                                <h3 class="mb-0" style="color: #6f42c1;">{{ assignment_count }}</h3>
+                            </div>
                             <p class="mb-0 text-muted">作业数</p>
-                           
                         </div>
                     </div>
-                    <div class="col-md-3 mb-3">
-                        <div class="bg-light rounded p-3">
-                            <h3 class="text-primary mb-1">{{ knowledge_count }}</h3>
+                    <div class="col-md-3">
+                        <div class="p-3" style="background: rgba(253, 126, 20, 0.1); border-radius: 12px;">
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="rounded-circle p-2 me-2" style="background: rgba(253, 126, 20, 0.2);">
+                                    <i class="fas fa-lightbulb" style="color: #fd7e14;"></i>
+                                </div>
+                                <h3 class="mb-0" style="color: #fd7e14;">{{ knowledge_count }}</h3>
+                            </div>
                             <p class="mb-0 text-muted">知识条目</p>
-                         
                         </div>
                     </div>
                 </div>
-                
-                <!-- 系统状态信息
-                <div class="alert alert-info mt-3 mb-0">
-                    <i class="fas fa-info-circle me-2"></i>
-                    系统运行正常，最后更新: {{ last_updated|default("刚刚") }}
-                </div> -->
             </div>
         </div>
     </div>
@@ -94,137 +143,209 @@
 
 <div class="row mb-4">
     <div class="col-12">
-        <div class="card shadow-sm">
-            <div class="card-header bg-light">
-                <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>活跃度分析</h5>
+        <div class="card">
+            <div class="card-header bg-transparent border-0">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle p-2 me-2" style="background: rgba(13, 202, 240, 0.1);">
+                        <i class="fas fa-chart-line" style="color: #0dcaf0;"></i>
+                    </div>
+                    <h5 class="mb-0">活跃度分析</h5>
+                </div>
             </div>
             <div class="card-body">
-              <!-- 顶部标签 -->
-              <ul class="nav nav-tabs mb-3" id="activityTab" role="tablist">
-                <li class="nav-item" role="presentation">
-                  <button class="nav-link active" id="student-tab" data-bs-toggle="tab" data-role="student" onclick="switchRole('student')">学生</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                  <button class="nav-link" id="teacher-tab" data-bs-toggle="tab" data-role="teacher" onclick="switchRole('teacher')">教师</button>
-                </li>
-              </ul>
+                <!-- 顶部标签 -->
+                <ul class="nav nav-tabs mb-4" id="activityTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="student-tab" data-bs-toggle="tab" data-role="student"
+                            onclick="switchRole('student')">
+                            <i class="fas fa-user-graduate me-2"></i>学生
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="teacher-tab" data-bs-toggle="tab" data-role="teacher"
+                            onclick="switchRole('teacher')">
+                            <i class="fas fa-chalkboard-teacher me-2"></i>教师
+                        </button>
+                    </li>
+                </ul>
 
-              <!-- 时间粒度切换按钮组 -->
-              <div class="btn-group btn-group-sm mb-3" role="group" aria-label="活跃度类型选择">
-                <button type="button" class="btn btn-outline-primary active" id="daily-btn" onclick="switchType('daily')">日活跃度</button>
-                <button type="button" class="btn btn-outline-primary" id="weekly-btn" onclick="switchType('weekly')">周活跃度</button>
-              </div>
+                <!-- 时间粒度切换按钮组 -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="btn-group" role="group" aria-label="活跃度类型选择">
+                        <button type="button" class="btn btn-light active" id="daily-btn" onclick="switchType('daily')">
+                            <i class="fas fa-calendar-day me-2"></i>日活跃度
+                        </button>
+                        <button type="button" class="btn btn-light" id="weekly-btn" onclick="switchType('weekly')">
+                            <i class="fas fa-calendar-week me-2"></i>周活跃度
+                        </button>
+                    </div>
+                </div>
 
-              <!-- 图表容器 -->
-              <div class="chart-container">
-                <canvas id="student-daily-chart" height="300"></canvas>
-                <canvas id="student-weekly-chart" style="display: none;"></canvas>
-                <canvas id="teacher-daily-chart" style="display: none;"></canvas>
-                <canvas id="teacher-weekly-chart" style="display: none;"></canvas>
-              </div>
+                <!-- 图表容器 -->
+                <div class="chart-container" style="position: relative; height: 400px;">
+                    <canvas id="student-daily-chart"></canvas>
+                    <canvas id="student-weekly-chart" style="display: none;"></canvas>
+                    <canvas id="teacher-daily-chart" style="display: none;"></canvas>
+                    <canvas id="teacher-weekly-chart" style="display: none;"></canvas>
+                </div>
             </div>
-
         </div>
     </div>
 </div>
-
-<!-- 
-待办事项
-<div class="row">
-    <div class="col-12">
-        <div class="card shadow-sm">
-            <div class="card-header bg-light">
-                <h5 class="mb-0"><i class="fas fa-list me-2"></i>待办事项</h5>
-            </div>
-            <div class="card-body">
-                {% if pending_tasks %}
-                <ul class="list-group list-group-flush">
-                    {% for task in pending_tasks %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="mb-1">{{ task.title }}</h6>
-                            <small class="text-muted">{{ task.description }}</small>
-                        </div>
-                        <span class="badge bg-{{ task.priority }} rounded-pill">{{ task.due_date }}</span>
-                    </li>
-                    {% endfor %}
-                </ul>
-                {% else %}
-                <div class="alert alert-light text-center">
-                    <p class="mb-0">当前没有需要处理的待办事项</p>
-                </div>
-                {% endif %}
-                
-                <div class="d-flex justify-content-end mt-3">
-                    <button class="btn btn-outline-primary btn-sm" onclick="refreshDashboard()">
-                        <i class="fas fa-sync-alt me-1"></i>刷新数据
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div> -->
 {% endblock %}
-
 
 {% block extra_css %}
 <style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #4e54c8 0%, #8f94fb 100%);
+        --secondary-gradient: linear-gradient(135deg, #00cdac 0%, #8ddad5 100%);
+        --background-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        --card-background: rgba(255, 255, 255, 0.9);
+        --hover-background: rgba(78, 84, 200, 0.1);
+    }
 
-    /* 标签页字体*/
-      .nav-tabs .nav-link {
-        color: #000 !important;
+    body {
+        background: var(--background-gradient);
+        min-height: 100vh;
+    }
+
+    .card {
+        border: none;
+        background: var(--card-background);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+    }
+
+    .btn-light {
+        border: none;
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(5px);
+        transition: all 0.3s ease;
+    }
+
+    .btn-light:hover {
+        background: rgba(255, 255, 255, 0.9);
+        transform: translateY(-1px);
+    }
+
+    .btn-light.active {
+        background: var(--primary-gradient);
+        color: white;
+    }
+
+    .nav-tabs {
+        border-bottom: 2px solid rgba(78, 84, 200, 0.1);
+    }
+
+    .nav-tabs .nav-link {
+        color: #6c757d !important;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .nav-tabs .nav-link:hover {
+        border: none;
+        color: #4e54c8 !important;
     }
 
     .nav-tabs .nav-link.active {
-        color: #0d6efd !important;
+        color: #4e54c8 !important;
+        border: none;
+        border-bottom: 2px solid #4e54c8;
+        background: transparent;
     }
 
-
-    /* 覆盖按钮悬停样式 */
-    .btn-group .btn.btn-outline-primary:hover {
-        background-color: transparent;
-        border-color: #0d6efd;
-        color: #0d6efd;
+    .chart-container {
+        background: rgba(255, 255, 255, 0.5);
+        border-radius: 12px;
+        padding: 1rem;
+        backdrop-filter: blur(5px);
     }
-    /* 覆盖激活状态按钮悬停样式 */
-    .btn-group .btn.btn-outline-primary.active:hover {
-        background-color: #0d6efd;
-        border-color: #0d6efd;
-        color: #fff;
+
+    .btn-group .btn {
+        border-radius: 8px;
+        margin: 0 4px;
+        padding: 0.5rem 1rem;
+    }
+
+    .btn-group .btn:first-child {
+        margin-left: 0;
+    }
+
+    .btn-group .btn:last-child {
+        margin-right: 0;
+    }
+
+    /* 动画效果 */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .card {
+        animation: fadeIn 0.5s ease-out;
+    }
+
+    .card:nth-child(2) {
+        animation-delay: 0.1s;
+    }
+
+    .card:nth-child(3) {
+        animation-delay: 0.2s;
     }
 </style>
 {% endblock %}
 
 {% block extra_js %}
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
 <script>
     let studentDailyChart, studentWeeklyChart;
     let teacherDailyChart, teacherWeeklyChart;
+    let currentRole = 'student';
+    let currentType = 'daily';
 
-    let currentRole = 'student';  // 'student' or 'teacher'
-    let currentType = 'daily';    // 'daily' or 'weekly'
+    // 初始化图表数据
+    const chartData = {
+        student: {
+            names: JSON.parse('{{ student_names|tojson|safe }}'),
+            daily: JSON.parse('{{ student_daily_data|tojson|safe }}'),
+            weekly: JSON.parse('{{ student_weekly_data|tojson|safe }}')
+        },
+        teacher: {
+            names: JSON.parse('{{ teacher_names|tojson|safe }}'),
+            daily: JSON.parse('{{ teacher_daily_data|tojson|safe }}'),
+            weekly: JSON.parse('{{ teacher_weekly_data|tojson|safe }}')
+        }
+    };
 
-    // 统计总活动数
-    document.addEventListener('DOMContentLoaded', function() {
-        let totalActivities = 0;
-        {% for student in students %}
-            totalActivities += {{ course_activity[student.id].weekly }};
-        {% endfor %}
-        const totalDom = document.getElementById('totalActivityCount');
-        if (totalDom) totalDom.innerText = totalActivities;
+    document.addEventListener('DOMContentLoaded', function () {
+        // 设置全局变量
+        window.studentNames = chartData.student.names;
+        window.studentDailyData = chartData.student.daily;
+        window.studentWeeklyData = chartData.student.weekly;
 
-        // ========== 学生图表数据 ==========
-        window.studentNames = [];
-        window.studentDailyData = [];
-        window.studentWeeklyData = [];
-        {% for student in students %}
-            studentNames.push("{{ student.name }}");
-            studentDailyData.push({{ course_activity[student.id].daily }});
-            studentWeeklyData.push({{ course_activity[student.id].weekly }});
-        {% endfor %}
+        window.teacherNames = chartData.teacher.names;
+        window.teacherDailyData = chartData.teacher.daily;
+        window.teacherWeeklyData = chartData.teacher.weekly;
 
-        // 初始化只渲染当前显示的图表
+        // 初始化图表
         renderStudentChart(currentType);
         updateChartVisibility();
     });
@@ -246,9 +367,10 @@
                 datasets: [{
                     label: label,
                     data: data,
-                    backgroundColor: type === 'daily' ? 'rgba(54, 162, 235, 0.6)' : 'rgba(75, 192, 192, 0.6)',
-                    borderColor: type === 'daily' ? 'rgba(54, 162, 235, 1)' : 'rgba(75, 192, 192, 1)',
-                    borderWidth: 1
+                    backgroundColor: type === 'daily' ? 'rgba(78, 84, 200, 0.6)' : 'rgba(32, 201, 151, 0.6)',
+                    borderColor: type === 'daily' ? 'rgba(78, 84, 200, 1)' : 'rgba(32, 201, 151, 1)',
+                    borderWidth: 1,
+                    borderRadius: 6
                 }]
             },
             options: commonOptions('学生')
@@ -258,25 +380,15 @@
         if (type === 'weekly') studentWeeklyChart = chart;
     }
 
-    // ========== 教师图表数据 ==========
-    window.teacherNames = [];
-    window.teacherDailyData = [];
-    window.teacherWeeklyData = [];
-    {% for teacher in teachers %}
-        teacherNames.push("{{ teacher.name }}");
-        teacherDailyData.push({{ teacher_activities[teacher.id].daily }});
-        teacherWeeklyData.push({{ teacher_activities[teacher.id].weekly }});
-    {% endfor %}
-    
     // 渲染教师图表
     function renderTeacherChart(type) {
         const ctx = document.getElementById(`teacher-${type}-chart`).getContext('2d');
         const data = (type === 'daily') ? teacherDailyData : teacherWeeklyData;
         const label = (type === 'daily') ? '教师日活跃度' : '教师周活跃度';
-    
+
         if (type === 'daily' && teacherDailyChart) teacherDailyChart.destroy();
         if (type === 'weekly' && teacherWeeklyChart) teacherWeeklyChart.destroy();
-    
+
         const chart = new Chart(ctx, {
             type: 'bar',
             data: {
@@ -284,18 +396,19 @@
                 datasets: [{
                     label: label,
                     data: data,
-                    backgroundColor: type === 'daily' ? 'rgba(255, 159, 64, 0.6)' : 'rgba(255, 205, 86, 0.6)',
-                    borderColor: type === 'daily' ? 'rgba(255, 159, 64, 1)' : 'rgba(255, 205, 86, 1)',
-                    borderWidth: 1
+                    backgroundColor: type === 'daily' ? 'rgba(253, 126, 20, 0.6)' : 'rgba(111, 66, 193, 0.6)',
+                    borderColor: type === 'daily' ? 'rgba(253, 126, 20, 1)' : 'rgba(111, 66, 193, 1)',
+                    borderWidth: 1,
+                    borderRadius: 6
                 }]
             },
             options: commonOptions('教师')
         });
-    
+
         if (type === 'daily') teacherDailyChart = chart;
         if (type === 'weekly') teacherWeeklyChart = chart;
     }
-    
+
     // 切换角色
     function switchRole(role) {
         currentRole = role;
@@ -306,8 +419,8 @@
         }
         updateChartVisibility();
     }
-    
-    // 修改switchType，支持教师
+
+    // 切换类型
     function switchType(type) {
         currentType = type;
         if (currentRole === 'student') {
@@ -316,7 +429,7 @@
             renderTeacherChart(type);
         }
         updateChartVisibility();
-    
+
         document.getElementById('daily-btn')?.classList.toggle('active', type === 'daily');
         document.getElementById('weekly-btn')?.classList.toggle('active', type === 'weekly');
     }
@@ -330,7 +443,6 @@
         });
     }
 
-
     // 通用图表样式
     function commonOptions(xLabel) {
         return {
@@ -340,18 +452,58 @@
                 duration: 1200,
                 easing: 'easeOutQuart'
             },
+            plugins: {
+                legend: {
+                    labels: {
+                        font: {
+                            family: "'Microsoft YaHei', 'SimHei', Arial, sans-serif",
+                            size: 14
+                        },
+                        padding: 20
+                    }
+                }
+            },
             scales: {
                 y: {
                     beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        font: {
+                            family: "'Microsoft YaHei', 'SimHei', Arial, sans-serif",
+                            size: 12
+                        }
+                    },
                     title: {
                         display: true,
-                        text: '活动次数'
+                        text: '活动次数',
+                        font: {
+                            family: "'Microsoft YaHei', 'SimHei', Arial, sans-serif",
+                            size: 14,
+                            weight: 'bold'
+                        }
                     }
                 },
                 x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        font: {
+                            family: "'Microsoft YaHei', 'SimHei', Arial, sans-serif",
+                            size: 12
+                        }
+                    },
                     title: {
                         display: true,
-                        text: xLabel
+                        text: xLabel,
+                        font: {
+                            family: "'Microsoft YaHei', 'SimHei', Arial, sans-serif",
+                            size: 14,
+                            weight: 'bold'
+                        }
                     }
                 }
             }
@@ -364,21 +516,19 @@
                 'X-Requested-With': 'XMLHttpRequest'
             }
         })
-        .then(response => response.text())
-        .then(html => {
-            document.open();
-            document.write(html);
-            document.close();
-        })
-        .catch(error => {
-            console.error('刷新失败:', error);
-            alert('刷新数据失败，请稍后再试');
-        });
+            .then(response => response.text())
+            .then(html => {
+                document.open();
+                document.write(html);
+                document.close();
+            })
+            .catch(error => {
+                console.error('刷新失败:', error);
+                alert('刷新数据失败，请稍后再试');
+            });
     }
 
     // 自动刷新数据（每5分钟）
     setTimeout(refreshDashboard, 300000);
-
 </script>
-
 {% endblock %}

@@ -5,18 +5,32 @@
 {% block content %}
 <div class="row mb-4">
     <div class="col">
-        <h2>欢迎，{{ user.name }}！</h2>
-        <p class="text-muted">这是您的学习数据概览</p>
+        <div class="d-flex align-items-center">
+            <div class="rounded-circle p-3 me-3" style="background: rgba(78, 84, 200, 0.1);">
+                <i class="fas fa-user-graduate" style="color: #4e54c8;"></i>
+            </div>
+            <div>
+                <h2 class="text-primary mb-1">欢迎，{{ user.name }}！</h2>
+                <p class="text-muted mb-0">
+                    <i class="fas fa-chart-line me-1"></i>这是您的学习数据概览
+                </p>
+            </div>
+        </div>
     </div>
 </div>
 
 <!-- 学习警告 -->
 {% if learning_issues and learning_issues.has_issues %}
-<div class="alert alert-warning">
-    <h5><i class="fas fa-exclamation-triangle me-2"></i>学习提醒</h5>
-    <ul class="mb-0">
+<div class="alert mb-4" style="background: rgba(255, 193, 7, 0.1); border: none;">
+    <div class="d-flex align-items-center mb-2">
+        <div class="rounded-circle p-2 me-2" style="background: rgba(255, 193, 7, 0.2);">
+            <i class="fas fa-exclamation-triangle" style="color: #ffc107;"></i>
+        </div>
+        <h5 class="mb-0" style="color: #ffc107;">学习提醒</h5>
+    </div>
+    <ul class="mb-0 ps-4">
         {% for issue in learning_issues.issues %}
-        <li>{{ issue.message }}</li>
+        <li class="text-muted">{{ issue.message }}</li>
         {% endfor %}
     </ul>
 </div>
@@ -25,21 +39,36 @@
 <!-- 课程概览 -->
 <div class="row mb-4">
     <div class="col-12">
-        <div class="card shadow-sm">
-            <div class="card-header bg-light">
-                <h5 class="mb-0"><i class="fas fa-book me-2"></i>我的课程</h5>
+        <div class="card">
+            <div class="card-header bg-transparent border-0">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle p-2 me-2" style="background: rgba(78, 84, 200, 0.1);">
+                        <i class="fas fa-book" style="color: #4e54c8;"></i>
+                    </div>
+                    <h5 class="mb-0">我的课程</h5>
+                </div>
             </div>
-            <div class="card-body">
+            <div class="card-body px-4 py-4">
                 {% if courses %}
                 <div class="row">
                     {% for course in courses %}
                     <div class="col-md-4 mb-3">
-                        <div class="card h-100">
+                        <div class="card h-100" style="box-shadow: none; border: 1px solid rgba(0,0,0,0.08);">
                             <div class="card-body">
-                                <h5 class="card-title">{{ course.name }}</h5>
-                                <h6 class="card-subtitle mb-2 text-muted">{{ course.code }}</h6>
-                                <p class="card-text">{{ course.description|truncate(100) }}</p>
-                                <a href="{{ url_for('course.view', course_id=course.id) }}" class="btn btn-sm btn-primary">进入课程</a>
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="rounded-circle p-2 me-2" style="background: rgba(78, 84, 200, 0.1);">
+                                        <i class="fas fa-book" style="color: #4e54c8;"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="card-title mb-0">{{ course.name }}</h5>
+                                        <small class="text-muted">{{ course.code }}</small>
+                                    </div>
+                                </div>
+                                <p class="card-text text-muted">{{ course.description|truncate(100) }}</p>
+                                <a href="{{ url_for('course.view', course_id=course.id) }}"
+                                    class="btn btn-primary w-100">
+                                    <i class="fas fa-arrow-right me-1"></i>进入课程
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -47,8 +76,14 @@
                 </div>
                 {% else %}
                 <div class="text-center py-4">
-                    <p class="mb-3">您还没有加入任何课程</p>
-                    <a href="{{ url_for('course.index') }}" class="btn btn-primary">浏览课程</a>
+                    <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
+                        style="width: 60px; height: 60px; background: rgba(78, 84, 200, 0.1);">
+                        <i class="fas fa-book fa-lg" style="color: #4e54c8;"></i>
+                    </div>
+                    <p class="text-muted mb-3">您还没有加入任何课程</p>
+                    <a href="{{ url_for('course.index') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>浏览课程
+                    </a>
                 </div>
                 {% endif %}
             </div>
@@ -56,33 +91,56 @@
     </div>
 </div>
 
-<!-- 待完成作业 -->
-<div class="row mb-4">
-    <div class="col-md-6">
-        <div class="card shadow-sm h-100">
-            <div class="card-header bg-light">
-                <h5 class="mb-0"><i class="fas fa-tasks me-2"></i>待完成作业</h5>
+<!-- 待完成作业和学习活动 -->
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-transparent border-0">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle p-2 me-2" style="background: rgba(111, 66, 193, 0.1);">
+                        <i class="fas fa-tasks" style="color: #6f42c1;"></i>
+                    </div>
+                    <h5 class="mb-0">待完成作业</h5>
+                </div>
             </div>
-            <div class="card-body">
+            <div class="card-body px-4 py-4">
                 {% if incomplete_assignments %}
                 <div class="table-responsive">
-                    <table class="table table-hover">
+                    <table class="table">
                         <thead>
                             <tr>
                                 <th>作业</th>
                                 <th>课程</th>
                                 <th>截止日期</th>
-                                <th>操作</th>
+                                <th class="text-end">操作</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for sa in incomplete_assignments %}
                             <tr>
-                                <td>{{ sa.assignment.title }}</td>
-                                <td>{{ sa.assignment.course.name }}</td>
-                                <td>{{ sa.assignment.due_date.strftime('%Y-%m-%d') }}</td>
                                 <td>
-                                    <a href="{{ url_for('course.view_assignment', assignment_id=sa.assignment.id) }}" class="btn btn-sm btn-outline-primary">查看</a>
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-file-alt me-2" style="color: #6f42c1;"></i>
+                                        {{ sa.assignment.title }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-book me-2" style="color: #4e54c8;"></i>
+                                        {{ sa.assignment.course.name }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-calendar-alt me-2" style="color: #20c997;"></i>
+                                        {{ sa.assignment.due_date.strftime('%Y-%m-%d') }}
+                                    </div>
+                                </td>
+                                <td class="text-end">
+                                    <a href="{{ url_for('course.view_assignment', assignment_id=sa.assignment.id) }}"
+                                        class="btn btn-light btn-sm">
+                                        <i class="fas fa-eye me-1"></i>查看
+                                    </a>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -90,47 +148,136 @@
                     </table>
                 </div>
                 {% else %}
-                <p class="text-center py-4">当前没有待完成的作业</p>
+                <div class="text-center py-4">
+                    <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
+                        style="width: 60px; height: 60px; background: rgba(111, 66, 193, 0.1);">
+                        <i class="fas fa-tasks fa-lg" style="color: #6f42c1;"></i>
+                    </div>
+                    <p class="text-muted">当前没有待完成的作业</p>
+                </div>
                 {% endif %}
             </div>
         </div>
     </div>
-    
+
     <!-- 学习活动 -->
-    <div class="col-md-6">
-        <div class="card shadow-sm h-100">
-            <div class="card-header bg-light">
-                <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>学习活动概览</h5>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-transparent border-0">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle p-2 me-2" style="background: rgba(253, 126, 20, 0.1);">
+                        <i class="fas fa-chart-line" style="color: #fd7e14;"></i>
+                    </div>
+                    <h5 class="mb-0">学习活动概览</h5>
+                </div>
             </div>
-            <div class="card-body">
+            <div class="card-body px-4 py-4">
                 {% if activity_summary and activity_summary.total_activities > 0 %}
-                <div class="row text-center mb-4">
+                <div class="row g-3 mb-4">
                     <div class="col-6">
-                        <div class="card border-0">
-                            <div class="card-body">
-                                <h3 class="text-primary">{{ activity_summary.total_activities }}</h3>
-                                <p class="text-muted">总活动次数</p>
+                        <div class="p-3 rounded h-100" style="background: rgba(78, 84, 200, 0.1);">
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="rounded-circle p-2 me-2" style="background: rgba(78, 84, 200, 0.2);">
+                                    <i class="fas fa-chart-bar" style="color: #4e54c8;"></i>
+                                </div>
+                                <h6 class="mb-0 text-primary">总活动次数</h6>
                             </div>
+                            <h3 class="mb-0 text-primary">{{ activity_summary.total_activities }}</h3>
                         </div>
                     </div>
                     <div class="col-6">
-                        <div class="card border-0">
-                            <div class="card-body">
-                                <h3 class="text-primary">{{ (activity_summary.total_duration / 60)|int }}分钟</h3>
-                                <p class="text-muted">总学习时间</p>
+                        <div class="p-3 rounded h-100" style="background: rgba(32, 201, 151, 0.1);">
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="rounded-circle p-2 me-2" style="background: rgba(32, 201, 151, 0.2);">
+                                    <i class="fas fa-clock" style="color: #20c997;"></i>
+                                </div>
+                                <h6 class="mb-0" style="color: #20c997;">总学习时间</h6>
                             </div>
+                            <h3 class="mb-0" style="color: #20c997;">{{ (activity_summary.total_duration / 60)|int }}分钟
+                            </h3>
                         </div>
                     </div>
                 </div>
-                
-                <div class="text-center">
-                    <a href="{{ url_for('analytics.student_analytics', student_id=user.id) }}" class="btn btn-outline-primary">查看详细分析</a>
-                </div>
+
+                <a href="{{ url_for('analytics.student_analytics', student_id=user.id) }}" class="btn btn-light w-100">
+                    <i class="fas fa-chart-pie me-1"></i>查看详细分析
+                </a>
                 {% else %}
-                <p class="text-center py-4">暂无学习活动记录</p>
+                <div class="text-center py-4">
+                    <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
+                        style="width: 60px; height: 60px; background: rgba(253, 126, 20, 0.1);">
+                        <i class="fas fa-chart-line fa-lg" style="color: #fd7e14;"></i>
+                    </div>
+                    <p class="text-muted">暂无学习活动记录</p>
+                </div>
                 {% endif %}
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    /* 继承view.html的样式 */
+    :root {
+        --primary-gradient: linear-gradient(135deg, #4e54c8 0%, #8f94fb 100%);
+        --secondary-gradient: linear-gradient(135deg, #00cdac 0%, #8ddad5 100%);
+        --background-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        --card-background: rgba(255, 255, 255, 0.9);
+        --hover-background: rgba(78, 84, 200, 0.1);
+    }
+
+    .card {
+        border: none;
+        background: var(--card-background);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+    }
+
+    .btn-primary {
+        background: var(--primary-gradient);
+        border: none;
+        box-shadow: 0 4px 15px rgba(78, 84, 200, 0.2);
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(78, 84, 200, 0.3);
+    }
+
+    .table {
+        background: var(--card-background);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .table thead th {
+        background: rgba(78, 84, 200, 0.05);
+        border-bottom: none;
+        padding: 1rem;
+    }
+
+    .table td {
+        padding: 1rem;
+        vertical-align: middle;
+    }
+
+    .btn-light {
+        border: none;
+        background: #f8f9fa;
+        transition: all 0.3s ease;
+    }
+
+    .btn-light:hover {
+        transform: translateY(-1px);
+        background: #e9ecef;
+    }
+</style>
 {% endblock %}

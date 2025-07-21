@@ -5,51 +5,133 @@
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-8">
-        <div class="card shadow">
-            <div class="card-header bg-primary text-white">
-                <h4 class="mb-0">个人资料</h4>
+        <div class="card">
+            <div class="card-header bg-transparent border-0 text-center pt-4">
+                <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
+                    style="width: 60px; height: 60px; background: rgba(78, 84, 200, 0.1);">
+                    <i class="fas fa-user text-primary fa-lg"></i>
+                </div>
+                <h3 class="font-weight-bold text-primary mb-2">个人资料</h3>
+                <p class="text-muted mb-0">管理您的个人信息</p>
             </div>
-            <div class="card-body">
+            <div class="card-body px-4 py-4">
                 <div class="row">
                     <div class="col-md-3 text-center mb-4 mb-md-0">
-                        <div class="avatar-placeholder bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center mx-auto" style="width: 120px; height: 120px; font-size: 3rem;">
+                        <div class="avatar-placeholder rounded-circle d-flex align-items-center justify-content-center mx-auto"
+                            style="width: 120px; height: 120px; font-size: 3rem; background: rgba(78, 84, 200, 0.1); color: #4e54c8;">
                             {{ user.name[0] }}
                         </div>
                     </div>
                     <div class="col-md-9">
-                        <h3>{{ user.name }}</h3>
-                        <p class="text-muted">{{ user.username }}</p>
-                        
-                        <table class="table">
-                            <tr>
-                                <th style="width: 30%">用户名:</th>
-                                <td>{{ user.username }}</td>
-                            </tr>
-                            <tr>
-                                <th>姓名:</th>
-                                <td>{{ user.name }}</td>
-                            </tr>
-                            <tr>
-                                <th>电子邮箱:</th>
-                                <td>{{ user.email }}</td>
-                            </tr>
-                            <tr>
-                                <th>角色:</th>
-                                <td>
-                                    {% for user_role in user.roles %}
-                                    <span class="badge bg-primary me-1">{{ user_role.role.name }}</span>
-                                    {% endfor %}
-                                </td>
-                            </tr>
-                            <tr>
-                                <th>加入时间:</th>
-                                <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
-                            </tr>
-                        </table>
+                        <div class="mb-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="rounded-circle p-2 me-2" style="background: rgba(78, 84, 200, 0.1);">
+                                    <i class="fas fa-user" style="color: #4e54c8;"></i>
+                                </div>
+                                <h4 class="mb-0">{{ user.name }}</h4>
+                            </div>
+                            <p class="text-muted mb-0">
+                                <i class="fas fa-at me-1"></i>{{ user.username }}
+                            </p>
+                        </div>
+
+                        <div class="card bg-light border-0">
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label small text-muted mb-1">用户名</label>
+                                    <div class="p-3 rounded" style="background: rgba(78, 84, 200, 0.1);">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-user me-2" style="color: #4e54c8;"></i>
+                                            {{ user.username }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label small text-muted mb-1">姓名</label>
+                                    <div class="p-3 rounded" style="background: rgba(78, 84, 200, 0.1);">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-id-card me-2" style="color: #4e54c8;"></i>
+                                            {{ user.name }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label small text-muted mb-1">电子邮箱</label>
+                                    <div class="p-3 rounded" style="background: rgba(78, 84, 200, 0.1);">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-envelope me-2" style="color: #4e54c8;"></i>
+                                            {{ user.email }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label small text-muted mb-1">角色</label>
+                                    <div class="p-3 rounded" style="background: rgba(78, 84, 200, 0.1);">
+                                        <div class="d-flex align-items-center flex-wrap gap-2">
+                                            <i class="fas fa-user-tag me-2" style="color: #4e54c8;"></i>
+                                            {% for user_role in user.roles %}
+                                            <span class="badge"
+                                                style="background: rgba(25, 135, 84, 0.1); color: #198754;">
+                                                {{ user_role.role.name }}
+                                            </span>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-0">
+                                    <label class="form-label small text-muted mb-1">加入时间</label>
+                                    <div class="p-3 rounded" style="background: rgba(78, 84, 200, 0.1);">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-calendar-alt me-2" style="color: #4e54c8;"></i>
+                                            {{ user.created_at.strftime('%Y-%m-%d') }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    /* 继承view.html的样式 */
+    :root {
+        --primary-gradient: linear-gradient(135deg, #4e54c8 0%, #8f94fb 100%);
+        --secondary-gradient: linear-gradient(135deg, #00cdac 0%, #8ddad5 100%);
+        --background-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        --card-background: rgba(255, 255, 255, 0.9);
+        --hover-background: rgba(78, 84, 200, 0.1);
+    }
+
+    .card {
+        border: none;
+        background: var(--card-background);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+    }
+
+    .badge {
+        font-weight: 500;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+    }
+
+    .rounded {
+        border-radius: 8px !important;
+    }
+</style>
 {% endblock %}

@@ -3,122 +3,251 @@
 {% block title %}编辑题目 - {{ question.question_name }}{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <div class="card shadow-sm">
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0">
-                <i class="fas fa-robot me-2"></i>
-                编辑题目
-            </h5>
-        </div>
-        <div class="card-body">
-            <form method="post">
-                <div class="mb-3">
-                    <label for="name" class="form-label">题目名称</label>
-                    <input type="text" class="form-control" id="name" name="name" value="{{ question.question_name }}"
-                        required>
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-transparent border-0 text-center pt-4">
+                <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
+                    style="width: 60px; height: 60px; background: rgba(78, 84, 200, 0.1);">
+                    <i class="fas fa-edit text-primary fa-lg"></i>
                 </div>
-
-                <div class="mb-3">
-                    <label for="type" class="form-label">题目类型</label>
-                    <select class="form-select" id="type" name="type" onchange="toggleQuestionType()">
-                        {% for type_id, type_name in question_types.items() %}
-                        <option value="{{ type_id }}" {{ 'selected' if question.status==type_id }}>
-                            {{ type_name }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <!-- 题目内容区域 -->
-                <div id="question-content">
-                    {% if question.status == 1 %}
-                    <!-- 选择题编辑 -->
-                    <div class="mb-3">
-                        <label for="context" class="form-label">题目内容</label>
-                        <textarea class="form-control" id="context" name="context" rows="5"
-                            required>{{ question_stem }}</textarea>
+                <h3 class="font-weight-bold text-primary mb-2">编辑题目</h3>
+                <p class="text-muted mb-0">{{ question.question_name }}</p>
+            </div>
+            <div class="card-body px-4 py-4">
+                <form method="post">
+                    <div class="mb-4">
+                        <label for="name" class="form-label small text-muted mb-1">题目名称</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text border-0 bg-light">
+                                <i class="fas fa-heading text-primary"></i>
+                            </span>
+                            <input type="text" class="form-control border-0 bg-light" id="name" name="name"
+                                value="{{ question.question_name }}" required>
+                        </div>
                     </div>
 
-                    <!-- 修改选择题选项部分，确保按钮有正确的id -->
-                    <div class="mb-3">
-                        <label class="form-label">选项</label>
-                        <div id="options-container">
-                            {% for option in options %}
-                            <div class="input-group mb-2 option-item">
-                                <span class="input-group-text option-letter"></span>
-                                <input type="text" class="form-control" name="options[]" value="{{ option }}" required
-                                    placeholder="请输入选项内容">
-                                <button type="button" class="btn btn-outline-danger remove-option" title="删除选项">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </div>
-                            {% endfor %}
+                    <div class="mb-4">
+                        <label for="type" class="form-label small text-muted mb-1">题目类型</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text border-0 bg-light">
+                                <i class="fas fa-list-ul text-primary"></i>
+                            </span>
+                            <select class="form-select border-0 bg-light" id="type" name="type"
+                                onchange="toggleQuestionType()">
+                                {% for type_id, type_name in question_types.items() %}
+                                <option value="{{ type_id }}" {{ 'selected' if question.status==type_id }}>
+                                    {{ type_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
                         </div>
-                        <button type="button" class="btn btn-sm btn-outline-primary mt-2" id="add-option">
-                            <i class="fas fa-plus me-1"></i>添加选项
+                    </div>
+
+                    <!-- 题目内容区域 -->
+                    <div id="question-content">
+                        {% if question.status == 1 %}
+                        <!-- 选择题编辑 -->
+                        <div class="mb-4">
+                            <label for="context" class="form-label small text-muted mb-1">题目内容</label>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text border-0 bg-light">
+                                    <i class="fas fa-align-left text-primary"></i>
+                                </span>
+                                <textarea class="form-control border-0 bg-light" id="context" name="context" rows="5"
+                                    required>{{ question_stem }}</textarea>
+                            </div>
+                        </div>
+
+                        <!-- 修改选择题选项部分 -->
+                        <div class="mb-4">
+                            <label class="form-label small text-muted mb-1">选项</label>
+                            <div id="options-container">
+                                {% for option in options %}
+                                <div class="input-group mb-2 option-item">
+                                    <span class="input-group-text border-0 bg-light option-letter"></span>
+                                    <input type="text" class="form-control border-0 bg-light" name="options[]"
+                                        value="{{ option }}" required placeholder="请输入选项内容">
+                                    <button type="button" class="btn btn-outline-danger btn-sm remove-option"
+                                        title="删除选项">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <button type="button" class="btn btn-outline-primary btn-sm mt-2" id="add-option">
+                                <i class="fas fa-plus me-1"></i>添加选项
+                            </button>
+                        </div>
+                        {% elif question.status == 2 %}
+                        <!-- 判断题编辑 -->
+                        <div class="mb-4">
+                            <label for="context" class="form-label small text-muted mb-1">题目内容</label>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text border-0 bg-light">
+                                    <i class="fas fa-align-left text-primary"></i>
+                                </span>
+                                <textarea class="form-control border-0 bg-light" id="context" name="context" rows="5"
+                                    required>{{ question.context }}</textarea>
+                            </div>
+                        </div>
+                        {% else %}
+                        <!-- 简答题编辑 -->
+                        <div class="mb-4">
+                            <label for="context" class="form-label small text-muted mb-1">题目内容</label>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text border-0 bg-light">
+                                    <i class="fas fa-align-left text-primary"></i>
+                                </span>
+                                <textarea class="form-control border-0 bg-light" id="context" name="context" rows="5"
+                                    required>{{ question.context }}</textarea>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="answer" class="form-label small text-muted mb-1">正确答案</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text border-0 bg-light">
+                                <i class="fas fa-check-circle text-primary"></i>
+                            </span>
+                            {% if question.status == 1 %}
+                            <select class="form-select border-0 bg-light" id="answer" name="answer" required>
+                                {% for option in options %}
+                                <option value="{{ option[0] }}" {{ 'selected' if option[0]==question.answer }}>
+                                    {{ option }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            {% elif question.status == 2 %}
+                            <select class="form-select border-0 bg-light" id="answer" name="answer" required>
+                                <option value="1" {{ 'selected' if question.answer=='1' }}>正确</option>
+                                <option value="0" {{ 'selected' if question.answer=='0' }}>错误</option>
+                            </select>
+                            {% else %}
+                            <textarea class="form-control border-0 bg-light" id="answer" name="answer" rows="3"
+                                required>{{ question.answer }}</textarea>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="score" class="form-label small text-muted mb-1">题目分数</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text border-0 bg-light">
+                                <i class="fas fa-star text-primary"></i>
+                            </span>
+                            <input type="number" class="form-control border-0 bg-light" id="score" name="score"
+                                value="{{ question.score }}" min="0" step="0.1" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="analysis" class="form-label small text-muted mb-1">题目解析</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text border-0 bg-light">
+                                <i class="fas fa-lightbulb text-primary"></i>
+                            </span>
+                            <textarea class="form-control border-0 bg-light" id="analysis" name="analysis"
+                                rows="3">{{ question.analysis or '' }}</textarea>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-3 mt-5">
+                        <a href="{{ url_for('course.view_assignment', assignment_id=question.assignment.id) }}"
+                            class="btn btn-light flex-grow-1">
+                            <i class="fas fa-times me-1"></i>取消
+                        </a>
+                        <button type="submit" class="btn btn-primary flex-grow-1">
+                            <i class="fas fa-check me-1"></i>保存修改
                         </button>
                     </div>
-                    {% elif question.status == 2 %}
-                    <!-- 判断题编辑 -->
-                    <div class="mb-3">
-                        <label for="context" class="form-label">题目内容</label>
-                        <textarea class="form-control" id="context" name="context" rows="5"
-                            required>{{ question.context }}</textarea>
-                    </div>
-
-                    {% else %}
-                    <!-- 简答题编辑 -->
-                    <div class="mb-3">
-                        <label for="context" class="form-label">题目内容</label>
-                        <textarea class="form-control" id="context" name="context" rows="5"
-                            required>{{ question.context }}</textarea>
-                    </div>
-                    {% endif %}
-                </div>
-
-                <div class="mb-3">
-                    <label for="answer" class="form-label">正确答案</label>
-                    {% if question.status == 1 %}
-                    <select class="form-select" id="answer" name="answer" required>
-                        {% for option in options %}
-                        <option value="{{ option[0] }}" {{ 'selected' if option[0]==question.answer }}>
-                            {{ option }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                    {% elif question.status == 2 %}
-                    <select class="form-select" id="answer" name="answer" required>
-                        <option value="1" {{ 'selected' if question.answer=='1' }}>正确</option>
-                        <option value="0" {{ 'selected' if question.answer=='0' }}>错误</option>
-                    </select>
-                    {% else %}
-                    <textarea class="form-control" id="answer" name="answer" rows="3"
-                        required>{{ question.answer }}</textarea>
-                    {% endif %}
-                </div>
-
-                <div class="mb-3">
-                    <label for="score" class="form-label">题目分数</label>
-                    <input type="number" class="form-control" id="score" name="score" value="{{ question.score }}"
-                        min="0" step="0.1" required>
-                </div>
-
-                <div class="mb-3">
-                    <label for="analysis" class="form-label">题目解析</label>
-                    <textarea class="form-control" id="analysis" name="analysis"
-                        rows="3">{{ question.analysis or '' }}</textarea>
-                </div>
-
-                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                    <a href="{{ url_for('course.view_assignment', assignment_id=question.assignment.id) }}"
-                        class="btn btn-secondary me-md-2">取消</a>
-                    <button type="submit" class="btn btn-primary">保存修改</button>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
     </div>
 </div>
+
+<style>
+    /* 继承create.html的样式 */
+    :root {
+        --primary-gradient: linear-gradient(135deg, #4e54c8 0%, #8f94fb 100%);
+        --secondary-gradient: linear-gradient(135deg, #00cdac 0%, #8ddad5 100%);
+        --background-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        --card-background: rgba(255, 255, 255, 0.9);
+        --hover-background: rgba(78, 84, 200, 0.1);
+    }
+
+    .card {
+        border: none;
+        background: var(--card-background);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+    }
+
+    .btn-primary {
+        background: var(--primary-gradient);
+        border: none;
+        box-shadow: 0 4px 15px rgba(78, 84, 200, 0.2);
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(78, 84, 200, 0.3);
+    }
+
+    .input-group-text {
+        border: none;
+        background-color: #f8f9fa;
+    }
+
+    .form-control,
+    .form-select {
+        border: none;
+        background-color: #f8f9fa;
+        padding: 0.75rem 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        background-color: #ffffff;
+        box-shadow: 0 0 0 2px rgba(78, 84, 200, 0.2);
+    }
+
+    .form-control:disabled {
+        background-color: #e9ecef;
+        opacity: 0.7;
+    }
+
+    .btn-outline-danger {
+        color: #dc3545;
+        border-color: #dc3545;
+    }
+
+    .btn-outline-danger:hover {
+        color: #fff;
+        background-color: #dc3545;
+        border-color: #dc3545;
+    }
+
+    .option-item {
+        transition: all 0.3s ease;
+    }
+
+    .option-item:hover {
+        transform: translateX(5px);
+    }
+</style>
 
 <script>
     // 字母生成器 (A, B, C, ..., Z)
@@ -161,9 +290,9 @@
         const div = document.createElement('div');
         div.className = 'input-group mb-2 option-item';
         div.innerHTML = `
-        <span class="input-group-text option-letter"></span>
-        <input type="text" class="form-control" name="options[]" required placeholder="输入选项内容">
-        <button type="button" class="btn btn-outline-danger remove-option">
+        <span class="input-group-text border-0 bg-light option-letter"></span>
+        <input type="text" class="form-control border-0 bg-light" name="options[]" required placeholder="输入选项内容">
+        <button type="button" class="btn btn-outline-danger btn-sm remove-option">
             <i class="fas fa-times"></i>
         </button>
     `;
@@ -211,7 +340,7 @@
     function toggleQuestionType() {
         const typeSelect = document.getElementById('type');
         const questionContent = document.getElementById('question-content');
-        const answerDiv = document.querySelector('.mb-3:has(#answer)');
+        const answerDiv = document.querySelector('.mb-4:has(#answer)');
 
         if (!typeSelect || !questionContent || !answerDiv) return;
 
@@ -224,35 +353,40 @@
         if (selectedType === 1) {
             // 选择题
             contentHTML = `
-                <div class="mb-3">
-                    <label for="context" class="form-label">题目内容</label>
-                    <textarea class="form-control" id="context" name="context" rows="5" required></textarea>
+                <div class="mb-4">
+                    <label for="context" class="form-label small text-muted mb-1">题目内容</label>
+                    <div class="input-group input-group-lg">
+                        <span class="input-group-text border-0 bg-light">
+                            <i class="fas fa-align-left text-primary"></i>
+                        </span>
+                        <textarea class="form-control border-0 bg-light" id="context" name="context" rows="5" required></textarea>
+                    </div>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label">选项</label>
+                <div class="mb-4">
+                    <label class="form-label small text-muted mb-1">选项</label>
                     <div id="options-container">
                         <div class="input-group mb-2 option-item">
-                            <span class="input-group-text option-letter">A.</span>
-                            <input type="text" class="form-control" name="options[]" required placeholder="请输入选项内容">
-                            <button type="button" class="btn btn-outline-danger remove-option" title="删除选项">
+                            <span class="input-group-text border-0 bg-light option-letter">A.</span>
+                            <input type="text" class="form-control border-0 bg-light" name="options[]" required placeholder="请输入选项内容">
+                            <button type="button" class="btn btn-outline-danger btn-sm remove-option" title="删除选项">
                                 <i class="fas fa-times"></i>
                             </button>
                         </div>
                         <div class="input-group mb-2 option-item">
-                            <span class="input-group-text option-letter">B.</span>
-                            <input type="text" class="form-control" name="options[]" required placeholder="请输入选项内容">
-                            <button type="button" class="btn btn-outline-danger remove-option" title="删除选项">
+                            <span class="input-group-text border-0 bg-light option-letter">B.</span>
+                            <input type="text" class="form-control border-0 bg-light" name="options[]" required placeholder="请输入选项内容">
+                            <button type="button" class="btn btn-outline-danger btn-sm remove-option" title="删除选项">
                                 <i class="fas fa-times"></i>
                             </button>
                         </div>
                     </div>
-                    <button type="button" class="btn btn-sm btn-outline-primary mt-2" id="add-option">
+                    <button type="button" class="btn btn-outline-primary btn-sm mt-2" id="add-option">
                         <i class="fas fa-plus me-1"></i>添加选项
                     </button>
                 </div>
             `;
             answerHTML = `
-                <select class="form-select" id="answer" name="answer" required>
+                <select class="form-select border-0 bg-light" id="answer" name="answer" required>
                     <option value="A">A. 选项1</option>
                     <option value="B">B. 选项2</option>
                 </select>
@@ -260,13 +394,18 @@
         } else if (selectedType === 2) {
             // 判断题
             contentHTML = `
-                <div class="mb-3">
-                    <label for="context" class="form-label">题目内容</label>
-                    <textarea class="form-control" id="context" name="context" rows="5" required></textarea>
+                <div class="mb-4">
+                    <label for="context" class="form-label small text-muted mb-1">题目内容</label>
+                    <div class="input-group input-group-lg">
+                        <span class="input-group-text border-0 bg-light">
+                            <i class="fas fa-align-left text-primary"></i>
+                        </span>
+                        <textarea class="form-control border-0 bg-light" id="context" name="context" rows="5" required></textarea>
+                    </div>
                 </div>
             `;
             answerHTML = `
-                <select class="form-select" id="answer" name="answer" required>
+                <select class="form-select border-0 bg-light" id="answer" name="answer" required>
                     <option value="1">正确</option>
                     <option value="0">错误</option>
                 </select>
@@ -274,13 +413,18 @@
         } else {
             // 简答题或编程题
             contentHTML = `
-                <div class="mb-3">
-                    <label for="context" class="form-label">题目内容</label>
-                    <textarea class="form-control" id="context" name="context" rows="5" required></textarea>
+                <div class="mb-4">
+                    <label for="context" class="form-label small text-muted mb-1">题目内容</label>
+                    <div class="input-group input-group-lg">
+                        <span class="input-group-text border-0 bg-light">
+                            <i class="fas fa-align-left text-primary"></i>
+                        </span>
+                        <textarea class="form-control border-0 bg-light" id="context" name="context" rows="5" required></textarea>
+                    </div>
                 </div>
             `;
             answerHTML = `
-                <textarea class="form-control" id="answer" name="answer" rows="3" required></textarea>
+                <textarea class="form-control border-0 bg-light" id="answer" name="answer" rows="3" required></textarea>
             `;
         }
 

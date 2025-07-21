@@ -5,16 +5,35 @@
 {% block content %}
 <div class="row mb-4">
     <div class="col">
-        <h2>知识库搜索</h2>
-        <p class="text-muted">搜索课程相关问题和资料</p>
+        <div class="d-flex align-items-center">
+            <div class="rounded-circle p-3 me-3" style="background: rgba(78, 84, 200, 0.1);">
+                <i class="fas fa-search" style="color: #4e54c8;"></i>
+            </div>
+            <div>
+                <h2 class="text-primary mb-1">知识库搜索</h2>
+                <p class="text-muted mb-0">
+                    <i class="fas fa-info-circle me-1"></i>搜索课程相关问题和资料
+                </p>
+            </div>
+        </div>
     </div>
     {% if 'teacher' in session.get('roles', []) or 'admin' in session.get('roles', []) %}
     <div class="col-auto">
-        <a href="{{ url_for('search.add_knowledge') }}" class="btn btn-primary">
-            <i class="fas fa-plus me-1"></i>添加知识条目
+        <a href="{{ url_for('search.add_knowledge') }}" class="btn btn-light me-2">
+            <div class="d-flex align-items-center">
+                <div class="rounded-circle p-1 me-2" style="background: rgba(25, 135, 84, 0.1);">
+                    <i class="fas fa-plus" style="color: #198754;"></i>
+                </div>
+                添加知识条目
+            </div>
         </a>
-        <a href="{{ url_for('search.manage_knowledge') }}" class="btn btn-outline-primary">
-            <i class="fas fa-cog me-1"></i>管理知识库
+        <a href="{{ url_for('search.manage_knowledge') }}" class="btn btn-light">
+            <div class="d-flex align-items-center">
+                <div class="rounded-circle p-1 me-2" style="background: rgba(13, 202, 240, 0.1);">
+                    <i class="fas fa-cog" style="color: #0dcaf0;"></i>
+                </div>
+                管理知识库
+            </div>
         </a>
     </div>
     {% endif %}
@@ -23,17 +42,21 @@
 <!-- 搜索表单 -->
 <div class="row mb-4">
     <div class="col-md-9">
-        <div class="card shadow-sm">
+        <div class="card border-0 shadow-sm" style="border-radius: 12px;">
             <div class="card-body">
                 <form action="{{ url_for('search.index') }}" method="get" class="mb-0">
                     <div class="input-group">
-                        <input type="text" class="form-control form-control-lg" name="q" value="{{ query }}"
-                            placeholder="输入问题或关键词...">
+                        <span class="input-group-text border-0 bg-light">
+                            <i class="fas fa-search text-primary"></i>
+                        </span>
+                        <input type="text" class="form-control form-control-lg border-0 bg-light" name="q"
+                            value="{{ query }}" placeholder="输入问题或关键词..." style="border-radius: 8px;">
                         {% if selected_course_id %}
                         <input type="hidden" name="course_id" value="{{ selected_course_id }}">
                         {% endif %}
-                        <button class="btn btn-primary btn-lg" type="submit">
-                            <i class="fas fa-search me-1"></i>搜索
+                        <button class="btn btn-primary btn-lg" type="submit"
+                            style="background: linear-gradient(135deg, #4e54c8 0%, #8f94fb 100%); border: none; box-shadow: 0 4px 15px rgba(78, 84, 200, 0.2);">
+                            搜索
                         </button>
                     </div>
                 </form>
@@ -42,12 +65,18 @@
     </div>
     <div class="col-md-3">
         <div class="card shadow-sm">
-            <div class="card-header bg-light">
-                <h6 class="mb-0">按课程筛选</h6>
+            <div class="card-header bg-transparent border-0">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle p-2 me-2" style="background: rgba(255, 193, 7, 0.1);">
+                        <i class="fas fa-filter" style="color: #ffc107;"></i>
+                    </div>
+                    <h6 class="mb-0">按课程筛选</h6>
+                </div>
             </div>
             <div class="card-body">
                 <form id="courseFilterForm">
-                    <select class="form-select" name="course_id" id="courseFilter">
+                    <select class="form-select border-0 bg-light" name="course_id" id="courseFilter"
+                        style="border-radius: 8px;">
                         <option value="">所有课程</option>
                         {% for course in courses %}
                         <option value="{{ course.id }}" {% if selected_course_id==course.id %}selected{% endif %}>
@@ -67,86 +96,128 @@
         {% if query %}
         <!-- 正常搜索结果 -->
         {% if results %}
-        <h4 class="mb-3">搜索结果: {{ results|length }} 条</h4>
+        <div class="d-flex align-items-center mb-3">
+            <div class="rounded-circle p-2 me-2" style="background: rgba(25, 135, 84, 0.1);">
+                <i class="fas fa-search" style="color: #198754;"></i>
+            </div>
+            <h4 class="mb-0">
+                {% if selected_course %}
+                在"{{ selected_course.name }}"中搜索到 {{ results|length }} 条结果
+                {% else %}
+                搜索到 {{ results|length }} 条结果
+                {% endif %}
+            </h4>
+        </div>
         {% for result in results %}
-        <div class="card shadow-sm mb-3">
+        <div class="card border-0 shadow-sm mb-3" style="border-radius: 12px; transition: all 0.3s ease;">
             <div class="card-body">
-                <h5 class="card-title">{{ result.title }}</h5>
+                <h5 class="card-title d-flex align-items-center">
+                    <div class="rounded-circle p-2 me-2" style="background: rgba(78, 84, 200, 0.1);">
+                        <i class="fas {% if result.type == 'text' %}fa-file-alt{% else %}fa-file-download{% endif %}"
+                            style="color: #4e54c8;"></i>
+                    </div>
+                    {{ result.title }}
+                </h5>
 
                 {% if result.type == "text" %}
-                <p class="card-text">{{ result.content|truncate(300) }}</p>
+                <p class="card-text text-muted">{{ result.content|truncate(300) }}</p>
                 {% else %}
                 <div class="card-text">
-                    <i class="fas fa-file-download me-2"></i>
-                    <a href="{{ result.content }}" class="text-decoration-none">
-                        文件下载
+                    <a href="{{ result.content }}" class="btn btn-light">
+                        <i class="fas fa-download me-2"></i>下载文件
                     </a>
-                    <small class="text-muted ms-2">(点击下载)</small>
                 </div>
                 {% endif %}
 
                 <div class="mb-2">
                     {% if result.category %}
-                    <span class="badge bg-primary me-1">{{ result.category }}</span>
+                    <span class="badge rounded-pill" style="background: rgba(13, 110, 253, 0.1); color: #0d6efd;">
+                        {{ result.category }}
+                    </span>
                     {% endif %}
 
                     {% for tag in result.tags %}
                     {% if tag %}
-                    <span class="badge bg-secondary me-1">{{ tag }}</span>
+                    <span class="badge rounded-pill ms-1" style="background: rgba(108, 117, 125, 0.1); color: #6c757d;">
+                        {{ tag }}
+                    </span>
                     {% endif %}
                     {% endfor %}
                 </div>
 
                 {% if result.course %}
-                <small class="text-muted">
-                    <i class="fas fa-book me-1"></i>相关课程: {{ result.course.name }}
-                </small>
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle p-1 me-2" style="background: rgba(32, 201, 151, 0.1);">
+                        <i class="fas fa-book" style="color: #20c997; font-size: 0.75rem;"></i>
+                    </div>
+                    <small class="text-muted">相关课程: {{ result.course.name }}</small>
+                </div>
                 {% endif %}
             </div>
         </div>
         {% endfor %}
         {% else %}
-        <div class="alert alert-info text-center py-5">
-            <h4><i class="fas fa-info-circle me-2"></i>未找到相关结果</h4>
-            <p>请尝试其他关键词或扩大搜索范围。</p>
+        <div class="alert border-0 text-center py-5" style="background: rgba(13, 202, 240, 0.1);">
+            <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
+                style="width: 60px; height: 60px; background: rgba(13, 202, 240, 0.2);">
+                <i class="fas fa-info-circle fa-lg" style="color: #0dcaf0;"></i>
+            </div>
+            <h4 class="text-info">未找到相关结果</h4>
+            <p class="text-muted mb-0">请尝试其他关键词或扩大搜索范围</p>
         </div>
         {% endif %}
         {% elif 'admin' in session.get('roles', []) and not selected_course_id %}
         <!-- 管理员查看所有条目 -->
-        <h4 class="mb-3">全部知识条目 ({{ all_entries|length }})</h4>
+        <div class="d-flex align-items-center mb-3">
+            <div class="rounded-circle p-2 me-2" style="background: rgba(25, 135, 84, 0.1);">
+                <i class="fas fa-database" style="color: #198754;"></i>
+            </div>
+            <h4 class="mb-0">全部知识条目 ({{ all_entries|length }})</h4>
+        </div>
         {% for entry in all_entries %}
-        <div class="card shadow-sm mb-3">
+        <div class="card border-0 shadow-sm mb-3" style="border-radius: 12px; transition: all 0.3s ease;">
             <div class="card-body">
-                <h5 class="card-title">{{ entry.title }}</h5>
+                <h5 class="card-title d-flex align-items-center">
+                    <div class="rounded-circle p-2 me-2" style="background: rgba(78, 84, 200, 0.1);">
+                        <i class="fas {% if entry.type == 'text' %}fa-file-alt{% else %}fa-file-download{% endif %}"
+                            style="color: #4e54c8;"></i>
+                    </div>
+                    {{ entry.title }}
+                </h5>
 
                 {% if entry.type == "text" %}
-                <p class="card-text">{{ entry.content|truncate(300) }}</p>
+                <p class="card-text text-muted">{{ entry.content|truncate(300) }}</p>
                 {% else %}
                 <div class="card-text">
-                    <i class="fas fa-file-download me-2"></i>
-                    <a href="{{ entry.content }}" class="text-decoration-none">
-                        文件下载
+                    <a href="{{ entry.content }}" class="btn btn-light">
+                        <i class="fas fa-download me-2"></i>下载文件
                     </a>
-                    <small class="text-muted ms-2">(点击下载)</small>
                 </div>
                 {% endif %}
 
                 <div class="mb-2">
                     {% if entry.category %}
-                    <span class="badge bg-primary me-1">{{ entry.category }}</span>
+                    <span class="badge rounded-pill" style="background: rgba(13, 110, 253, 0.1); color: #0d6efd;">
+                        {{ entry.category }}
+                    </span>
                     {% endif %}
 
                     {% for tag in entry.tags %}
                     {% if tag %}
-                    <span class="badge bg-secondary me-1">{{ tag }}</span>
+                    <span class="badge rounded-pill ms-1" style="background: rgba(108, 117, 125, 0.1); color: #6c757d;">
+                        {{ tag }}
+                    </span>
                     {% endif %}
                     {% endfor %}
                 </div>
 
                 {% if entry.course %}
-                <small class="text-muted">
-                    <i class="fas fa-book me-1"></i>相关课程: {{ entry.course.name }}
-                </small>
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle p-1 me-2" style="background: rgba(32, 201, 151, 0.1);">
+                        <i class="fas fa-book" style="color: #20c997; font-size: 0.75rem;"></i>
+                    </div>
+                    <small class="text-muted">相关课程: {{ entry.course.name }}</small>
+                </div>
                 {% endif %}
             </div>
         </div>
@@ -154,54 +225,123 @@
 
         {% elif selected_course_id %}
         <!-- 按课程筛选显示 -->
-        <h4 class="mb-3">{{ selected_course.name }} 课程知识条目 ({{ course_entries|length }})</h4>
+        <div class="d-flex align-items-center mb-3">
+            <div class="rounded-circle p-2 me-2" style="background: rgba(25, 135, 84, 0.1);">
+                <i class="fas fa-book" style="color: #198754;"></i>
+            </div>
+            <h4 class="mb-0">
+                {% if selected_course %}
+                {{ selected_course.name }} 课程知识条目
+                {% else %}
+                课程知识条目
+                {% endif %}
+                ({{ course_entries|length }})
+            </h4>
+        </div>
         {% for entry in course_entries %}
-        <div class="card shadow-sm mb-3">
-            <!-- 条目卡片内容与上面相同 -->
+        <div class="card border-0 shadow-sm mb-3" style="border-radius: 12px; transition: all 0.3s ease;">
             <div class="card-body">
-                <h5 class="card-title">{{ entry.title }}</h5>
+                <h5 class="card-title d-flex align-items-center">
+                    <div class="rounded-circle p-2 me-2" style="background: rgba(78, 84, 200, 0.1);">
+                        <i class="fas {% if entry.type == 'text' %}fa-file-alt{% else %}fa-file-download{% endif %}"
+                            style="color: #4e54c8;"></i>
+                    </div>
+                    {{ entry.title }}
+                </h5>
 
                 {% if entry.type == "text" %}
-                <p class="card-text">{{ entry.content|truncate(300) }}</p>
+                <p class="card-text text-muted">{{ entry.content|truncate(300) }}</p>
                 {% else %}
                 <div class="card-text">
-                    <i class="fas fa-file-download me-2"></i>
-                    <a href="{{ entry.content }}" class="text-decoration-none">
-                        文件下载
+                    <a href="{{ entry.content }}" class="btn btn-light">
+                        <i class="fas fa-download me-2"></i>下载文件
                     </a>
-                    <small class="text-muted ms-2">(点击下载)</small>
                 </div>
                 {% endif %}
 
                 <div class="mb-2">
                     {% if entry.category %}
-                    <span class="badge bg-primary me-1">{{ entry.category }}</span>
+                    <span class="badge rounded-pill" style="background: rgba(13, 110, 253, 0.1); color: #0d6efd;">
+                        {{ entry.category }}
+                    </span>
                     {% endif %}
 
                     {% for tag in entry.tags %}
                     {% if tag %}
-                    <span class="badge bg-secondary me-1">{{ tag }}</span>
+                    <span class="badge rounded-pill ms-1" style="background: rgba(108, 117, 125, 0.1); color: #6c757d;">
+                        {{ tag }}
+                    </span>
                     {% endif %}
                     {% endfor %}
                 </div>
 
                 {% if entry.course %}
-                <small class="text-muted">
-                    <i class="fas fa-book me-1"></i>相关课程: {{ entry.course.name }}
-                </small>
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle p-1 me-2" style="background: rgba(32, 201, 151, 0.1);">
+                        <i class="fas fa-book" style="color: #20c997; font-size: 0.75rem;"></i>
+                    </div>
+                    <small class="text-muted">相关课程: {{ entry.course.name }}</small>
+                </div>
                 {% endif %}
             </div>
         </div>
         {% endfor %}
 
         {% else %}
-        <div class="alert alert-light text-center py-5">
-            <h5>输入问题或关键词开始搜索</h5>
-            <p>可以搜索课程内容、常见问题等</p>
+        <div class="alert border-0 text-center py-5" style="background: rgba(78, 84, 200, 0.05);">
+            <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
+                style="width: 80px; height: 80px; background: rgba(78, 84, 200, 0.1);">
+                <i class="fas fa-search fa-2x" style="color: #4e54c8;"></i>
+            </div>
+            <h5 class="text-primary mb-2">输入问题或关键词开始搜索</h5>
+            <p class="text-muted mb-0">可以搜索课程内容、常见问题等</p>
         </div>
         {% endif %}
     </div>
 </div>
+
+<style>
+    .card {
+        transition: all 0.3s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(78, 84, 200, 0.15) !important;
+    }
+
+    .form-control:focus {
+        box-shadow: 0 0 0 0.25rem rgba(78, 84, 200, 0.25);
+        border-color: #4e54c8;
+    }
+
+    .btn-light {
+        background: rgba(108, 117, 125, 0.1);
+        border: none;
+        color: #6c757d;
+        transition: all 0.3s ease;
+    }
+
+    .btn-light:hover {
+        background: rgba(108, 117, 125, 0.2);
+        color: #495057;
+        transform: translateY(-1px);
+    }
+
+    .form-select {
+        transition: all 0.3s ease;
+    }
+
+    .form-select:focus {
+        box-shadow: 0 0 0 0.25rem rgba(78, 84, 200, 0.25);
+        border-color: #4e54c8;
+    }
+
+    .badge {
+        padding: 0.5em 1em;
+        font-weight: 500;
+    }
+</style>
 {% endblock %}
 
 {% block extra_js %}
@@ -210,23 +350,21 @@
     document.getElementById('courseFilter').addEventListener('change', function () {
         const query = '{{ query }}';
         const courseId = this.value;
+        const currentUrl = new URL(window.location.href);
 
-        let url = '{{ url_for("search.index") }}';
-        const params = [];
+        // 更新URL参数
+        if (courseId) {
+            currentUrl.searchParams.set('course_id', courseId);
+        } else {
+            currentUrl.searchParams.delete('course_id');
+        }
 
         if (query) {
-            params.push(`q=${encodeURIComponent(query)}`);
+            currentUrl.searchParams.set('q', query);
         }
 
-        if (courseId) {
-            params.push(`course_id=${courseId}`);
-        }
-
-        if (params.length > 0) {
-            url += '?' + params.join('&');
-        }
-
-        window.location.href = url;
+        // 跳转到新URL
+        window.location.href = currentUrl.toString();
     });
 </script>
 {% endblock %}

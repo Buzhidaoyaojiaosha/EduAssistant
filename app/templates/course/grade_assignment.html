@@ -3,90 +3,215 @@
 {% block title %}评分 - {{ student.name }} - {{ assignment.title }}{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <div class="row mb-4">
-        <div class="col">
-            <h2>学生作业评分</h2>
-            <p class="text-muted">{{ assignment.title }} - {{ student.name }}</p>
-        </div>
-        <div class="col-auto">
-            <a href="{{ url_for('course.view_assignment', assignment_id=assignment.id) }}" class="btn btn-outline-primary">
-                <i class="fas fa-arrow-left me-1"></i>返回作业
-            </a>
+<div class="row mb-4">
+    <div class="col">
+        <div class="d-flex align-items-center">
+            <div class="rounded-circle p-3 me-3" style="background: rgba(111, 66, 193, 0.1);">
+                <i class="fas fa-tasks" style="color: #6f42c1;"></i>
+            </div>
+            <div>
+                <h2 class="text-primary mb-1">学生作业评分</h2>
+                <p class="text-muted mb-0">
+                    <i class="fas fa-book me-1"></i>{{ assignment.title }} -
+                    <i class="fas fa-user me-1"></i>{{ student.name }}
+                </p>
+            </div>
         </div>
     </div>
+    <div class="col-auto">
+        <a href="{{ url_for('course.view_assignment', assignment_id=assignment.id) }}" class="btn btn-light">
+            <i class="fas fa-arrow-left me-1"></i>返回作业
+        </a>
+    </div>
+</div>
 
-    <div class="card shadow-sm mb-4">
-        <div class="card-header bg-light">
-            <h5 class="mb-0"><i class="fas fa-tasks me-2"></i>题目评分</h5>
-        </div>
-        <div class="card-body">
-            <form method="post" action="{{ url_for('course.grade_student_answers', assignment_id=assignment.id, student_id=student.id) }}">
-                <div class="alert alert-info mb-4">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div><i class="fas fa-info-circle me-2"></i>正在评分</div>
-                        <div>当前总分: <span id="total-score-display">{{ student_assignment.final_score or 0 }}</span> / {{ assignment.total_points }}</div>
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-transparent border-0">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle p-2 me-2" style="background: rgba(111, 66, 193, 0.1);">
+                        <i class="fas fa-tasks" style="color: #6f42c1;"></i>
                     </div>
+                    <h5 class="mb-0">题目评分</h5>
                 </div>
-                
-                {% for answer in student_answers %}
-                <div class="card mb-3">
-                    <div class="card-header">
+            </div>
+            <div class="card-body px-4 py-4">
+                <form method="post"
+                    action="{{ url_for('course.grade_student_answers', assignment_id=assignment.id, student_id=student.id) }}">
+                    <div class="alert" style="background: rgba(13, 202, 240, 0.1); border: none;">
                         <div class="d-flex justify-content-between align-items-center">
-                            <h6 class="mb-0">{{ loop.index }}. {{ answer.question.question_name }}</h6>
-                            <span class="badge bg-secondary">满分: {{ answer.question.score }}</span>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-info-circle me-2" style="color: #0dcaf0;"></i>
+                                <span>正在评分</span>
+                            </div>
+                            <div>
+                                当前总分:
+                                <span id="total-score-display" class="badge"
+                                    style="background: rgba(25, 135, 84, 0.1); color: #198754;">
+                                    {{ student_assignment.final_score or 0 }}
+                                </span>
+                                /
+                                <span class="badge" style="background: rgba(111, 66, 193, 0.1); color: #6f42c1;">
+                                    {{ assignment.total_points }}
+                                </span>
+                            </div>
                         </div>
                     </div>
-                    <div class="card-body">
-                        <div class="mb-2">
-                            <strong>题目内容:</strong>
-                            <p>{{ answer.question.context }}</p>
+
+                    {% for answer in student_answers %}
+                    <div class="card mb-4" style="box-shadow: none; border: 1px solid rgba(0,0,0,0.08);">
+                        <div class="card-header bg-transparent">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <div class="rounded-circle p-2 me-2" style="background: rgba(111, 66, 193, 0.1);">
+                                        <span style="color: #6f42c1; font-weight: 500;">{{ loop.index }}</span>
+                                    </div>
+                                    <h6 class="mb-0">{{ answer.question.question_name }}</h6>
+                                </div>
+                                <span class="badge" style="background: rgba(108, 117, 125, 0.1); color: #6c757d;">
+                                    满分: {{ answer.question.score }}
+                                </span>
+                            </div>
                         </div>
-                        <div class="mb-2">
-                            <strong>正确答案:</strong>
-                            <p>{{ answer.question.answer }}</p>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label small text-muted mb-1">题目内容</label>
+                                <div class="p-3 rounded" style="background: rgba(108, 117, 125, 0.1);">
+                                    {{ answer.question.context }}
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small text-muted mb-1">正确答案</label>
+                                <div class="p-3 rounded" style="background: rgba(25, 135, 84, 0.1);">
+                                    {{ answer.question.answer }}
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small text-muted mb-1">学生答案</label>
+                                <div class="p-3 rounded" style="background: rgba(13, 202, 240, 0.1);">
+                                    {{ answer.commit_answer }}
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="score_{{ answer.submission_id }}"
+                                    class="form-label small text-muted mb-1">得分</label>
+                                <div class="input-group input-group-lg">
+                                    <span class="input-group-text border-0 bg-light">
+                                        <i class="fas fa-star" style="color: #fd7e14;"></i>
+                                    </span>
+                                    <input type="number" class="form-control border-0 bg-light score-input"
+                                        id="score_{{ answer.submission_id }}" name="score_{{ answer.submission_id }}"
+                                        min="0" max="{{ answer.question.score }}" step="0.5"
+                                        value="{{ answer.earned_score or 0 }}"
+                                        data-max-score="{{ answer.question.score }}">
+                                </div>
+                            </div>
+                            {% if answer.question.analysis %}
+                            <div class="alert mb-0" style="background: rgba(108, 117, 125, 0.1); border: none;">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-lightbulb me-2" style="color: #6c757d;"></i>
+                                    <div>
+                                        <strong>解析:</strong> {{ answer.question.analysis }}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
                         </div>
-                        <div class="mb-2">
-                            <strong>学生答案:</strong>
-                            <p>{{ answer.commit_answer }}</p>
-                        </div>
-                        <div class="mb-3">
-                            <label for="score_{{ answer.submission_id }}" class="form-label">得分:</label>
-                            <input type="number" class="form-control score-input" id="score_{{ answer.submission_id }}" 
-                                   name="score_{{ answer.submission_id }}" 
-                                   min="0" max="{{ answer.question.score }}" step="0.5" 
-                                   value="{{ answer.earned_score or 0 }}"
-                                   data-max-score="{{ answer.question.score }}">
-                        </div>
-                        {% if answer.question.analysis %}
-                        <div class="alert alert-secondary">
-                            <strong>解析:</strong> {{ answer.question.analysis }}
-                        </div>
-                        {% endif %}
                     </div>
-                </div>
-                {% endfor %}
+                    {% endfor %}
 
-                <div class="mb-3">
-                    <label for="feedback" class="form-label">总体评语:</label>
-                    <textarea class="form-control" id="feedback" name="feedback" rows="8">{% if feedback %}{{ feedback.comment }}{% endif %}</textarea>
-                </div>
+                    <div class="mb-4">
+                        <label for="feedback" class="form-label small text-muted mb-1">总体评语</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text border-0 bg-light">
+                                <i class="fas fa-comment" style="color: #0dcaf0;"></i>
+                            </span>
+                            <textarea class="form-control border-0 bg-light" id="feedback" name="feedback"
+                                rows="8">{% if feedback %}{{ feedback.comment }}{% endif %}</textarea>
+                        </div>
+                    </div>
 
-                <div class="d-grid">
-                    <button type="submit" class="btn btn-primary">保存评分</button>
-                </div>
-            </form>
+                    <div class="d-flex gap-3 mt-5">
+                        <a href="{{ url_for('course.view_assignment', assignment_id=assignment.id) }}"
+                            class="btn btn-light flex-grow-1">
+                            <i class="fas fa-times me-1"></i>取消
+                        </a>
+                        <button type="submit" class="btn btn-primary flex-grow-1">
+                            <i class="fas fa-check me-1"></i>保存评分
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
 
+<style>
+    /* 继承view.html的样式 */
+    :root {
+        --primary-gradient: linear-gradient(135deg, #4e54c8 0%, #8f94fb 100%);
+        --secondary-gradient: linear-gradient(135deg, #00cdac 0%, #8ddad5 100%);
+        --background-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        --card-background: rgba(255, 255, 255, 0.9);
+        --hover-background: rgba(78, 84, 200, 0.1);
+    }
+
+    .card {
+        border: none;
+        background: var(--card-background);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+    }
+
+    .btn-primary {
+        background: var(--primary-gradient);
+        border: none;
+        box-shadow: 0 4px 15px rgba(78, 84, 200, 0.2);
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(78, 84, 200, 0.3);
+    }
+
+    .input-group-text {
+        border: none;
+        background-color: #f8f9fa;
+    }
+
+    .form-control {
+        border: none;
+        background-color: #f8f9fa;
+        padding: 0.75rem 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+        background-color: #ffffff;
+        box-shadow: 0 0 0 2px rgba(78, 84, 200, 0.2);
+    }
+
+    .form-control:disabled {
+        background-color: #e9ecef;
+        opacity: 0.7;
+    }
+</style>
+
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // 获取所有得分输入框
+    // 保持原有的JavaScript代码不变
+    document.addEventListener('DOMContentLoaded', function () {
         const scoreInputs = document.querySelectorAll('.score-input');
         const totalScoreDisplay = document.getElementById('total-score-display');
-        
-        // 计算总分函数
+
         function calculateTotalScore() {
             let totalScore = 0;
             scoreInputs.forEach(input => {
@@ -94,20 +219,15 @@
             });
             totalScoreDisplay.textContent = totalScore.toFixed(1);
         }
-        
-        // 初始计算总分
+
         calculateTotalScore();
-        
-        // 监听所有得分输入框的变化
+
         scoreInputs.forEach(input => {
-            input.addEventListener('input', function() {
-                // 限制不超过最大分值
+            input.addEventListener('input', function () {
                 const maxScore = parseFloat(this.dataset.maxScore);
                 if (parseFloat(this.value) > maxScore) {
                     this.value = maxScore;
                 }
-                
-                // 重新计算总分
                 calculateTotalScore();
             });
         });

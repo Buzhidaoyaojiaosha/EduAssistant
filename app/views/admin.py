@@ -40,20 +40,35 @@ def index():
     
     student_activities = AnalyticsService.get_all_student_activity()
     teacher_activities = AnalyticsService.get_all_teacher_activity()
-    print(f"学生活动数据如下:{student_activities}")
-    print(f"教师活动数据如下:{teacher_activities}")
     
-     # 只查有活跃度的学生
+    # 只查有活跃度的学生
     student_ids = list(student_activities.keys())
-    students = User.select().where(User.id.in_(student_ids))
-    print(f"学生数据如下:{students}")
+    students = list(User.select().where(User.id.in_(student_ids)))
     
     teacher_ids = list(teacher_activities.keys())
-    teachers = User.select().where(User.id.in_(teacher_ids))
-    print(f"教师数据如下:{teachers}")
+    teachers = list(User.select().where(User.id.in_(teacher_ids)))
     
-    print(f"\n统计数据: {stats}\n")
-    return render_template('admin/dashboard.html',students=students,teachers = teachers,course_activity = student_activities, teacher_activities = teacher_activities,**stats)
+    # 预处理图表数据
+    student_names = [student.name for student in students]
+    student_daily_data = [student_activities[student.id]['daily'] for student in students]
+    student_weekly_data = [student_activities[student.id]['weekly'] for student in students]
+    
+    teacher_names = [teacher.name for teacher in teachers]
+    teacher_daily_data = [teacher_activities[teacher.id]['daily'] for teacher in teachers]
+    teacher_weekly_data = [teacher_activities[teacher.id]['weekly'] for teacher in teachers]
+    
+    return render_template(
+        'admin/dashboard.html',
+        students=students,
+        teachers=teachers,
+        student_names=student_names,
+        student_daily_data=student_daily_data,
+        student_weekly_data=student_weekly_data,
+        teacher_names=teacher_names,
+        teacher_daily_data=teacher_daily_data,
+        teacher_weekly_data=teacher_weekly_data,
+        **stats
+    )
 
 
 @admin_bp.route('/users')

@@ -5,75 +5,132 @@
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-8">
-        <div class="card shadow">
-            <div class="card-header bg-primary text-white">
-                <h4 class="mb-0">添加知识条目/文件资源</h4>
+        <div class="card">
+            <div class="card-header bg-transparent border-0 text-center pt-4">
+                <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
+                    style="width: 60px; height: 60px; background: rgba(13, 110, 253, 0.1);">
+                    <i class="fas fa-book-medical text-primary fa-lg"></i>
+                </div>
+                <h3 class="font-weight-bold text-primary mb-2">添加知识条目/文件资源</h3>
+                <p class="text-muted mb-0">
+                    <i class="fas fa-info-circle me-1"></i>添加课程相关的知识或资源文件
+                </p>
             </div>
-            <div class="card-body">
+            <div class="card-body px-4 py-4">
                 <form method="post" action="{{ url_for('search.add_knowledge') }}" enctype="multipart/form-data">
-                    <div class="mb-3">
-                        <label for="title" class="form-label">标题</label>
-                        <input type="text" class="form-control" id="title" name="title" required>
+                    <div class="mb-4">
+                        <label for="title" class="form-label small text-muted mb-1">标题</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text border-0 bg-light">
+                                <i class="fas fa-heading text-primary"></i>
+                            </span>
+                            <input type="text" class="form-control border-0 bg-light" id="title" name="title" required>
+                        </div>
                     </div>
 
                     <!-- 条目类型选择 -->
-                    <div class="mb-3">
-                        <label for="entry_type" class="form-label">条目类型</label>
-                        <select class="form-select" id="entry_type" name="entry_type" required>
-                            <option value="text">纯文字</option>
-                            <option value="pdf">PDF文件</option>
-                            <option value="pptx">PPTX文件</option>
-                            <option value="other">其他文件</option>
-                        </select>
+                    <div class="mb-4">
+                        <label for="entry_type" class="form-label small text-muted mb-1">条目类型</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text border-0 bg-light">
+                                <i class="fas fa-list-ul text-primary"></i>
+                            </span>
+                            <select class="form-select border-0 bg-light" id="entry_type" name="entry_type" required>
+                                <option value="text">纯文字</option>
+                                <option value="pdf">PDF文件</option>
+                                <option value="pptx">PPTX文件</option>
+                                <option value="other">其他文件</option>
+                            </select>
+                        </div>
                     </div>
 
                     <!-- 动态内容区域 -->
-                    <div class="mb-3" id="text_content_div">
-                        <label for="content" class="form-label">内容</label>
-                        <textarea class="form-control" id="content" name="content" rows="8"></textarea>
-                    </div>
-
-                    <div class="mb-3 d-none" id="file_upload_div">
-                        <label for="file" class="form-label">上传文件</label>
-                        <input type="file" class="form-control" id="file" name="file">
-                        <small class="text-muted" id="file_hint">请上传PDF、PPTX或其他支持的文件</small>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="category" class="form-label">分类</label>
-                            <input type="text" class="form-control" id="category" name="category">
-                        </div>
-                        <div class="col-md-6">
-                            <label for="tags" class="form-label">标签 (用逗号分隔)</label>
-                            <input type="text" class="form-control" id="tags" name="tags" placeholder="例如: 期末考试, 复习">
+                    <div class="mb-4" id="text_content_div">
+                        <label for="content" class="form-label small text-muted mb-1">内容</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text border-0 bg-light">
+                                <i class="fas fa-align-left text-primary"></i>
+                            </span>
+                            <textarea class="form-control border-0 bg-light" id="content" name="content"
+                                rows="4"></textarea>
                         </div>
                     </div>
 
-                    <!-- 关联课程字段 - 动态显示"不关联课程"选项 -->
+                    <div class="mb-4 d-none" id="file_upload_div">
+                        <label for="file" class="form-label small text-muted mb-1">上传文件</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text border-0 bg-light">
+                                <i class="fas fa-upload text-primary"></i>
+                            </span>
+                            <input type="file" class="form-control border-0 bg-light" id="file" name="file">
+                        </div>
+                        <div class="form-text text-muted mt-2">
+                            <i class="fas fa-info-circle me-1"></i>
+                            <span id="file_hint">请上传PDF、PPTX或其他支持的文件</span>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="category" class="form-label small text-muted mb-1">分类</label>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text border-0 bg-light">
+                                    <i class="fas fa-tag text-primary"></i>
+                                </span>
+                                <input type="text" class="form-control border-0 bg-light" id="category" name="category">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="tags" class="form-label small text-muted mb-1">标签</label>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text border-0 bg-light">
+                                    <i class="fas fa-tags text-primary"></i>
+                                </span>
+                                <input type="text" class="form-control border-0 bg-light" id="tags" name="tags"
+                                    placeholder="用逗号分隔">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 关联课程字段 -->
                     <div class="mb-4">
-                        <label for="course_id" class="form-label">关联课程 <span id="course_required"
-                                class="text-danger d-none">*</span></label>
-                        <select class="form-select" id="course_id" name="course_id">
-                            <option id="no_course_option" value="">不关联课程</option>
-                            {% for course in courses %}
-                            <option value="{{ course.id }}">{{ course.name }} ({{ course.code }})</option>
-                            {% endfor %}
-                        </select>
+                        <label for="course_id" class="form-label small text-muted mb-1">
+                            关联课程
+                            <span id="course_required" class="text-danger d-none">*</span>
+                        </label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text border-0 bg-light">
+                                <i class="fas fa-book text-primary"></i>
+                            </span>
+                            <select class="form-select border-0 bg-light" id="course_id" name="course_id">
+                                <option id="no_course_option" value="">不关联课程</option>
+                                {% for course in courses %}
+                                <option value="{{ course.id }}">{{ course.name }} ({{ course.code }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
                     </div>
 
-                    <div class="d-flex justify-content-between">
+                    <div class="d-flex gap-3 mt-5">
                         {% if request.args.get('referrer') %}
-                        <a href="{{ request.args.get('referrer') }}" class="btn btn-secondary">取消</a>
+                        <a href="{{ request.args.get('referrer') }}" class="btn btn-light flex-grow-1">
+                            <i class="fas fa-arrow-left me-1"></i>取消
+                        </a>
                         {% else %}
-                        <a href="{{ url_for('search.manage_knowledge') }}" class="btn btn-secondary">取消</a>
+                        <a href="{{ url_for('search.manage_knowledge') }}" class="btn btn-light flex-grow-1">
+                            <i class="fas fa-arrow-left me-1"></i>取消
+                        </a>
                         {% endif %}
 
                         {% if request.args.get('referrer') %}
                         <button type="submit" name="return_to" value="{{ request.args.get('referrer') }}"
-                            class="btn btn-primary">保存</button>
+                            class="btn btn-primary flex-grow-1">
+                            <i class="fas fa-check me-1"></i>保存
+                        </button>
                         {% else %}
-                        <button type="submit" class="btn btn-primary">保存</button>
+                        <button type="submit" class="btn btn-primary flex-grow-1">
+                            <i class="fas fa-check me-1"></i>保存
+                        </button>
                         {% endif %}
                     </div>
                 </form>
@@ -81,6 +138,71 @@
         </div>
     </div>
 </div>
+
+<style>
+    .card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.12);
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        border-color: #0d6efd;
+    }
+
+    .btn-light {
+        background: rgba(108, 117, 125, 0.1);
+        border: none;
+        color: #6c757d;
+        transition: all 0.3s ease;
+    }
+
+    .btn-light:hover {
+        background: rgba(108, 117, 125, 0.2);
+        color: #495057;
+        transform: translateY(-1px);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #4e54c8 0%, #8f94fb 100%);
+        border: none;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #4048c4 0%, #7f84f7 100%);
+        transform: translateY(-1px);
+    }
+
+    .input-group-text {
+        color: #6c757d;
+    }
+
+    .form-control,
+    .form-select {
+        transition: all 0.3s ease;
+    }
+
+    .form-control::placeholder {
+        color: #adb5bd;
+    }
+
+    .text-primary {
+        color: #0d6efd !important;
+    }
+
+    .card-header .rounded-circle {
+        background: rgba(13, 110, 253, 0.1) !important;
+    }
+</style>
 
 <!-- JavaScript处理动态切换和必选逻辑 -->
 <script>
@@ -154,6 +276,14 @@
                 // 设置课程必选
                 courseSelect.setAttribute('required', '');
                 courseRequiredMarker.classList.remove('d-none');
+
+                // 如果已有文件，更新标题
+                if (fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    const titleInput = document.getElementById('title');
+                    const fileName = file.name;
+                    titleInput.value = fileName;
+                }
             }
         }
 
@@ -173,57 +303,11 @@
                 return;
             }
 
-            // 自动填充标题（去除扩展名）
+            // 自动填充标题
             const titleInput = document.getElementById('title');
-            const fileName = file.name; // 移除文件扩展名
+            const fileName = file.name;
             titleInput.value = fileName;
         });
-
-        // 监听类型变化（修改原有函数）
-        function updateContentFields() {
-            if (entryType.value === 'text') {
-                // 纯文字模式
-                textContentDiv.classList.remove('d-none');
-                fileUploadDiv.classList.add('d-none');
-                contentTextarea.setAttribute('required', '');
-
-                // 显示"不关联课程"选项
-                noCourseOption.style.display = '';
-                // 取消课程必选
-                courseSelect.removeAttribute('required');
-                courseRequiredMarker.classList.add('d-none');
-
-                // 重置文件输入
-                fileInput.value = '';
-            } else {
-                // 文件上传模式
-                textContentDiv.classList.add('d-none');
-                fileUploadDiv.classList.remove('d-none');
-                contentTextarea.removeAttribute('required');
-
-                // 更新文件提示和接受类型
-                const fileType = fileTypeMap[entryType.value] || fileTypeMap.other;
-                fileHint.textContent = fileType.hint;
-                fileInput.setAttribute('accept', fileType.accept);
-
-                // 隐藏"不关联课程"选项并确保选中其他选项
-                noCourseOption.style.display = 'none';
-                if (courseSelect.value === '') {
-                    courseSelect.selectedIndex = 1;
-                }
-                // 设置课程必选
-                courseSelect.setAttribute('required', '');
-                courseRequiredMarker.classList.remove('d-none');
-
-                // 如果已有文件，更新标题
-                if (fileInput.files.length > 0) {
-                    const file = fileInput.files[0];
-                    const titleInput = document.getElementById('title');
-                    const fileName = file.name;
-                    titleInput.value = fileName;
-                }
-            }
-        }
 
         // 表单提交前验证
         document.querySelector('form').addEventListener('submit', function (e) {

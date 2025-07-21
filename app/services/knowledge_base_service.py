@@ -68,7 +68,6 @@ class KnowledgeBaseService:
     
     @staticmethod
     def search_knowledge(query, course_id=None, limit=5, keyword_weight=0.3,is_chunk=False):
-
         """
         升级版知识库搜索：结合语义搜索和关键字全文搜索
         
@@ -81,73 +80,142 @@ class KnowledgeBaseService:
         Returns:
             list: 匹配结果列表，按综合相关性排序
         """
+        # 如果查询为空，返回最新的知识条目
+        if not query.strip():
+            base_query = KnowledgeBase.select().where(KnowledgeBase.is_chunk == is_chunk)
+            if course_id:
+                base_query = base_query.where(KnowledgeBase.course_id == course_id)
+            entries = base_query.order_by(KnowledgeBase.created_time.desc()).limit(limit)
+            
+            return [{
+                "id": entry.id,
+                "vector_id": entry.vector_id,
+                "title": entry.title,
+                "type": entry.type,
+                "content": entry.content,
+                "category": entry.category,
+                "course_id": entry.course_id,
+                "course": entry.course,
+                "tags": entry.tags,
+                "full_record": entry,
+                "combined_score": 1.0,
+                "match_types": ["最新添加"]
+            } for entry in entries]
+
+        # 构建向量搜索的where条件
+        where_condition = None
+        if course_id:
+            where_condition = {
+                "$and": [
+                    {
+                        "path": "is_chunk",
+                        "operator": "eq",
+                        "value": is_chunk
+                    },
+                    {
+                        "path": "course_id",
+                        "operator": "eq",
+                        "value": int(course_id)
+                    }
+                ]
+            }
+        else:
+            where_condition = {
+                "path": "is_chunk",
+                "operator": "eq",
+                "value": is_chunk
+            }
+
         # 1. 执行语义搜索（向量搜索）
         vector_results = []
-        vector_search = knowledge_base_collection.query(
-            query_texts=[query],
-            n_results=limit * 3  # 获取更多结果用于后续融合
-            ,where={"is_chunk": is_chunk}
-        )
-        
-        if len(vector_search["ids"]) > 0:
-            for i, vector_id in enumerate(vector_search["ids"][0]):
-                metadata = vector_search["metadatas"][0][i]
-                document = vector_search["documents"][0][i]
-                distance = vector_search["distances"][0][i] if "distances" in vector_search else None
-                
-                # 获取完整记录
-                db_record = KnowledgeBase.get_or_none(KnowledgeBase.vector_id == vector_id)
-                if not db_record:
-                    continue
+        try:
+            vector_search = knowledge_base_collection.query(
+                query_texts=[query],
+                n_results=limit * 3,  # 获取更多结果用于后续融合
+                where=where_condition
+            )
+            
+            if len(vector_search["ids"]) > 0 and len(vector_search["ids"][0]) > 0:
+                for i, vector_id in enumerate(vector_search["ids"][0]):
+                    metadata = vector_search["metadatas"][0][i]
+                    document = vector_search["documents"][0][i]
+                    distance = vector_search["distances"][0][i] if "distances" in vector_search else None
                     
-                vector_results.append({
-                    "id": metadata["id"],
-                    "vector_id": vector_id,
-                    "title": metadata["title"],
-                    "type": db_record.type,
-                    "content": document,
-                    "vector_distance": distance,
-                    "category": metadata["category"],
-                    "course_id": metadata["course_id"],
-                    "tags": metadata["tags"].split(",") if metadata["tags"] else [],
-                    "full_record": db_record,
-                    "score": 1 - (distance if distance is not None else 1)  # 距离转换为相似度分数
-                })
+                    # 获取完整记录
+                    db_record = KnowledgeBase.get_or_none(KnowledgeBase.vector_id == vector_id)
+                    if not db_record:
+                        continue
+                        
+                    vector_results.append({
+                        "id": metadata["id"],
+                        "vector_id": vector_id,
+                        "title": metadata["title"],
+                        "type": db_record.type,
+                        "content": document,
+                        "vector_distance": distance,
+                        "category": metadata["category"],
+                        "course_id": metadata["course_id"],
+                        "course": db_record.course,
+                        "tags": metadata["tags"].split(",") if metadata["tags"] else [],
+                        "full_record": db_record,
+                        "score": 1 - (distance if distance is not None else 0)  # 距离转换为相似度分数
+                    })
+        except Exception as e:
+            print(f"Vector search error: {str(e)}")
              
-
         # 2. 执行关键字全文搜索（基于标题和内容）
         keyword_results = []
-        # 使用Peewee的SQL函数进行关键字匹配
-        keyword_query = KnowledgeBase.select().where(
-            (KnowledgeBase.title.contains(query)) |
-            (KnowledgeBase.content.contains(query)) &
-            (KnowledgeBase.is_chunk == is_chunk)
-        )
-        
-        if course_id is not None:
-            keyword_query = keyword_query.where(KnowledgeBase.course_id == course_id)
+        try:
+            # 使用Peewee的SQL函数进行关键字匹配
+            conditions = []
             
-        keyword_query = keyword_query.limit(limit * 3)  # 获取更多结果用于后续融合
-        
-        for knowledge in keyword_query:
-            # 计算关键字匹配分数（简单实现：匹配次数越多分数越高）
-            title_matches = knowledge.title.lower().count(query.lower())
-            content_matches = knowledge.content.lower().count(query.lower())
-            keyword_score = min(1.0, 0.1 * title_matches + 0.01 * content_matches)
+            # 分词处理查询
+            query_terms = query.lower().split()
+            for term in query_terms:
+                term_condition = (
+                    (KnowledgeBase.title.contains(term)) |
+                    (KnowledgeBase.content.contains(term))
+                )
+                conditions.append(term_condition)
             
-            keyword_results.append({
-                "id": knowledge.id,
-                "vector_id": knowledge.vector_id,
-                "title": knowledge.title,
-                "type": knowledge.type,
-                "content": knowledge.content,
-                "vector_distance": None,
-                "category": knowledge.category,
-                "course_id": knowledge.course_id,
-                "tags": knowledge.tags,
-                "full_record": knowledge,
-                "score": keyword_score
-            })
+            # 组合所有条件
+            combined_condition = conditions[0]
+            for condition in conditions[1:]:
+                combined_condition |= condition
+            
+            keyword_query = KnowledgeBase.select().where(
+                combined_condition &
+                (KnowledgeBase.is_chunk == is_chunk)
+            )
+            
+            # 添加课程筛选条件
+            if course_id is not None:
+                keyword_query = keyword_query.where(KnowledgeBase.course_id == course_id)
+                
+            keyword_query = keyword_query.limit(limit * 3)  # 获取更多结果用于后续融合
+            
+            for knowledge in keyword_query:
+                # 计算关键字匹配分数
+                title_score = sum(term in knowledge.title.lower() for term in query_terms) / len(query_terms)
+                content_score = sum(term in knowledge.content.lower() for term in query_terms) / len(query_terms)
+                keyword_score = (title_score * 0.6 + content_score * 0.4)  # 标题匹配权重更高
+                
+                keyword_results.append({
+                    "id": knowledge.id,
+                    "vector_id": knowledge.vector_id,
+                    "title": knowledge.title,
+                    "type": knowledge.type,
+                    "content": knowledge.content,
+                    "vector_distance": None,
+                    "category": knowledge.category,
+                    "course_id": knowledge.course_id,
+                    "course": knowledge.course,
+                    "tags": knowledge.tags,
+                    "full_record": knowledge,
+                    "score": keyword_score
+                })
+        except Exception as e:
+            print(f"Keyword search error: {str(e)}")
 
         # 3. 融合两种搜索结果
         all_results = {}
@@ -180,22 +248,59 @@ class KnowledgeBaseService:
             reverse=True
         )[:limit]
         
+        # 如果没有找到结果，尝试模糊搜索
+        if not sorted_results:
+            try:
+                fuzzy_query = KnowledgeBase.select().where(
+                    (KnowledgeBase.is_chunk == is_chunk)
+                )
+                if course_id:
+                    fuzzy_query = fuzzy_query.where(KnowledgeBase.course_id == course_id)
+                
+                fuzzy_results = []
+                for entry in fuzzy_query:
+                    # 计算相似度分数
+                    title_similarity = sum(term in entry.title.lower() for term in query_terms) / max(len(query_terms), 1)
+                    content_similarity = sum(term in entry.content.lower() for term in query_terms) / max(len(query_terms), 1)
+                    similarity_score = max(title_similarity, content_similarity)
+                    
+                    if similarity_score > 0:  # 只添加有一定相似度的结果
+                        fuzzy_results.append({
+                            "id": entry.id,
+                            "vector_id": entry.vector_id,
+                            "title": entry.title,
+                            "type": entry.type,
+                            "content": entry.content,
+                            "category": entry.category,
+                            "course_id": entry.course_id,
+                            "course": entry.course,
+                            "tags": entry.tags,
+                            "full_record": entry,
+                            "combined_score": similarity_score,
+                            "match_types": ["模糊匹配"]
+                        })
+                
+                sorted_results = sorted(fuzzy_results, key=lambda x: x["combined_score"], reverse=True)[:limit]
+            except Exception as e:
+                print(f"Fuzzy search error: {str(e)}")
+        
         # 5. 添加额外的元数据并返回
         final_results = []
         for result in sorted_results:
             # 计算匹配类型标签
-            match_types = []
-            if result.get("vector_distance") is not None:
-                match_types.append("语义匹配")
-                
-            if "score" in result and result["score"] > 0:
-                match_types.append("关键词匹配")
-                
-            final_results.append({
-                **result,
-                "match_types": match_types,
-                "combined_score": round(result["combined_score"], 4)  # 保留4位小数
-            })
+            if "match_types" not in result:
+                match_types = []
+                if result.get("vector_distance") is not None:
+                    match_types.append("语义匹配")
+                if "score" in result and result["score"] > 0:
+                    match_types.append("关键词匹配")
+                result["match_types"] = match_types
+            
+            # 确保分数在0-1之间
+            result["combined_score"] = min(1.0, max(0.0, result["combined_score"]))
+            result["combined_score"] = round(result["combined_score"], 4)
+            
+            final_results.append(result)
         
         return final_results
     

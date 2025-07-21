@@ -5,11 +5,20 @@
 {% block content %}
 <div class="row mb-4">
     <div class="col">
-        <h2>管理知识点</h2>
-        <p class="text-muted">{{ assignment.title }} - {{ assignment.course.name }}</p>
+        <div class="d-flex align-items-center">
+            <div class="rounded-circle p-3 me-3" style="background: rgba(255, 193, 7, 0.1);">
+                <i class="fas fa-lightbulb" style="color: #ffc107;"></i>
+            </div>
+            <div>
+                <h2 class="text-primary mb-1">管理知识点</h2>
+                <p class="text-muted mb-0">
+                    <i class="fas fa-book me-1"></i>{{ assignment.title }} - {{ assignment.course.name }}
+                </p>
+            </div>
+        </div>
     </div>
     <div class="col-auto">
-        <a href="{{ url_for('course.view_assignment', assignment_id=assignment.id) }}" class="btn btn-outline-primary">
+        <a href="{{ url_for('course.view_assignment', assignment_id=assignment.id) }}" class="btn btn-light">
             <i class="fas fa-arrow-left me-1"></i>返回作业
         </a>
     </div>
@@ -17,18 +26,29 @@
 
 <div class="row">
     <div class="col-md-12">
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-light">
-                <h5 class="mb-0"><i class="fas fa-lightbulb me-2"></i>关联知识点</h5>
+        <div class="card">
+            <div class="card-header bg-transparent border-0">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle p-2 me-2" style="background: rgba(255, 193, 7, 0.1);">
+                        <i class="fas fa-lightbulb" style="color: #ffc107;"></i>
+                    </div>
+                    <h5 class="mb-0">关联知识点</h5>
+                </div>
             </div>
             <div class="card-body">
-                <form method="post" action="{{ url_for('course.assignment_knowledge_points', assignment_id=assignment.id) }}">
+                <form method="post"
+                    action="{{ url_for('course.assignment_knowledge_points', assignment_id=assignment.id) }}">
                     {% if course_knowledge_points %}
                     <div class="table-responsive">
-                        <table class="table table-hover">
+                        <table class="table">
                             <thead>
                                 <tr>
-                                    <th style="width: 50px;">选择</th>
+                                    <th style="width: 50px;">
+                                        <div class="rounded-circle p-1"
+                                            style="background: rgba(78, 84, 200, 0.1); width: 24px; height: 24px; text-align: center;">
+                                            <i class="fas fa-check" style="color: #4e54c8; font-size: 0.8rem;"></i>
+                                        </div>
+                                    </th>
                                     <th>知识点名称</th>
                                     <th>描述</th>
                                     <th>所属</th>
@@ -40,47 +60,70 @@
                                 {% set is_selected = false %}
                                 {% set weight = 1.0 %}
                                 {% for kp_item in assignment_knowledge_points %}
-                                    {% if kp_item.knowledge_point.id == kp.id %}
-                                        {% set is_selected = true %}
-                                        {% set weight = kp_item.weight %}
-                                    {% endif %}
+                                {% if kp_item.knowledge_point.id == kp.id %}
+                                {% set is_selected = true %}
+                                {% set weight = kp_item.weight %}
+                                {% endif %}
                                 {% endfor %}
                                 <tr>
                                     <td>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" 
-                                                   name="knowledge_point_ids" value="{{ kp.id }}" 
-                                                   id="kp_{{ kp.id }}" 
-                                                   {% if is_selected %}checked{% endif %}>
-                                            <label class="form-check-label" for="kp_{{ kp.id }}"></label>
+                                        <div class="form-check d-flex justify-content-center">
+                                            <input class="form-check-input" type="checkbox" name="knowledge_point_ids"
+                                                value="{{ kp.id }}" id="kp_{{ kp.id }}" {% if is_selected %}checked{%
+                                                endif %}>
                                         </div>
                                     </td>
-                                    <td>{{ kp.name }}</td>
-                                    <td>{{ kp.description|truncate(50) }}</td>
-                                    <td>{% if kp.parent %}{{ kp.parent.name }}{% else %}<span class="text-muted">顶级</span>{% endif %}</td>
                                     <td>
-                                        <input type="number" class="form-control form-control-sm" 
-                                               name="weight_{{ kp.id }}" min="0.1" max="10" step="0.1" 
-                                               value="{{ weight }}" 
-                                               {% if not is_selected %}disabled{% endif %}>
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-circle me-2"
+                                                style="color: #ffc107; font-size: 0.5rem;"></i>
+                                            {{ kp.name }}
+                                        </div>
+                                    </td>
+                                    <td>{{ kp.description|truncate(50) }}</td>
+                                    <td>
+                                        {% if kp.parent %}
+                                        <span class="text-primary">{{ kp.parent.name }}</span>
+                                        {% else %}
+                                        <span class="text-muted">顶级</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text border-0 bg-light">
+                                                <i class="fas fa-star" style="color: #fd7e14;"></i>
+                                            </span>
+                                            <input type="number" class="form-control border-0 bg-light"
+                                                name="weight_{{ kp.id }}" min="0.1" max="10" step="0.1"
+                                                value="{{ weight }}" {% if not is_selected %}disabled{% endif %}>
+                                        </div>
                                     </td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
                     </div>
-                    
-                    <div class="mt-4">
-                        <button type="submit" class="btn btn-primary">保存更改</button>
-                        <a href="{{ url_for('course.view_assignment', assignment_id=assignment.id) }}" class="btn btn-outline-secondary ms-2">取消</a>
+
+                    <div class="d-flex gap-3 mt-5">
+                        <a href="{{ url_for('course.view_assignment', assignment_id=assignment.id) }}"
+                            class="btn btn-light flex-grow-1">
+                            <i class="fas fa-times me-1"></i>取消
+                        </a>
+                        <button type="submit" class="btn btn-primary flex-grow-1">
+                            <i class="fas fa-check me-1"></i>保存更改
+                        </button>
                     </div>
                     {% else %}
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i>该课程暂无知识点，请先在课程页面添加知识点。
+                    <div class="text-center py-4">
+                        <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
+                            style="width: 60px; height: 60px; background: rgba(255, 193, 7, 0.1);">
+                            <i class="fas fa-lightbulb fa-lg" style="color: #ffc107;"></i>
+                        </div>
+                        <p class="text-muted mb-3">该课程暂无知识点，请先在课程页面添加知识点。</p>
+                        <a href="{{ url_for('course.view', course_id=assignment.course.id) }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i>添加课程知识点
+                        </a>
                     </div>
-                    <a href="{{ url_for('course.view', course_id=assignment.course.id) }}" class="btn btn-primary">
-                        <i class="fas fa-plus me-1"></i>添加课程知识点
-                    </a>
                     {% endif %}
                 </form>
             </div>
@@ -90,10 +133,10 @@
 
 <script>
     // 当复选框状态变化时，启用或禁用对应的权重输入框
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         var checkboxes = document.querySelectorAll('input[name="knowledge_point_ids"]');
-        checkboxes.forEach(function(checkbox) {
-            checkbox.addEventListener('change', function() {
+        checkboxes.forEach(function (checkbox) {
+            checkbox.addEventListener('change', function () {
                 var id = this.value;
                 var weightInput = document.querySelector('input[name="weight_' + id + '"]');
                 if (weightInput) {
@@ -106,4 +149,85 @@
         });
     });
 </script>
+
+<style>
+    /* 继承view.html的样式 */
+    :root {
+        --primary-gradient: linear-gradient(135deg, #4e54c8 0%, #8f94fb 100%);
+        --secondary-gradient: linear-gradient(135deg, #00cdac 0%, #8ddad5 100%);
+        --background-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        --card-background: rgba(255, 255, 255, 0.9);
+        --hover-background: rgba(78, 84, 200, 0.1);
+    }
+
+    .card {
+        border: none;
+        background: var(--card-background);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+    }
+
+    .btn-primary {
+        background: var(--primary-gradient);
+        border: none;
+        box-shadow: 0 4px 15px rgba(78, 84, 200, 0.2);
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(78, 84, 200, 0.3);
+    }
+
+    .table {
+        background: var(--card-background);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .table thead th {
+        background: rgba(78, 84, 200, 0.05);
+        border-bottom: none;
+        padding: 1rem;
+    }
+
+    .table td {
+        padding: 1rem;
+        vertical-align: middle;
+    }
+
+    .form-check-input:checked {
+        background-color: #4e54c8;
+        border-color: #4e54c8;
+    }
+
+    .input-group-text {
+        border: none;
+        background-color: #f8f9fa;
+    }
+
+    .form-control {
+        border: none;
+        background-color: #f8f9fa;
+        padding: 0.75rem 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+        background-color: #ffffff;
+        box-shadow: 0 0 0 2px rgba(78, 84, 200, 0.2);
+    }
+
+    .form-control:disabled {
+        background-color: #e9ecef;
+        opacity: 0.7;
+    }
+</style>
 {% endblock %}

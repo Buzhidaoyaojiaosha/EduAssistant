@@ -3,95 +3,173 @@
 {% block title %}提交详情 - {{ assignment.title }} - {{ student.name }}{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <div class="row mb-4">
-        <div class="col">
-            <h2>作业提交详情</h2>
-            <p class="text-muted">{{ assignment.title }} - {{ student.name }}</p>
-        </div>
-        <div class="col-auto">
-            <a href="{{ url_for('course.view_assignment', assignment_id=assignment.id) }}" class="btn btn-outline-primary">
-                <i class="fas fa-arrow-left me-1"></i>返回作业
-            </a>
-            {% if is_teacher and submission.status == 1 %}
-            <a href="{{ url_for('course.grade_student_assignment', assignment_id=assignment.id, student_id=student.id) }}" class="btn btn-primary">
-                <i class="fas fa-check-circle me-1"></i>评分
-            </a>
-            {% endif %}
-        </div>
-    </div>
-
-    <div class="card shadow-sm mb-4">
-        <div class="card-header bg-light d-flex justify-content-between align-items-center">
-            <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>提交内容</h5>
+<div class="row mb-4">
+    <div class="col">
+        <div class="d-flex align-items-center">
+            <div class="rounded-circle p-3 me-3" style="background: rgba(111, 66, 193, 0.1);">
+                <i class="fas fa-file-alt" style="color: #6f42c1;"></i>
+            </div>
             <div>
-                <span class="badge bg-{{ 'success' if submission.status == 2 else 'warning' if submission.status == 1 else 'danger' }}">
-                    {{ '已批改' if submission.status == 2 else '已提交' if submission.status == 1 else '未提交' }}
-                </span>
+                <h2 class="text-primary mb-1">作业提交详情</h2>
+                <p class="text-muted mb-0">
+                    <i class="fas fa-book me-1"></i>{{ assignment.title }} -
+                    <i class="fas fa-user me-1"></i>{{ student.name }}
+                </p>
             </div>
         </div>
-        <div class="card-body">
-            {% if submission.status >= 1 %}
+    </div>
+    <div class="col-auto">
+        <a href="{{ url_for('course.view_assignment', assignment_id=assignment.id) }}" class="btn btn-light">
+            <i class="fas fa-arrow-left me-1"></i>返回作业
+        </a>
+        {% if is_teacher and submission.status == 1 %}
+        <a href="{{ url_for('course.grade_student_assignment', assignment_id=assignment.id, student_id=student.id) }}"
+            class="btn btn-primary ms-2">
+            <i class="fas fa-check-circle me-1"></i>评分
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-transparent border-0">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle p-2 me-2" style="background: rgba(111, 66, 193, 0.1);">
+                            <i class="fas fa-file-alt" style="color: #6f42c1;"></i>
+                        </div>
+                        <h5 class="mb-0">提交内容</h5>
+                    </div>
+                    <div>
+                        <span class="badge"
+                            style="background: {{ 'rgba(25, 135, 84, 0.1); color: #198754;' if submission.status == 2 else 'rgba(255, 193, 7, 0.1); color: #ffc107;' if submission.status == 1 else 'rgba(220, 53, 69, 0.1); color: #dc3545;' }}">
+                            {{ '已批改' if submission.status == 2 else '已提交' if submission.status == 1 else '未提交' }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body px-4 py-4">
+                {% if submission.status >= 1 %}
                 <div class="mb-4">
                     <div class="row">
                         <div class="col-md-6">
-                            <p><strong>提交时间:</strong> {{ submission.work_time.strftime('%Y-%m-%d %H:%M') if submission.work_time else '未记录' }}</p>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-calendar-alt me-2" style="color: #20c997;"></i>
+                                <span>提交时间: {{ submission.work_time.strftime('%Y-%m-%d %H:%M') if submission.work_time
+                                    else '未记录' }}</span>
+                            </div>
                         </div>
                         {% if submission.status == 2 %}
                         <div class="col-md-6 text-md-end">
-                            <p><strong>总分:</strong> <span class="text-{{ 'success' if submission.final_score is not none and submission.final_score >= assignment.total_points * 0.6 else 'danger' }} fw-bold">{{ submission.final_score or 0 }}</span> / {{ assignment.total_points }}</p>
+                            <div class="d-flex align-items-center justify-content-md-end">
+                                <i class="fas fa-star me-2" style="color: #fd7e14;"></i>
+                                <span>总分:
+                                    <span class="badge"
+                                        style="background: {{ 'rgba(25, 135, 84, 0.1); color: #198754;' if submission.final_score is not none and submission.final_score >= assignment.total_points * 0.6 else 'rgba(220, 53, 69, 0.1); color: #dc3545;' }}">
+                                        {{ submission.final_score or 0 }}
+                                    </span>
+                                    / {{ assignment.total_points }}
+                                </span>
+                            </div>
                         </div>
                         {% endif %}
                     </div>
-                    
+
                     {% if submission.status == 2 and feedback %}
-                    <div class="alert alert-info">
-                        <h6><i class="fas fa-comment me-2"></i>总体评语</h6>
-                        <p class="mb-0">{{ feedback.comment }}</p>
+                    <div class="alert mt-3 mb-0" style="background: rgba(13, 202, 240, 0.1); border: none;">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-comment me-2" style="color: #0dcaf0;"></i>
+                            <div>
+                                <h6 class="mb-1">总体评语</h6>
+                                <p class="mb-0">{{ feedback.comment }}</p>
+                            </div>
+                        </div>
                     </div>
                     {% endif %}
                 </div>
-                
-                <!-- 显示提交的题目答案 -->
+
                 {% if student_answers %}
-                <h5 class="mb-3">题目详情</h5>
-                <div class="list-group mb-4">
+                <h5 class="mb-3 d-flex align-items-center">
+                    <div class="rounded-circle p-2 me-2" style="background: rgba(111, 66, 193, 0.1);">
+                        <i class="fas fa-list" style="color: #6f42c1;"></i>
+                    </div>
+                    题目详情
+                </h5>
+                <div class="list-group">
                     {% for answer in student_answers %}
-                    <div class="list-group-item">
-                        <div class="d-flex w-100 justify-content-between">
-                            <h6 class="mb-1">{{ loop.index }}. {{ answer.question.question_name }}</h6>
-                            {% if submission.status == 2 %}
-                            <span class="badge bg-{{ 'success' if answer.earned_score == answer.question.score else 'warning' if answer.earned_score > 0 else 'danger' }}">
-                                得分: {{ answer.earned_score or 0 }}/{{ answer.question.score }}
-                            </span>
-                            {% endif %}
+                    <div class="card mb-3" style="box-shadow: none; border: 1px solid rgba(0,0,0,0.08);">
+                        <div class="card-header bg-transparent">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <div class="rounded-circle p-2 me-2" style="background: rgba(111, 66, 193, 0.1);">
+                                        <span style="color: #6f42c1; font-weight: 500;">{{ loop.index }}</span>
+                                    </div>
+                                    <h6 class="mb-0">{{ answer.question.question_name }}</h6>
+                                </div>
+                                {% if submission.status == 2 %}
+                                <span class="badge"
+                                    style="background: {{ 'rgba(25, 135, 84, 0.1); color: #198754;' if answer.earned_score == answer.question.score else 'rgba(255, 193, 7, 0.1); color: #ffc107;' if answer.earned_score > 0 else 'rgba(220, 53, 69, 0.1); color: #dc3545;' }}">
+                                    得分: {{ answer.earned_score or 0 }}/{{ answer.question.score }}
+                                </span>
+                                {% endif %}
+                            </div>
                         </div>
-                        
-                        <div class="mt-2">
-                            <div class="card bg-light mb-2">
+
+                        <div class="card-body">
+                            <div class="card bg-light border-0 mb-3">
                                 <div class="card-body">
-                                    {% if answer.question.status == 1 %}  <!-- 选择题 -->
-                                        <p><strong>题目内容:</strong> {{ answer.question.context.split('\n')[0] }}</p>
-                                        <div class="mb-2">
-                                            <strong>选项:</strong>
-                                            <ul class="mb-0">
-                                                {% for option in answer.question.context.split('\n')[1:] if option.strip() %}
-                                                <li>{{ option }}</li>
+                                    {% if answer.question.status == 1 %} <!-- 选择题 -->
+                                    <div class="mb-3">
+                                        <label class="form-label small text-muted mb-1">题目内容</label>
+                                        <div class="p-3 rounded" style="background: rgba(108, 117, 125, 0.1);">
+                                            {{ answer.question.context.split('\n')[0] }}
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label small text-muted mb-1">选项</label>
+                                        <div class="p-3 rounded" style="background: rgba(108, 117, 125, 0.1);">
+                                            <ul class="mb-0 list-unstyled">
+                                                {% for option in answer.question.context.split('\n')[1:] if
+                                                option.strip() %}
+                                                <li class="mb-2">{{ option }}</li>
                                                 {% endfor %}
                                             </ul>
                                         </div>
+                                    </div>
                                     {% else %}
-                                        <p><strong>题目内容:</strong> {{ answer.question.context }}</p>
+                                    <div class="mb-3">
+                                        <label class="form-label small text-muted mb-1">题目内容</label>
+                                        <div class="p-3 rounded" style="background: rgba(108, 117, 125, 0.1);">
+                                            {{ answer.question.context }}
+                                        </div>
+                                    </div>
                                     {% endif %}
-                                    
-                                    <p><strong>您的答案:</strong> {{ answer.commit_answer }}</p>
-                                    
+
+                                    <div class="mb-3">
+                                        <label class="form-label small text-muted mb-1">您的答案</label>
+                                        <div class="p-3 rounded" style="background: rgba(13, 202, 240, 0.1);">
+                                            {{ answer.commit_answer }}
+                                        </div>
+                                    </div>
+
                                     {% if submission.status == 2 or is_teacher %}
-                                    <p class="text-success"><strong>正确答案:</strong> {{ answer.question.answer }}</p>
-                                    
+                                    <div class="mb-3">
+                                        <label class="form-label small text-muted mb-1">正确答案</label>
+                                        <div class="p-3 rounded" style="background: rgba(25, 135, 84, 0.1);">
+                                            {{ answer.question.answer }}
+                                        </div>
+                                    </div>
+
                                     {% if answer.question.analysis %}
-                                    <div class="alert alert-secondary mt-2">
-                                        <p class="mb-0"><strong>解析:</strong> {{ answer.question.analysis }}</p>
+                                    <div class="alert mb-0" style="background: rgba(108, 117, 125, 0.1); border: none;">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-lightbulb me-2" style="color: #6c757d;"></i>
+                                            <div>
+                                                <strong>解析:</strong> {{ answer.question.analysis }}
+                                            </div>
+                                        </div>
                                     </div>
                                     {% endif %}
                                     {% endif %}
@@ -102,16 +180,76 @@
                     {% endfor %}
                 </div>
                 {% else %}
-                <div class="alert alert-warning">
-                    <i class="fas fa-exclamation-triangle me-2"></i>未找到题目答案记录
+                <div class="alert mb-0" style="background: rgba(255, 193, 7, 0.1); border: none;">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-exclamation-triangle me-2" style="color: #ffc107;"></i>
+                        <span>未找到题目答案记录</span>
+                    </div>
                 </div>
                 {% endif %}
-            {% else %}
-            <div class="alert alert-danger">
-                <i class="fas fa-exclamation-circle me-2"></i>此作业尚未提交
+                {% else %}
+                <div class="alert mb-0" style="background: rgba(220, 53, 69, 0.1); border: none;">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-exclamation-circle me-2" style="color: #dc3545;"></i>
+                        <span>此作业尚未提交</span>
+                    </div>
+                </div>
+                {% endif %}
             </div>
-            {% endif %}
         </div>
     </div>
 </div>
+
+<style>
+    /* 继承view.html的样式 */
+    :root {
+        --primary-gradient: linear-gradient(135deg, #4e54c8 0%, #8f94fb 100%);
+        --secondary-gradient: linear-gradient(135deg, #00cdac 0%, #8ddad5 100%);
+        --background-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        --card-background: rgba(255, 255, 255, 0.9);
+        --hover-background: rgba(78, 84, 200, 0.1);
+    }
+
+    .card {
+        border: none;
+        background: var(--card-background);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+    }
+
+    .btn-primary {
+        background: var(--primary-gradient);
+        border: none;
+        box-shadow: 0 4px 15px rgba(78, 84, 200, 0.2);
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(78, 84, 200, 0.3);
+    }
+
+    .list-group-item {
+        border: none;
+        margin-bottom: 1rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .list-group-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    .alert {
+        border-radius: 8px;
+    }
+</style>
 {% endblock %}

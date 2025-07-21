@@ -2,42 +2,102 @@
 
 {% block title %}注册 - 启智AI伴学{% endblock %}
 
+{% block body_class %}auth-page{% endblock %}
+
+{% block nav_class %}{% endblock %}
+
+{% block main_class %}{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6 col-lg-5">
-        <div class="card shadow">
-            <div class="card-header bg-primary text-white text-center">
-                <h4 class="mb-0">用户注册</h4>
-            </div>
-            <div class="card-body">
-                <form method="post" action="{{ url_for('auth.register') }}">
-                    <div class="mb-3">
-                        <label for="username" class="form-label">用户名</label>
-                        <input type="text" class="form-control" id="username" name="username" placeholder="请设置用户名" required>
+<div class="flex-grow-1 d-flex align-items-center justify-content-center position-relative">
+    <!-- Decorative Background Elements -->
+    <div class="position-absolute w-100 h-100 overflow-hidden" style="z-index: 1;">
+        <div class="position-absolute"
+            style="width: 300px; height: 300px; background: linear-gradient(45deg, #4e54c8 0%, #8f94fb 100%); border-radius: 50%; filter: blur(80px); opacity: 0.3; top: -100px; left: -100px;">
+        </div>
+        <div class="position-absolute"
+            style="width: 250px; height: 250px; background: linear-gradient(45deg, #00cdac 0%, #8ddad5 100%); border-radius: 50%; filter: blur(60px); opacity: 0.2; bottom: -50px; right: -50px;">
+        </div>
+    </div>
+
+    <div class="container position-relative" style="z-index: 2;">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5">
+                <!-- Register Card -->
+                <div class="card shadow-lg border-0 rounded-lg"
+                    style="backdrop-filter: blur(10px); background: rgba(255, 255, 255, 0.9);">
+                    <div class="card-header bg-transparent border-0 text-center pt-4">
+                        <h3 class="font-weight-bold text-primary mb-2">创建账号</h3>
+                        <p class="text-muted mb-0">请填写以下信息完成注册</p>
                     </div>
-                    <div class="mb-3">
-                        <label for="name" class="form-label">姓名</label>
-                        <input type="text" class="form-control" id="name" name="name" placeholder="请输入真实姓名" required>
+                    <div class="card-body px-4 py-4">
+                        <form method="post" action="{{ url_for('auth.register') }}">
+                            <div class="mb-4">
+                                <label for="username" class="form-label small text-muted mb-1">用户名</label>
+                                <div class="input-group input-group-lg">
+                                    <span class="input-group-text border-0 bg-light">
+                                        <i class="fas fa-user text-primary"></i>
+                                    </span>
+                                    <input type="text" class="form-control border-0 bg-light" id="username"
+                                        name="username" placeholder="请设置用户名" required>
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <label for="name" class="form-label small text-muted mb-1">姓名</label>
+                                <div class="input-group input-group-lg">
+                                    <span class="input-group-text border-0 bg-light">
+                                        <i class="fas fa-id-card text-primary"></i>
+                                    </span>
+                                    <input type="text" class="form-control border-0 bg-light" id="name" name="name"
+                                        placeholder="请输入真实姓名" required>
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <label for="email" class="form-label small text-muted mb-1">电子邮箱</label>
+                                <div class="input-group input-group-lg">
+                                    <span class="input-group-text border-0 bg-light">
+                                        <i class="fas fa-envelope text-primary"></i>
+                                    </span>
+                                    <input type="email" class="form-control border-0 bg-light" id="email" name="email"
+                                        placeholder="请输入电子邮箱" required>
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <label for="password" class="form-label small text-muted mb-1">密码</label>
+                                <div class="input-group input-group-lg">
+                                    <span class="input-group-text border-0 bg-light">
+                                        <i class="fas fa-lock text-primary"></i>
+                                    </span>
+                                    <input type="password" class="form-control border-0 bg-light" id="password"
+                                        name="password" placeholder="请设置密码" required>
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <label for="confirmPassword" class="form-label small text-muted mb-1">确认密码</label>
+                                <div class="input-group input-group-lg">
+                                    <span class="input-group-text border-0 bg-light">
+                                        <i class="fas fa-lock text-primary"></i>
+                                    </span>
+                                    <input type="password" class="form-control border-0 bg-light" id="confirmPassword"
+                                        name="confirmPassword" placeholder="请再次输入密码" required>
+                                </div>
+                            </div>
+                            <div class="d-grid gap-2 mt-5">
+                                <button type="submit" class="btn btn-primary btn-lg"
+                                    style="background: linear-gradient(135deg, #4e54c8 0%, #8f94fb 100%); border: none; box-shadow: 0 4px 15px rgba(78, 84, 200, 0.2);">
+                                    注册
+                                </button>
+                            </div>
+                        </form>
                     </div>
-                    <div class="mb-3">
-                        <label for="email" class="form-label">电子邮箱</label>
-                        <input type="email" class="form-control" id="email" name="email" placeholder="请输入电子邮箱" required>
+                    <div class="card-footer bg-transparent border-0 text-center pb-4">
+                        <p class="mb-0 text-muted">
+                            已有账号？
+                            <a href="{{ url_for('auth.login') }}"
+                                class="text-primary text-decoration-none fw-bold">立即登录</a>
+                        </p>
                     </div>
-                    <div class="mb-3">
-                        <label for="password" class="form-label">密码</label>
-                        <input type="password" class="form-control" id="password" name="password" placeholder="请设置密码" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="confirmPassword" class="form-label">确认密码</label>
-                        <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" placeholder="请再次输入密码" required>
-                    </div>
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-primary btn-lg">注册</button>
-                    </div>
-                </form>
-            </div>
-            <div class="card-footer text-center">
-                <p class="mb-0">已有账号？ <a href="{{ url_for('auth.login') }}">立即登录</a></p>
+                </div>
             </div>
         </div>
     </div>
@@ -46,10 +106,10 @@
 <!-- 确认密码验证 -->
 {% block extra_js %}
 <script>
-    document.querySelector('form').addEventListener('submit', function(e) {
+    document.querySelector('form').addEventListener('submit', function (e) {
         const password = document.getElementById('password').value;
         const confirmPassword = document.getElementById('confirmPassword').value;
-        
+
         if (password !== confirmPassword) {
             e.preventDefault();
             alert('两次输入的密码不一致，请重新输入');

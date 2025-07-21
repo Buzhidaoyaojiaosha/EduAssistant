@@ -5,20 +5,36 @@
 {% block content %}
 <div class="row mb-4">
     <div class="col">
-        <h2>角色管理</h2>
-        <p class="text-muted">管理系统角色和权限</p>
+        <div class="d-flex align-items-center">
+            <div class="rounded-circle p-3 me-3" style="background: rgba(111, 66, 193, 0.1);">
+                <i class="fas fa-user-tag" style="color: #6f42c1;"></i>
+            </div>
+            <div>
+                <h2 class="text-primary mb-1">角色管理</h2>
+                <p class="text-muted mb-0">管理系统角色和权限</p>
+            </div>
+        </div>
     </div>
     <div class="col-auto">
-        <!-- <a href="{{ url_for('admin.add_role') }}" class="btn btn-primary">
-            <i class="fas fa-plus me-1"></i>添加角色
-        </a> -->
+        <a href="{{ url_for('admin.add_role') }}" class="btn btn-primary"
+            style="background: linear-gradient(135deg, #6f42c1 0%, #8f94fb 100%); border: none;">
+            <i class="fas fa-plus me-2"></i>添加角色
+        </a>
     </div>
 </div>
 
-<div class="card shadow-sm">
+<div class="card">
+    <div class="card-header bg-transparent border-0">
+        <div class="d-flex align-items-center">
+            <div class="rounded-circle p-2 me-2" style="background: rgba(111, 66, 193, 0.1);">
+                <i class="fas fa-list" style="color: #6f42c1;"></i>
+            </div>
+            <h5 class="mb-0">角色列表</h5>
+        </div>
+    </div>
     <div class="card-body">
         <div class="table-responsive">
-            <table class="table table-hover">
+            <table class="table">
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -26,75 +42,229 @@
                         <th>描述</th>
                         <th>用户数量</th>
                         <th>创建时间</th>
-                        <th>操作</th>
+                        <th class="text-end">操作</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for role in roles %}
                     <tr>
-                        <td>{{ role.id }}</td>
-                        <td>{{ role.name }}</td>
-                        <td>{{ role.description }}</td>
-                        <td>{{ role.users|length }}</td>
-                        <td>{{ role.created_at.strftime('%Y-%m-%d') }}</td>
                         <td>
-                            <div class="btn-group btn-group-sm">
-                                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editRoleModal-{{ role.id }}">编辑</button>
-                                <!-- <button type="button" class="btn btn-outline-danger" {% if role.users|length > 0 %}disabled title="有用户使用此角色，无法删除"{% else %}data-bs-toggle="modal" data-bs-target="#deleteRoleModal-{{ role.id }}"{% endif %}>删除</button> -->
-                            </div>
-                            
-                            <!-- 编辑角色弹窗 -->
-                            <div class="modal fade" id="editRoleModal-{{ role.id }}" tabindex="-1" aria-hidden="true">
-                                <div class="modal-dialog">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title">编辑角色</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
-                                        </div>
-                                        <div class="modal-body">
-                                            <form id="editRoleForm-{{ role.id }}">
-                                                <div class="mb-3">
-                                                    <label for="name-{{ role.id }}" class="form-label">角色名称</label>
-                                                    <input type="text" class="form-control" id="name-{{ role.id }}" name="name" value="{{ role.name }}" required>
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label for="description-{{ role.id }}" class="form-label">描述</label>
-                                                    <textarea class="form-control" id="description-{{ role.id }}" name="description" rows="3" required>{{ role.description }}</textarea>
-                                                </div>
-                                            </form>
-                                        </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                                            <button type="button" class="btn btn-primary">保存更改</button>
-                                        </div>
-                                    </div>
+                            <span class="badge" style="background: rgba(111, 66, 193, 0.1); color: #6f42c1;">
+                                {{ role.id }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle p-2 me-2" style="background: rgba(111, 66, 193, 0.1);">
+                                    <i class="fas fa-user-shield" style="color: #6f42c1;"></i>
                                 </div>
-                            </div>
-                            
-                            <!-- 删除角色确认弹窗 -->
-                            <div class="modal fade" id="deleteRoleModal-{{ role.id }}" tabindex="-1" aria-hidden="true">
-                                <div class="modal-dialog">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title">确认删除</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
-                                        </div>
-                                        <div class="modal-body">
-                                            <p>确定要删除角色 "{{ role.name }}" 吗？</p>
-                                        </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                                            <button type="button" class="btn btn-danger">确认删除</button>
-                                        </div>
-                                    </div>
-                                </div>
+                                {{ role.name }}
                             </div>
                         </td>
+                        <td>{{ role.description }}</td>
+                        <td>
+                            <span class="badge bg-light text-dark">
+                                <i class="fas fa-users me-1"></i>{{ role.users|length }}
+                            </span>
+                        </td>
+                        <td>
+                            <i class="fas fa-calendar-alt me-1 text-muted"></i>
+                            {{ role.created_at.strftime('%Y-%m-%d') }}
+                        </td>
+                        <td class="text-end">
+                            <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal"
+                                data-bs-target="#editRoleModal-{{ role.id }}">
+                                <i class="fas fa-edit me-1"></i>编辑
+                            </button>
+                        </td>
                     </tr>
+
+                    <!-- 编辑角色弹窗 -->
+                    <div class="modal fade" id="editRoleModal-{{ role.id }}" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header border-0">
+                                    <div class="d-flex align-items-center">
+                                        <div class="rounded-circle p-2 me-2"
+                                            style="background: rgba(111, 66, 193, 0.1);">
+                                            <i class="fas fa-edit" style="color: #6f42c1;"></i>
+                                        </div>
+                                        <h5 class="modal-title mb-0">编辑角色</h5>
+                                    </div>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="关闭"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <form id="editRoleForm-{{ role.id }}">
+                                        <div class="mb-3">
+                                            <label for="name-{{ role.id }}" class="form-label">角色名称</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-light border-0">
+                                                    <i class="fas fa-tag" style="color: #6f42c1;"></i>
+                                                </span>
+                                                <input type="text" class="form-control bg-light border-0"
+                                                    id="name-{{ role.id }}" name="name" value="{{ role.name }}"
+                                                    required>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="description-{{ role.id }}" class="form-label">描述</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-light border-0">
+                                                    <i class="fas fa-align-left" style="color: #6f42c1;"></i>
+                                                </span>
+                                                <textarea class="form-control bg-light border-0"
+                                                    id="description-{{ role.id }}" name="description" rows="3"
+                                                    required>{{ role.description }}</textarea>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                                <div class="modal-footer border-0">
+                                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">
+                                        <i class="fas fa-times me-2"></i>取消
+                                    </button>
+                                    <button type="button" class="btn btn-primary"
+                                        style="background: linear-gradient(135deg, #6f42c1 0%, #8f94fb 100%); border: none;">
+                                        <i class="fas fa-save me-2"></i>保存更改
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #4e54c8 0%, #8f94fb 100%);
+        --secondary-gradient: linear-gradient(135deg, #00cdac 0%, #8ddad5 100%);
+        --background-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        --card-background: rgba(255, 255, 255, 0.9);
+        --hover-background: rgba(78, 84, 200, 0.1);
+    }
+
+    body {
+        background: var(--background-gradient);
+        min-height: 100vh;
+    }
+
+    .card {
+        border: none;
+        background: var(--card-background);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+    }
+
+    .table {
+        margin-bottom: 0;
+    }
+
+    .table th {
+        border-top: none;
+        border-bottom: 2px solid rgba(111, 66, 193, 0.1);
+        color: #6c757d;
+        font-weight: 600;
+        padding: 1rem;
+    }
+
+    .table td {
+        padding: 1rem;
+        vertical-align: middle;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .btn {
+        padding: 0.75rem 1.5rem;
+        font-weight: 500;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-sm {
+        padding: 0.5rem 1rem;
+    }
+
+    .btn-light {
+        background: rgba(255, 255, 255, 0.8);
+        border: none;
+    }
+
+    .btn-light:hover {
+        background: rgba(255, 255, 255, 0.9);
+        transform: translateY(-1px);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(111, 66, 193, 0.2);
+    }
+
+    .modal-content {
+        border: none;
+        border-radius: 12px;
+        background: var(--card-background);
+        backdrop-filter: blur(10px);
+    }
+
+    .form-control,
+    .input-group-text {
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .input-group .form-control {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+    }
+
+    .input-group-text {
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+
+    .form-control:focus {
+        box-shadow: 0 0 0 3px rgba(111, 66, 193, 0.1);
+        border: none;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .card {
+        animation: fadeIn 0.5s ease-out;
+    }
+
+    tr {
+        transition: all 0.3s ease;
+    }
+
+    tr:hover {
+        background: rgba(111, 66, 193, 0.02);
+    }
+</style>
 {% endblock %}

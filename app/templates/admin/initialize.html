@@ -5,45 +5,68 @@
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-8 col-lg-6">
-        <div class="card shadow">
-            <div class="card-header bg-primary text-white text-center">
-                <h4 class="mb-0">系统初始化</h4>
+        <div class="card">
+            <div class="card-header bg-transparent border-0">
+                <div class="d-flex align-items-center justify-content-center">
+                    <div class="rounded-circle p-3 me-3" style="background: rgba(78, 84, 200, 0.1);">
+                        <i class="fas fa-cog" style="color: #4e54c8;"></i>
+                    </div>
+                    <h4 class="mb-0">系统初始化</h4>
+                </div>
             </div>
             <div class="card-body">
-                <div class="alert alert-info">
-                    <p><i class="fas fa-info-circle me-2"></i>欢迎使用启智AI伴学系统！请先创建管理员账户以完成系统初始化。</p>
+                <div class="alert" style="background: rgba(13, 202, 240, 0.1); border: none;">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-info-circle me-3" style="color: #0dcaf0; font-size: 1.5rem;"></i>
+                        <p class="mb-0">欢迎使用启智AI伴学系统！请先创建管理员账户以完成系统初始化。</p>
+                    </div>
                 </div>
-                
+
                 <form method="post" action="{{ url_for('admin.initialize_system') }}">
-                    <h5 class="mb-3">管理员账户设置</h5>
-                    
-                    <div class="mb-3">
-                        <label for="admin_username" class="form-label">管理员用户名</label>
-                        <input type="text" class="form-control" id="admin_username" name="admin_username" required>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="admin_name" class="form-label">管理员姓名</label>
-                        <input type="text" class="form-control" id="admin_name" name="admin_name" required>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="admin_email" class="form-label">管理员邮箱</label>
-                        <input type="email" class="form-control" id="admin_email" name="admin_email" required>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="admin_password" class="form-label">管理员密码</label>
-                        <input type="password" class="form-control" id="admin_password" name="admin_password" required>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="admin_password_confirm" class="form-label">确认密码</label>
-                        <input type="password" class="form-control" id="admin_password_confirm" name="admin_password_confirm" required>
-                    </div>
-                    
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-primary btn-lg">初始化系统</button>
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="rounded-circle p-2 me-2" style="background: rgba(78, 84, 200, 0.1);">
+                                <i class="fas fa-user-shield" style="color: #4e54c8;"></i>
+                            </div>
+                            <h5 class="mb-0">管理员账户设置</h5>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="admin_username" class="form-label">管理员用户名</label>
+                            <input type="text" class="form-control bg-light border-0" id="admin_username"
+                                name="admin_username" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="admin_name" class="form-label">管理员姓名</label>
+                            <input type="text" class="form-control bg-light border-0" id="admin_name" name="admin_name"
+                                required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="admin_email" class="form-label">管理员邮箱</label>
+                            <input type="email" class="form-control bg-light border-0" id="admin_email"
+                                name="admin_email" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="admin_password" class="form-label">管理员密码</label>
+                            <input type="password" class="form-control bg-light border-0" id="admin_password"
+                                name="admin_password" required>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="admin_password_confirm" class="form-label">确认密码</label>
+                            <input type="password" class="form-control bg-light border-0" id="admin_password_confirm"
+                                name="admin_password_confirm" required>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg"
+                                style="background: linear-gradient(135deg, #4e54c8 0%, #8f94fb 100%); border: none;">
+                                <i class="fas fa-check-circle me-2"></i>初始化系统
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -51,16 +74,88 @@
     </div>
 </div>
 
-<!-- 确认密码验证 -->
+{% block extra_css %}
+<style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #4e54c8 0%, #8f94fb 100%);
+        --secondary-gradient: linear-gradient(135deg, #00cdac 0%, #8ddad5 100%);
+        --background-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        --card-background: rgba(255, 255, 255, 0.9);
+        --hover-background: rgba(78, 84, 200, 0.1);
+    }
+
+    body {
+        background: var(--background-gradient);
+        min-height: 100vh;
+    }
+
+    .card {
+        border: none;
+        background: var(--card-background);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+
+    .form-control {
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+        box-shadow: 0 0 0 3px rgba(78, 84, 200, 0.1);
+        border: none;
+    }
+
+    .btn-primary {
+        padding: 0.75rem 1.5rem;
+        font-weight: 500;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(78, 84, 200, 0.2);
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .card {
+        animation: fadeIn 0.5s ease-out;
+    }
+</style>
+{% endblock %}
+
 {% block extra_js %}
 <script>
-    document.querySelector('form').addEventListener('submit', function(e) {
+    document.querySelector('form').addEventListener('submit', function (e) {
         const password = document.getElementById('admin_password').value;
         const confirmPassword = document.getElementById('admin_password_confirm').value;
-        
+
         if (password !== confirmPassword) {
             e.preventDefault();
-            alert('两次输入的密码不一致，请重新输入');
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-danger mt-3';
+            alert.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i>两次输入的密码不一致，请重新输入';
+            this.appendChild(alert);
+
+            setTimeout(() => {
+                alert.remove();
+            }, 3000);
         }
     });
 </script>

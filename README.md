@@ -51,11 +51,15 @@ source venv/bin/activate  # Linux/Mac
 ```bash
 pip install -r requirements.txt
 ```
-5. 配置.env文件
+5. 安装Node.js和Marp CLI
+```bash
+npm install -g @marp-team/marp-cli
+```
+6. 配置.env文件
 
 创建文件.env, 然后参照.env.example文件进行配置
 
-6. 启动
+7. 启动
 ```bash
 python run.py
 ```

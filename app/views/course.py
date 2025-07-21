@@ -105,113 +105,11 @@ def delete(course_id):
     
     if request.method == 'POST':
         try:
-            # 导入所需模型
-            from peewee import DoesNotExist
-            from app.models.course import StudentCourse
-            from app.models.assignment import Assignment, StudentAssignment
-            from app.models.NewAdd import Question, StudentAnswer, Feedback, WrongBook, QuestionWrongBook
-            from app.models.learning_data import (
-                KnowledgePoint, AssignmentKnowledgePoint, 
-                StudentKnowledgePoint, LearningActivity, 
-                KnowledgeBaseKnowledgePoint
-            )
-            
-            # 使用事务确保数据一致性
-            with Course._meta.database.atomic():
-                # 1. 获取课程相关的基础数据
-                course_questions = Question.select().join(Assignment).where(Assignment.course == course)
-                course_assignments = Assignment.select().where(Assignment.course == course)
-                course_wrong_books = WrongBook.select().where(WrongBook.course == course)
-                course_knowledge_points = KnowledgePoint.select().where(KnowledgePoint.course == course)
-                
-                # 2. 删除错题本相关记录（最深层的关联）
-                if course_questions.exists():
-                    question_ids = [q.question_id for q in course_questions]
-                    # 删除题目与错题本的关联记录
-                    QuestionWrongBook.delete().where(
-                        QuestionWrongBook.question_id.in_(question_ids)
-                    ).execute()
-                
-                # 删除课程相关的错题本
-                if course_wrong_books.exists():
-                    wrong_book_ids = [wb.wrong_book_id for wb in course_wrong_books]
-                    # 删除错题本中剩余的题目关联（如果有跨课程的情况）
-                    QuestionWrongBook.delete().where(
-                        QuestionWrongBook.wrong_book_id.in_(wrong_book_ids)
-                    ).execute()
-                    # 删除错题本本身
-                    WrongBook.delete().where(WrongBook.course == course).execute()
-                
-                # 3. 删除课程相关的反馈记录
-                if course_assignments.exists():
-                    assignment_ids = [a.id for a in course_assignments]
-                    Feedback.delete().where(
-                        Feedback.assignment_id.in_(assignment_ids)
-                    ).execute()
-                
-                # 4. 删除课程相关的学生答案记录
-                if course_questions.exists():
-                    question_ids = [q.question_id for q in course_questions]
-                    StudentAnswer.delete().where(StudentAnswer.question_id.in_(question_ids)).execute()
-                
-                # 5. 删除知识点相关的学习数据
-                if course_knowledge_points.exists():
-                    knowledge_point_ids = [kp.id for kp in course_knowledge_points]
-                    
-                    # 删除学生知识点掌握情况
-                    StudentKnowledgePoint.delete().where(
-                        StudentKnowledgePoint.knowledge_point_id.in_(knowledge_point_ids)
-                    ).execute()
-                    
-                    # 删除知识点与知识库的关联
-                    KnowledgeBaseKnowledgePoint.delete().where(
-                        KnowledgeBaseKnowledgePoint.knowledge_point_id.in_(knowledge_point_ids)
-                    ).execute()
-                
-                # 6. 删除作业与知识点的关联
-                if course_assignments.exists():
-                    assignment_ids = [a.id for a in course_assignments]
-                    AssignmentKnowledgePoint.delete().where(
-                        AssignmentKnowledgePoint.assignment_id.in_(assignment_ids)
-                    ).execute()
-                
-                # 7. 删除课程相关的学习活动记录
-                LearningActivity.delete().where(LearningActivity.course == course).execute()
-                
-                # 8. 删除课程下的所有题目
-                Question.delete().where(Question.course == course).execute()
-                
-                # 9. 删除学生作业记录
-                if course_assignments.exists():
-                    StudentAssignment.delete().where(
-                        StudentAssignment.assignment_id.in_(assignment_ids)
-                    ).execute()
-                
-                # 10. 删除课程作业
-                Assignment.delete().where(Assignment.course == course).execute()
-                
-                # 11. 删除课程知识点（先删除子知识点，再删除父知识点）
-                # 获取所有课程知识点，按层级倒序删除
-                if course_knowledge_points.exists():
-                    # 先删除有父级的知识点（子知识点）
-                    child_kps = course_knowledge_points.where(KnowledgePoint.parent_id.is_null(False))
-                    for kp in child_kps:
-                        kp.delete_instance()
-                    
-                    # 再删除没有父级的知识点（根知识点）
-                    root_kps = course_knowledge_points.where(KnowledgePoint.parent_id.is_null(True))
-                    for kp in root_kps:
-                        kp.delete_instance()
-                
-                # 12. 删除学生课程关联记录
-                StudentCourse.delete().where(StudentCourse.course == course).execute()
-                
-                # 13. 最后删除课程本身
-                course_name = course.name
-                course.delete_instance()
-                
-                flash(f'课程 "{course_name}" 及其所有相关数据已成功删除。', 'success')
-                return redirect(url_for('course.index'))
+            # 使用CourseService删除课程及其所有相关数据
+            course_name = course.name
+            CourseService.delete_course(course_id)
+            flash(f'课程 "{course_name}" 及其所有相关数据已成功删除。', 'success')
+            return redirect(url_for('course.index'))
                 
         except Exception as e:
             import traceback

@@ -30,19 +30,23 @@ def index():
         courses = CourseService.get_courses_by_student(user_id)
     else:
         courses = CourseService.get_all_courses()
+
+    # 获取选中的课程信息
+    selected_course = Course.get_or_none(Course.id == course_id) if course_id else None
+
     # 如果是管理员且没有搜索词，显示所有条目或按课程筛选
     if UserService.has_role(user, 'admin') and not query:
         if course_id:
             # 按课程筛选显示
-         
             entries = KnowledgeBase.select().where(
-                KnowledgeBase.course_id == course_id
+                KnowledgeBase.course_id == course_id,
+                KnowledgeBase.is_chunk == False  # 只显示非分块内容
             ).order_by(KnowledgeBase.title)
-            selected_course = Course.get_or_none(Course.id == course_id)
         else:
             # 显示所有条目
-            entries = KnowledgeBase.select().order_by(KnowledgeBase.title)
-            selected_course = None
+            entries = KnowledgeBase.select().where(
+                KnowledgeBase.is_chunk == False  # 只显示非分块内容
+            ).order_by(KnowledgeBase.title)
 
         return render_template('search/index.html',
                             all_entries=entries if not course_id else None,
@@ -55,12 +59,29 @@ def index():
     # 正常搜索逻辑
     results = []
     if query:
-        results = KnowledgeBaseService.search_knowledge(query, course_id)
+        results = KnowledgeBaseService.search_knowledge(
+            query=query, 
+            course_id=course_id,
+            is_chunk=False  # 只搜索非分块内容
+        )
+    elif course_id:
+        # 如果没有搜索词但选择了课程，显示该课程的所有知识条目
+        entries = KnowledgeBase.select().where(
+            KnowledgeBase.course_id == course_id,
+            KnowledgeBase.is_chunk == False  # 只显示非分块内容
+        ).order_by(KnowledgeBase.title)
+        return render_template('search/index.html',
+                            course_entries=entries,
+                            selected_course=selected_course,
+                            query=query,
+                            courses=courses,
+                            selected_course_id=course_id)
 
     return render_template('search/index.html',
                          query=query,
                          results=results,
                          courses=courses,
+                         selected_course=selected_course,
                          selected_course_id=course_id)
 
 @search_bp.route('/api/search')
@@ -359,6 +380,8 @@ def delete_knowledge(knowledge_id):
                 print(f"删除OSS文件失败: {str(e)}")
                 # 这里可以选择记录日志但不影响主流程
 
+        flash('知识条目已删除。', 'success')
+    elif success and entry.type == 'text':
         flash('知识条目已删除。', 'success')
     else:
         flash('删除失败。', 'danger')

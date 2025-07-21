@@ -236,6 +236,12 @@ class CourseService:
                 )).execute()
             print(f"已删除 {deleted_assignment_kps} 条作业-知识点关联")
 
+            # 先解除所有知识点的父子关系
+            KnowledgePoint.update(parent_id=None).where(
+                KnowledgePoint.course_id == course_id
+            ).execute()
+            print("已解除所有知识点的父子关系")
+
             # 删除知识点本身
             deleted_kps = KnowledgePoint.delete().where(
                 KnowledgePoint.course_id == course_id).execute()
@@ -301,8 +307,6 @@ class CourseService:
             deleted_wrong_books = WrongBook.delete().where(
                 WrongBook.course_id == course_id).execute()
             print(f"已删除 {deleted_wrong_books} 条错题本记录")
-
-           
 
             # 6. 删除学生课程关联
             deleted_student_courses = StudentCourse.delete().where(

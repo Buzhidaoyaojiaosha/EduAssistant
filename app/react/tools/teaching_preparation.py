@@ -23,6 +23,8 @@ from app.services.course_service import CourseService
 from app.utils.llm.deepseek import chat_deepseek
 import re
 from pptx import Presentation
+from reportlab.lib import colors
+from reportlab.platypus import ListFlowable, HRFlowable
 
 # 配置背景图片路径
 BACKGROUND_IMAGE_PATH = r"app\static\images\ppt_background.png"
@@ -504,6 +506,115 @@ style: |
     
     return '\n'.join(processed_lines)
 
+def _clean_text(text: str) -> str:
+    """清理和格式化文本内容"""
+    # 替换特殊字符
+    text = text.replace('**', '')  # 移除Markdown加粗标记
+    text = text.replace('*', '')   # 移除Markdown斜体标记
+    text = text.replace('`', '')   # 移除代码标记
+    text = text.replace('"', '"')  # 替换引号
+    text = text.replace('"', '"')
+    text = text.replace(''', "'")
+    text = text.replace(''', "'")
+    text = text.replace('…', '...')
+    text = text.replace('—', '-')
+    text = text.replace('–', '-')
+    text = text.replace('―', '-')
+    # 清理多余的空白字符
+    text = ' '.join(text.split())
+    return text
+
+def _process_markdown_content(content: str) -> List[Dict]:
+    """处理Markdown内容为结构化数据"""
+    sections = []
+    current_section = None
+    current_list = []
+    
+    lines = content.split('\n')
+    
+    for line in lines:
+        line = line.strip()
+        if not line:
+            if current_list:
+                if current_section:
+                    if 'content' not in current_section:
+                        current_section['content'] = []
+                    current_section['content'].extend(current_list)
+                current_list = []
+            continue
+        
+        # 处理标题
+        if line.startswith('# '):
+            if current_section and current_list:
+                if 'content' not in current_section:
+                    current_section['content'] = []
+                current_section['content'].extend(current_list)
+                current_list = []
+            
+            if current_section:
+                sections.append(current_section)
+            
+            current_section = {
+                'type': 'h1',
+                'text': _clean_text(line[2:]),
+                'content': []
+            }
+        elif line.startswith('## '):
+            if current_section and current_list:
+                if 'content' not in current_section:
+                    current_section['content'] = []
+                current_section['content'].extend(current_list)
+                current_list = []
+            
+            if current_section:
+                sections.append(current_section)
+            
+            current_section = {
+                'type': 'h2',
+                'text': _clean_text(line[3:]),
+                'content': []
+            }
+        # 处理列表项
+        elif line.startswith(('- ', '* ', '+ ')):
+            current_list.append({
+                'type': 'bullet',
+                'text': _clean_text(line[2:])
+            })
+        # 处理有序列表
+        elif re.match(r'^\d+\.\s', line):
+            number = line.split('.')[0]
+            text = line[len(number)+2:]
+            current_list.append({
+                'type': 'number',
+                'number': number,
+                'text': _clean_text(text)
+            })
+        # 处理普通段落
+        else:
+            if current_list:
+                if current_section:
+                    if 'content' not in current_section:
+                        current_section['content'] = []
+                    current_section['content'].extend(current_list)
+                current_list = []
+            
+            if current_section:
+                current_section['content'].append({
+                    'type': 'paragraph',
+                    'text': _clean_text(line)
+                })
+    
+    # 处理最后的部分
+    if current_list and current_section:
+        if 'content' not in current_section:
+            current_section['content'] = []
+        current_section['content'].extend(current_list)
+    
+    if current_section:
+        sections.append(current_section)
+    
+    return sections
+
 def _generate_simple_ppt_content(title: str, content: str, course: Course) -> tuple:
     """简单PPT生成方法（原有的python-pptx实现作为后备）"""
     try:
@@ -650,7 +761,7 @@ def _generate_text_fallback(title: str, content: str, course: Course) -> tuple:
         return error_base64, "error.txt"
 
 def _generate_pdf_content(title: str, content: str, course: Course) -> tuple:
-    """生成格式化的PDF文件并返回base64编码（保留原有实现）"""
+    """生成格式化的PDF文件并返回base64编码"""
     try:
         # 创建内存缓冲区
         buffer = io.BytesIO()
@@ -661,24 +772,13 @@ def _generate_pdf_content(title: str, content: str, course: Course) -> tuple:
         
         # 注册中文字体
         try:
-            from reportlab.pdfbase import pdfmetrics
-            from reportlab.pdfbase.cidfonts import UnicodeCIDFont
-            from reportlab.pdfbase.ttfonts import TTFont
-            
-            # 尝试注册内置中文字体
             pdfmetrics.registerFont(UnicodeCIDFont('STSong-Light'))
             chinese_font = 'STSong-Light'
         except:
-            # 回退到系统字体
             try:
-                # 尝试使用常见的简体中文字体
                 font_path = os.path.join(os.path.dirname(__file__), 'fonts', 'simhei.ttf')
-                
-                # 如果字体文件不存在，尝试系统字体
                 if not os.path.exists(font_path):
-                    # Windows 系统字体路径
                     font_path = 'C:/Windows/Fonts/simhei.ttf'
-                    # Linux 系统字体路径
                     if not os.path.exists(font_path):
                         font_path = '/usr/share/fonts/truetype/wqy/wqy-microhei.ttc'
                 
@@ -686,14 +786,16 @@ def _generate_pdf_content(title: str, content: str, course: Course) -> tuple:
                 chinese_font = 'ChineseFont'
             except Exception as font_error:
                 logger.error(f"字体注册失败: {str(font_error)}")
-                chinese_font = 'Helvetica'  # 回退到英文字体
+                chinese_font = 'Helvetica'
         
         # 创建PDF文档
         doc = SimpleDocTemplate(
-            buffer, 
-            pagesize=A4, 
-            topMargin=0.5*inch,
-            bottomMargin=0.5*inch,
+            buffer,
+            pagesize=A4,
+            topMargin=0.6*inch,
+            bottomMargin=0.6*inch,
+            leftMargin=0.8*inch,
+            rightMargin=0.8*inch,
             encoding='utf-8'
         )
         
@@ -704,108 +806,192 @@ def _generate_pdf_content(title: str, content: str, course: Course) -> tuple:
         title_style = ParagraphStyle(
             'TitleStyle',
             parent=styles['Heading1'],
-            fontSize=16,
-            leading=22,
-            spaceAfter=14,
+            fontSize=24,
+            leading=32,
+            spaceAfter=30,
             alignment=TA_CENTER,
-            fontName=chinese_font
+            fontName=chinese_font,
+            textColor=colors.HexColor('#2c3e50'),
+            borderWidth=2,
+            borderColor=colors.HexColor('#3498db'),
+            borderPadding=20,
+            backColor=colors.HexColor('#f8f9fa')
         )
         
         # 章节标题样式
         heading1_style = ParagraphStyle(
             'Heading1Style',
             parent=styles['Heading2'],
-            fontSize=14,
-            leading=20,
-            spaceBefore=12,
-            spaceAfter=8,
-            fontName=chinese_font
+            fontSize=18,
+            leading=24,
+            spaceBefore=20,
+            spaceAfter=12,
+            fontName=chinese_font,
+            textColor=colors.HexColor('#2c3e50'),
+            borderWidth=0,
+            borderColor=colors.HexColor('#3498db'),
+            borderPadding=10,
+            leftIndent=0,
+            firstLineIndent=0,
+            borderRadius=5,
+            backColor=colors.HexColor('#f8f9fa')
         )
         
         # 章节副标题样式
         heading2_style = ParagraphStyle(
             'Heading2Style',
             parent=styles['Heading3'],
-            fontSize=12,
-            leading=18,
-            spaceBefore=8,
-            spaceAfter=6,
-            fontName=chinese_font
+            fontSize=14,
+            leading=20,
+            spaceBefore=15,
+            spaceAfter=10,
+            fontName=chinese_font,
+            textColor=colors.HexColor('#34495e'),
+            borderWidth=0,
+            borderRadius=5,
+            leftIndent=20,
+            firstLineIndent=0,
+            backColor=colors.HexColor('#f8f9fa')
         )
         
         # 正文样式
         body_style = ParagraphStyle(
             'BodyStyle',
             parent=styles['Normal'],
-            fontSize=10,
-            leading=15,
+            fontSize=12,
+            leading=18,
+            spaceBefore=6,
             spaceAfter=6,
             fontName=chinese_font,
-            wordWrap='CJK'
+            textColor=colors.HexColor('#2c3e50'),
+            alignment=TA_LEFT,
+            wordWrap='CJK',
+            firstLineIndent=24,
+            leftIndent=12
         )
         
         # 列表样式
         list_style = ParagraphStyle(
             'ListStyle',
             parent=body_style,
-            leftIndent=12,
-            bulletIndent=0,
-            spaceBefore=4,
-            spaceAfter=4
+            fontSize=12,
+            leading=18,
+            leftIndent=40,
+            bulletIndent=20,
+            spaceBefore=6,
+            spaceAfter=6,
+            textColor=colors.HexColor('#2c3e50'),
+            bulletFontName=chinese_font,
+            bulletFontSize=10
         )
         
-        # 开始构建文档内容
+        # 课程信息样式
+        info_style = ParagraphStyle(
+            'InfoStyle',
+            parent=body_style,
+            fontSize=10,
+            leading=14,
+            alignment=TA_CENTER,
+            textColor=colors.HexColor('#666666'),
+            backColor=colors.HexColor('#f8f9fa'),
+            borderPadding=10,
+            borderRadius=5
+        )
+        
+        # 处理Markdown内容
+        sections = _process_markdown_content(content)
+        
+        # 构建文档内容
         story = []
         
         # 添加主标题
+        story.append(Spacer(1, 30))
         story.append(Paragraph(title, title_style))
-        story.append(Spacer(1, 12))
+        story.append(Spacer(1, 20))
         
         # 添加课程信息
-        course_info = f"课程名称: {course.name} | 课程代码: {course.code} | 生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-        story.append(Paragraph(course_info, body_style))
-        story.append(Spacer(1, 24))
+        course_info = f"""
+        <para alignment="center">
+        <font color="#666666">课程名称:</font> {course.name} &nbsp;|&nbsp; 
+        <font color="#666666">课程代码:</font> {course.code} &nbsp;|&nbsp; 
+        <font color="#666666">生成时间:</font> {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+        </para>
+        """
+        story.append(Paragraph(course_info, info_style))
+        story.append(Spacer(1, 30))
         
-        # 解析Markdown内容并转换为PDF元素
-        current_level = 0
-        lines = content.split('\n')
+        # 添加分隔线
+        story.append(HRFlowable(
+            width="100%",
+            thickness=1,
+            lineCap='round',
+            color=colors.HexColor('#e0e0e0'),
+            spaceBefore=10,
+            spaceAfter=20
+        ))
         
-        for line in lines:
-            line = line.strip()
-            if not line:
-                continue
+        # 处理每个部分
+        for section in sections:
+            if section['type'] == 'h1':
+                story.append(Spacer(1, 20))
+                story.append(Paragraph(section['text'], heading1_style))
+                story.append(Spacer(1, 10))
+            elif section['type'] == 'h2':
+                story.append(Spacer(1, 15))
+                story.append(Paragraph(section['text'], heading2_style))
+                story.append(Spacer(1, 8))
+            
+            # 处理内容
+            if 'content' in section:
+                current_list_items = []
                 
-            # 处理章节标题
-            if line.startswith('# '):
-                story.append(Paragraph(line[2:], heading1_style))
-                current_level = 1
-            elif line.startswith('## '):
-                story.append(Paragraph(line[3:], heading2_style))
-                current_level = 2
-            elif line.startswith('### '):
-                story.append(Paragraph(line[4:], heading2_style))
-                current_level = 3
-            # 处理列表项
-            elif line.startswith('- ') or line.startswith('* '):
-                story.append(Paragraph(line[2:], list_style))
-            # 处理有序列表
-            elif re.match(r'^\d+\.\s', line):
-                story.append(Paragraph(line, list_style))
-            # 处理普通段落
-            else:
-                # 如果是小标题后的内容，添加缩进
-                if current_level > 1:
-                    indented_style = ParagraphStyle(
-                        'IndentedStyle',
-                        parent=body_style,
-                        leftIndent=12
-                    )
-                    story.append(Paragraph(line, indented_style))
-                else:
-                    story.append(Paragraph(line, body_style))
+                for item in section['content']:
+                    if item['type'] in ['bullet', 'number']:
+                        current_list_items.append(
+                            Paragraph(item['text'], list_style)
+                        )
+                    else:  # paragraph
+                        if current_list_items:
+                            story.append(ListFlowable(
+                                current_list_items,
+                                bulletType='bullet',
+                                bulletColor=colors.HexColor('#3498db'),
+                                bulletFontName=chinese_font,
+                                bulletFontSize=8,
+                                leftIndent=40,
+                                bulletDedent=20,
+                                spaceBefore=10,
+                                spaceAfter=10
+                            ))
+                            current_list_items = []
+                        story.append(Paragraph(item['text'], body_style))
+                
+                # 处理最后的列表项
+                if current_list_items:
+                    story.append(ListFlowable(
+                        current_list_items,
+                        bulletType='bullet',
+                        bulletColor=colors.HexColor('#3498db'),
+                        bulletFontName=chinese_font,
+                        bulletFontSize=8,
+                        leftIndent=40,
+                        bulletDedent=20,
+                        spaceBefore=10,
+                        spaceAfter=10
+                    ))
+        
+        # 添加页脚
+        def add_footer(canvas, doc):
+            canvas.saveState()
+            canvas.setFont(chinese_font, 8)
+            canvas.setFillColor(colors.HexColor('#999999'))
+            footer_text = f"第 {canvas.getPageNumber()} 页"
+            page_width = doc.pagesize[0]
+            canvas.drawCentredString(page_width/2.0, 30, footer_text)
+            canvas.restoreState()
         
         # 构建PDF
-        doc.build(story)
+        doc.build(story, onFirstPage=add_footer, onLaterPages=add_footer)
         
         # 获取PDF内容并转换为base64
         pdf_content = buffer.getvalue()
@@ -817,16 +1003,7 @@ def _generate_pdf_content(title: str, content: str, course: Course) -> tuple:
         
     except Exception as e:
         logger.error(f"PDF生成失败: {str(e)}")
-        # 如果PDF生成失败，生成文本文件的base64编码
-        txt_content = f"{title}\n\n"
-        txt_content += f"课程：{course.name}\n"
-        txt_content += f"生成时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
-        txt_content += content
-        
-        txt_base64 = base64.b64encode(txt_content.encode('utf-8')).decode('utf-8')
-        txt_filename = filename.replace('.pdf', '.txt')
-        
-        return txt_base64, txt_filename
+        return _generate_text_fallback(title, content, course)
 
 # 添加保存教学资料到知识库的功能
 def save_teaching_material_to_kb(course_id: int, title: str, file_base64: str, filename: str) -> Dict:
