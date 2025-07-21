@@ -53,10 +53,6 @@ def initialize_extensions():
     with GraphDatabase.driver(
             os.getenv("NEO4J_URI"),
             auth=(os.getenv("NEO4J_USERNAME"), os.getenv("NEO4J_PASSWORD"))) as graph:
-<<<<<<< HEAD
-=======
-        print(os.getenv("NEO4J_URI"))
->>>>>>> 6d7fc237d782468653b29ff73ce11fd059f13341
-        graph.verify_connectivity()
-        print("Connected to Neo4j successfully!")
+            graph.verify_connectivity()
+            print("Connected to Neo4j successfully!")
 

@@ -19,304 +19,416 @@
             --background-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             --card-background: rgba(255, 255, 255, 0.9);
             --hover-background: rgba(78, 84, 200, 0.1);
+            --sidebar-width: 280px;
+            --sidebar-mini-width: 80px;
         }
 
         body {
             background: var(--background-gradient);
             min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
         }
 
-        /* 导航栏样式 */
-        .navbar-custom {
+        /* 侧边栏样式 */
+        .sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
             background: var(--primary-gradient);
-            box-shadow: 0 4px 20px rgba(78, 84, 200, 0.15);
+            box-shadow: 4px 0 20px rgba(78, 84, 200, 0.15);
             backdrop-filter: blur(10px);
-            padding: 1rem 0;
-            transition: all 0.3s ease;
+            z-index: 1000;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            overflow: visible;
+            /* 改为 visible 以显示折叠按钮 */
         }
 
-        .navbar-custom .nav-link {
-            color: rgba(255, 255, 255, 0.9) !important;
+        .sidebar.collapsed {
+            width: var(--sidebar-mini-width);
+        }
+
+        /* 折叠按钮样式 */
+        .sidebar-collapse-btn {
+            position: absolute;
+            right: 1rem;
+            top: 24px;
+            width: 32px;
+            height: 32px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
             transition: all 0.3s ease;
-            padding: 0.7rem 1.2rem !important;
-            margin: 0 0.3rem;
+            z-index: 1001;
+            padding: 0;
+        }
+
+        .sidebar.collapsed .sidebar-collapse-btn {
+            position: relative;
+            top: 0;
+            right: 0;
+            margin: 1rem auto;
+        }
+
+        .sidebar-collapse-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+
+        .sidebar-collapse-btn i {
+            font-size: 1.1rem;
+            transition: transform 0.3s ease;
+            line-height: 1;
+        }
+
+        .sidebar.collapsed .sidebar-collapse-btn i {
+            transform: rotate(180deg);
+        }
+
+        /* 调整品牌区域的内边距，为按钮留出空间 */
+        .sidebar-brand {
+            padding: 1.5rem 3.5rem 1.5rem 1.8rem;
+            color: #ffffff !important;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            min-height: 70px;
+            white-space: nowrap;
+            position: relative;
+        }
+
+        .sidebar.collapsed .sidebar-brand {
+            padding: 1.5rem 3.5rem 1.5rem 0.5rem;
+            /* 收起时调整内边距 */
+            justify-content: center;
+        }
+
+        .sidebar-brand i {
+            font-size: 1.5rem;
+            min-width: 32px;
+            text-align: center;
+            transition: margin 0.3s ease;
+        }
+
+        .sidebar-brand span {
+            transition: opacity 0.2s ease, visibility 0.2s ease;
+        }
+
+        .sidebar.collapsed .sidebar-brand {
+            padding: 1.5rem 0;
+            justify-content: center;
+        }
+
+        .sidebar.collapsed .sidebar-brand i {
+            margin: 0;
+            min-width: unset;
+        }
+
+        .sidebar.collapsed .sidebar-brand span {
+            opacity: 0;
+            visibility: hidden;
+            position: absolute;
+            pointer-events: none;
+        }
+
+        /* 调整导航菜单容器样式 */
+        .nav-menu {
+            list-style: none;
+            padding: 1.2rem 1rem;
+            margin: 0;
+            flex-grow: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .nav-menu::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .nav-menu::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        .nav-item {
+            margin: 6px 0;
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.9) !important;
+            padding: 0.9rem 1.2rem !important;
             border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: all 0.3s ease;
             font-weight: 500;
+            white-space: nowrap;
+            position: relative;
+            justify-content: flex-start;
+            /* 确保展开时左对齐 */
+        }
+
+        .nav-link i {
+            font-size: 1.25rem;
+            min-width: 32px;
+            text-align: center;
+            transition: margin 0.3s ease;
+        }
+
+        .sidebar.collapsed .nav-link {
+            justify-content: center;
+            padding: 0.9rem 0.5rem !important;
+        }
+
+        .sidebar.collapsed .nav-link i {
+            margin: 0;
+            min-width: unset;
+        }
+
+        .nav-link span {
+            transition: opacity 0.2s ease;
+        }
+
+        .sidebar.collapsed .nav-link span {
+            opacity: 0;
+            visibility: hidden;
+            position: absolute;
+        }
+
+        /* 调整底部用户部分的样式 */
+        .user-section {
+            padding: 1.2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: auto;
+        }
+
+        .user-dropdown {
+            width: 100%;
+            color: rgba(255, 255, 255, 0.9) !important;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 0.9rem 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            justify-content: flex-start;
+            position: relative;
+        }
+
+        .user-dropdown i {
+            font-size: 1.25rem;
+            min-width: 32px;
+            text-align: center;
+            transition: margin 0.3s ease;
+        }
+
+        .user-dropdown span {
+            transition: opacity 0.2s ease, visibility 0.2s ease;
+        }
+
+        .sidebar.collapsed .user-dropdown {
+            justify-content: center;
+            padding: 0.9rem 0;
+        }
+
+        .sidebar.collapsed .user-dropdown i {
+            margin: 0;
+            min-width: unset;
+        }
+
+        .sidebar.collapsed .user-dropdown span {
+            opacity: 0;
+            visibility: hidden;
+            position: absolute;
+            pointer-events: none;
+        }
+
+        /* 统一调整所有导航项的样式 */
+        .nav-link,
+        .user-dropdown {
             position: relative;
             overflow: hidden;
         }
 
-        .navbar-custom .nav-link:before {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 0;
-            height: 2px;
-            background: #ffffff;
-            transition: all 0.3s ease;
+        .sidebar.collapsed .nav-link,
+        .sidebar.collapsed .user-dropdown {
+            width: 48px;
+            height: 48px;
+            padding: 0 !important;
+            margin: 4px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .navbar-custom .nav-link:hover:before {
-            width: 80%;
+        .sidebar.collapsed .nav-link i,
+        .sidebar.collapsed .user-dropdown i {
+            margin: 0;
+            font-size: 1.25rem;
         }
 
-        .navbar-custom .nav-link:hover {
+        /* 悬停提示样式优化 */
+        .sidebar.collapsed .nav-item:hover .nav-link span,
+        .sidebar.collapsed .user-dropdown:hover span {
+            opacity: 1;
+            visibility: visible;
+            position: fixed;
+            left: calc(var(--sidebar-mini-width) + 10px);
+            background: var(--primary-gradient);
+            padding: 0.8rem 1.2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            z-index: 1001;
+            font-size: 0.95rem;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        .nav-link:hover {
             color: #ffffff !important;
             background: rgba(255, 255, 255, 0.15);
-            transform: translateY(-2px);
+            transform: translateX(5px);
         }
 
-        .navbar-custom .nav-link.active {
+        .nav-link.active {
             color: #ffffff !important;
             background: rgba(255, 255, 255, 0.2);
             box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
         }
 
-        .navbar-custom .navbar-brand {
-            color: #ffffff !important;
-            font-weight: 700;
-            font-size: 1.4rem;
-            letter-spacing: 0.5px;
-            padding: 0.5rem 1rem;
-            border-radius: 12px;
-            transition: all 0.3s ease;
-        }
-
-        .navbar-custom .navbar-brand:hover {
-            background: rgba(255, 255, 255, 0.1);
-            transform: translateY(-2px);
-        }
-
-        .navbar-custom .navbar-toggler {
-            border: none;
-            padding: 0.5rem 1rem;
-            color: rgba(255, 255, 255, 0.9);
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 10px;
-        }
-
-        .navbar-custom .dropdown-menu {
+        .dropdown-menu {
             border: none;
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
-            border-radius: 12px;
-            padding: 0.8rem 0;
+            border-radius: 10px;
+            padding: 0.5rem;
             margin-top: 0.5rem;
-            animation: dropdownFade 0.3s ease;
+            min-width: 200px;
         }
 
-        @keyframes dropdownFade {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .navbar-custom .dropdown-item {
-            padding: 0.7rem 1.5rem;
+        .dropdown-item {
+            padding: 0.7rem 1rem;
             color: #4e54c8;
             font-weight: 500;
-            transition: all 0.3s ease;
+            border-radius: 6px;
+            transition: all 0.2s ease;
         }
 
-        .navbar-custom .dropdown-item:hover {
+        .dropdown-item:hover {
             background: var(--hover-background);
             transform: translateX(5px);
         }
 
-        .navbar-custom .dropdown-divider {
+        .dropdown-divider {
             border-color: rgba(78, 84, 200, 0.1);
             margin: 0.5rem 0;
         }
 
-        /* 在移动设备上的导航栏样式优化 */
-        @media (max-width: 991.98px) {
-            .navbar-custom .navbar-collapse {
-                background: rgba(255, 255, 255, 0.95);
-                backdrop-filter: blur(10px);
-                border-radius: 12px;
-                padding: 1rem;
-                margin-top: 1rem;
-                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-            }
-
-            .navbar-custom .nav-link {
-                color: #4e54c8 !important;
-                margin: 0.3rem 0;
-            }
-
-            .navbar-custom .nav-link:hover,
-            .navbar-custom .nav-link.active {
-                color: #4e54c8 !important;
-                background: var(--hover-background);
-            }
-
-            .navbar-custom .dropdown-menu {
-                background: transparent;
-                box-shadow: none;
-                padding: 0;
-                margin: 0;
-            }
-
-            .navbar-custom .dropdown-item {
-                padding: 0.7rem 1.2rem;
-                margin-left: 1rem;
-            }
-        }
-
-        /* 卡片样式 */
-        .card {
-            border: none;
-            background: var(--card-background);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
-            border-radius: 12px;
-            transition: all 0.3s ease;
-        }
-
-        .card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
-        }
-
-        /* 按钮样式 */
-        .btn-primary {
-            background: var(--primary-gradient);
-            border: none;
-            box-shadow: 0 4px 15px rgba(78, 84, 200, 0.2);
-            transition: all 0.3s ease;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 20px rgba(78, 84, 200, 0.3);
-        }
-
-        /* 输入框样式 */
-        .form-control {
-            border: none;
-            background-color: #f8f9fa;
-            padding: 0.75rem 1rem;
-            transition: all 0.3s ease;
-        }
-
-        .form-control:focus {
-            background-color: #ffffff;
-            box-shadow: 0 0 0 2px rgba(78, 84, 200, 0.2);
-        }
-
-        .input-group-text {
-            border: none;
-            background-color: #f8f9fa;
-        }
-
-        /* 页面内容区域 */
-        .content-wrapper {
-            padding: 2rem 0;
-            min-height: calc(100vh - 60px);
-        }
-
-        /* 登录页面特殊样式 */
-        .auth-page {
+        /* 主要内容区域 */
+        .main-content {
+            margin-left: var(--sidebar-width);
             min-height: 100vh;
-            padding: 0;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
+            padding: 2rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: transparent;
         }
 
-        .auth-page .navbar {
-            margin: 0;
-            padding-top: 1rem;
-            padding-bottom: 1rem;
+        .sidebar.collapsed+.main-content {
+            margin-left: var(--sidebar-mini-width);
         }
 
-        .auth-page main {
-            flex: 1;
-            display: flex;
-            padding: 0;
-            margin: 0;
-        }
+        /* 移动端响应式设计 */
+        @media (max-width: 991.98px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
 
-        /* 装饰性背景元素 */
-        .decorative-bg {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            overflow: hidden;
-        }
+            .sidebar.show {
+                transform: translateX(0);
+                width: var(--sidebar-width) !important;
+            }
 
-        .decorative-bg .circle {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(80px);
-        }
+            .sidebar.show .nav-link span,
+            .sidebar.show .user-dropdown span,
+            .sidebar.show .sidebar-brand span {
+                opacity: 1 !important;
+                visibility: visible !important;
+                position: static !important;
+            }
 
-        .decorative-bg .circle-1 {
-            width: 300px;
-            height: 300px;
-            background: var(--primary-gradient);
-            opacity: 0.3;
-            top: -100px;
-            left: -100px;
-        }
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
 
-        .decorative-bg .circle-2 {
-            width: 250px;
-            height: 250px;
-            background: var(--secondary-gradient);
-            opacity: 0.2;
-            bottom: -50px;
-            right: -50px;
-        }
+            .sidebar.collapsed+.main-content {
+                margin-left: 0;
+            }
 
-        /* Alert 样式 */
-        .alert {
-            border: none;
-            background: var(--card-background);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-        }
+            .sidebar-collapse-btn {
+                display: none;
+            }
 
-        /* 表格样式 */
-        .table {
-            background: var(--card-background);
-            border-radius: 8px;
-            overflow: hidden;
-        }
+            /* 移动端菜单按钮 */
+            .mobile-toggle {
+                position: fixed;
+                left: 1rem;
+                top: 1rem;
+                z-index: 1002;
+                background: var(--primary-gradient);
+                border: none;
+                color: white;
+                width: 44px;
+                height: 44px;
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            }
 
-        .table thead th {
-            background: rgba(78, 84, 200, 0.05);
-            border-bottom: none;
-        }
+            .mobile-toggle i {
+                font-size: 1.25rem;
+            }
 
-        /* 分页样式 */
-        .pagination .page-link {
-            border: none;
-            background: var(--card-background);
-            color: #4e54c8;
-            margin: 0 2px;
-            border-radius: 6px;
-        }
+            /* 移动端遮罩层 */
+            .sidebar-backdrop {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                backdrop-filter: blur(4px);
+                z-index: 999;
+            }
 
-        .pagination .page-link:hover {
-            background: var(--hover-background);
-        }
-
-        .pagination .page-item.active .page-link {
-            background: var(--primary-gradient);
+            .sidebar-backdrop.show {
+                display: block;
+            }
         }
     </style>
     {% endblock %}
@@ -330,86 +442,111 @@
         <div class="circle circle-2"></div>
     </div>
 
-    <!-- 导航栏 -->
-    <nav class="navbar navbar-expand-lg navbar-custom {% block nav_class %}mb-1{% endblock %}">
-        <div class="container">
-            <a class="navbar-brand" href="{{ url_for('dashboard.index') }}">
-                <i class="fas fa-graduation-cap me-2"></i>启智AI伴学
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
+    <!-- 移动端菜单按钮 -->
+    <button class="mobile-toggle d-lg-none" onclick="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- 移动端遮罩层 -->
+    <div class="sidebar-backdrop" onclick="toggleSidebar()"></div>
+
+    <!-- 侧边导航栏 -->
+    <nav class="sidebar">
+        <a class="sidebar-brand" href="{{ url_for('dashboard.index') }}">
+            <i class="fas fa-graduation-cap"></i>
+            <span>启智AI伴学</span>
+        </a>
+        {% if session.get('user_id') %}
+        <div class="nav-menu-wrapper">
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a class="nav-link {{ 'active' if request.endpoint == 'ai_assistant.chat' }}"
+                        href="{{ url_for('ai_assistant.chat') }}">
+                        <i class="fas fa-robot"></i>
+                        <span>AI助手</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ 'active' if request.endpoint == 'dashboard.index' }}"
+                        href="{{ url_for('dashboard.index') }}">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>仪表盘</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ 'active' if request.endpoint == 'course.index' }}"
+                        href="{{ url_for('course.index') }}">
+                        <i class="fas fa-book"></i>
+                        <span>课程</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ 'active' if request.endpoint == 'analytics.index' }}"
+                        href="{{ url_for('analytics.index') }}">
+                        <i class="fas fa-chart-line"></i>
+                        <span>数据分析</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ 'active' if request.endpoint == 'search.index' }}"
+                        href="{{ url_for('search.index') }}">
+                        <i class="fas fa-search"></i>
+                        <span>知识库</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ 'active' if request.endpoint == 'recommend.index' }}"
+                        href="{{ url_for('recommend.index') }}">
+                        <i class="fa fa-globe"></i>
+                        <span>资源推荐</span>
+                    </a>
+                </li>
+            </ul>
+            <button class="sidebar-collapse-btn d-none d-lg-flex" onclick="toggleSidebarCollapse()">
+                <i class="fas fa-chevron-left"></i>
             </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                {% if session.get('user_id') %}
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a class="nav-link {{ 'active' if request.endpoint == 'ai_assistant.chat' }}"
-                            href="{{ url_for('ai_assistant.chat') }}">
-                            <i class="fas fa-robot me-1"></i>AI助手
-                        </a>
+        </div>
+        <div class="user-section">
+            <div class="dropdown">
+                <div class="user-dropdown" data-bs-toggle="dropdown">
+                    <i class="fas fa-user-circle"></i>
+                    <span>{{ session.get('username', '用户') }}</span>
+                </div>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ url_for('dashboard.profile') }}">个人资料</a></li>
+                    <li>
+                        <hr class="dropdown-divider">
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ 'active' if request.endpoint == 'dashboard.index' }}"
-                            href="{{ url_for('dashboard.index') }}">
-                            <i class="fas fa-tachometer-alt me-1"></i>仪表盘
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ 'active' if request.endpoint == 'course.index' }}"
-                            href="{{ url_for('course.index') }}">
-                            <i class="fas fa-book me-1"></i>课程
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ 'active' if request.endpoint == 'analytics.index' }}"
-                            href="{{ url_for('analytics.index') }}">
-                            <i class="fas fa-chart-line me-1"></i>数据分析
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ 'active' if request.endpoint == 'search.index' }}"
-                            href="{{ url_for('search.index') }}">
-                            <i class="fas fa-search me-1"></i>知识库
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ 'active' if request.endpoint == 'recommend.index' }}"
-                            href="{{ url_for('recommend.index') }}">
-                            <i class="fa fa-globe me-1"></i>资源推荐
-                        </a>
-                    </li>
+                    <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">退出登录</a></li>
                 </ul>
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
-                            data-bs-toggle="dropdown">
-                            <i class="fas fa-user-circle me-1"></i>{{ session.get('username', '用户') }}
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="{{ url_for('dashboard.profile') }}">个人资料</a></li>
-                            <li>
-                                <hr class="dropdown-divider">
-                            </li>
-                            <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">退出登录</a></li>
-                        </ul>
-                    </li>
-                </ul>
-                {% else %}
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('auth.login') }}">登录</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('auth.register') }}">注册</a>
-                    </li>
-                </ul>
-                {% endif %}
             </div>
         </div>
+        {% else %}
+        <div class="nav-menu-wrapper">
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('auth.login') }}">
+                        <i class="fas fa-sign-in-alt"></i>
+                        <span>登录</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('auth.register') }}">
+                        <i class="fas fa-user-plus"></i>
+                        <span>注册</span>
+                    </a>
+                </li>
+            </ul>
+            <button class="sidebar-collapse-btn d-none d-lg-flex" onclick="toggleSidebarCollapse()">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+        </div>
+        {% endif %}
     </nav>
 
-    <!-- 消息提示 -->
-    <div class="container mt-3">
+    <!-- 主要内容 -->
+    <div class="main-content">
+        <!-- 消息提示 -->
         {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
         {% for category, message in messages %}
@@ -420,12 +557,10 @@
         {% endfor %}
         {% endif %}
         {% endwith %}
-    </div>
 
-    <!-- 主要内容 -->
-    <main class="{% block main_class %}container content-wrapper{% endblock %}">
+        <!-- 页面内容 -->
         {% block content %}{% endblock %}
-    </main>
+    </div>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -433,6 +568,40 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- 自定义JS -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // 保存侧边栏状态到本地存储
+        function saveSidebarState(isCollapsed) {
+            localStorage.setItem('sidebarCollapsed', isCollapsed);
+        }
+
+        // 从本地存储获取侧边栏状态
+        function getSidebarState() {
+            return localStorage.getItem('sidebarCollapsed') === 'true';
+        }
+
+        // 切换侧边栏折叠状态
+        function toggleSidebarCollapse() {
+            const sidebar = document.querySelector('.sidebar');
+            sidebar.classList.toggle('collapsed');
+            saveSidebarState(sidebar.classList.contains('collapsed'));
+        }
+
+        // 页面加载时恢复侧边栏状态
+        document.addEventListener('DOMContentLoaded', function () {
+            const sidebar = document.querySelector('.sidebar');
+            if (getSidebarState()) {
+                sidebar.classList.add('collapsed');
+            }
+        });
+
+        // 移动端侧边栏控制
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const backdrop = document.querySelector('.sidebar-backdrop');
+            sidebar.classList.toggle('show');
+            backdrop.classList.toggle('show');
+        }
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 

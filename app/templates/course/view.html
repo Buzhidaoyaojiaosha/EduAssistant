@@ -32,7 +32,6 @@
                 </div>
             </div>
             <div class="card-body">
-<<<<<<< HEAD
                 <p class="card-text">{{ course.description }}</p>
                 <div class="d-flex align-items-center text-muted mb-3">
                     <i class="fas fa-user-tie me-2" style="color: #6c757d;"></i>
@@ -52,21 +51,6 @@
                             </button>
                         </form>
                     </div>
-=======
-                <p>{{ course.description }}</p>
-                <hr>
-                <p><strong>教师:</strong> {{ course.teacher.name }}</p>
-                {% if is_student  %}
-                <div class="alert alert-success mt-3">
-                    <i class="fas fa-check-circle me-2"></i>您已加入该课程
-                    <form action="{{ url_for('course.unenroll', course_id=course.id) }}" method="post"
-                        style="display: inline-block; float: right;">
-                        <button type="submit" class="btn btn-sm btn-outline-danger"
-                            onclick="return confirm('确定要退出此课程吗？这可能会影响您的作业和成绩记录。')">
-                            <i class="fas fa-user-minus me-1"></i>退出课程
-                        </button>
-                    </form>
->>>>>>> 6d7fc237d782468653b29ff73ce11fd059f13341
                 </div>
                 {% elif is_admin %}
 
@@ -214,7 +198,8 @@
                                     </div>
                                 </td>
                                 {% if is_student %}
-                                {% set student_assignment = student_assignments|selectattr('assignment.id', 'equalto',
+                                {% set student_assignment = student_assignments|selectattr('assignment.id',
+                                'equalto',
                                 assignment.id)|first %}
                                 <td>
                                     {% if student_assignment and student_assignment.status==1 %}
@@ -238,7 +223,6 @@
                                 {% endif %}
                                 <td class="text-end">
                                     <a href="{{ url_for('course.view_assignment', assignment_id=assignment.id) }}"
-<<<<<<< HEAD
                                         class="btn btn-light btn-sm">
                                         <i class="fas fa-eye me-1" style="color: #6c757d;"></i>查看
                                     </a>
@@ -246,11 +230,6 @@
                                         class="btn btn-light btn-sm">
                                         <i class="fas fa-download me-1" style="color: #6c757d;"></i>导出
                                     </a>
-=======
-                                        class="btn btn-sm btn-outline-primary">查看</a>
-                                    <a href="{{ url_for('course.export_assignment', assignment_id=assignment.id, course_id=assignment.course.id) }}"
-                                        class="btn btn-sm btn-outline-primary">导出</a>
->>>>>>> 6d7fc237d782468653b29ff73ce11fd059f13341
                                 </td>
                             </tr>
                             {% endfor %}
