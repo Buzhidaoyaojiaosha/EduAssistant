@@ -1,0 +1,671 @@
+{% extends 'base.html' %}
+
+{% block title %}启智AI伴学 - 基于开源大模型的实训智教平台{% endblock %}
+
+{% block body_class %}landing-page{% endblock %}
+
+{% block nav_class %}d-none{% endblock %}
+
+{% block content %}
+<!-- 动态背景元素 -->
+<div class="animated-background">
+    <div class="particle particle-1"></div>
+    <div class="particle particle-2"></div>
+    <div class="particle particle-3"></div>
+    <div class="particle particle-4"></div>
+</div>
+
+<!-- 顶部按钮 -->
+<div class="top-buttons">
+    <a href="{{ url_for('auth.login') }}" class="top-btn login-btn">
+        <i class="fas fa-sign-in-alt me-2"></i>登录
+    </a>
+    <a href="{{ url_for('auth.register') }}" class="top-btn register-btn">
+        <i class="fas fa-user-plus me-2"></i>注册
+    </a>
+</div>
+
+<div class="landing-wrapper">
+    <div class="landing-content text-center">
+        <div class="title-wrapper">
+            <h1 class="display-1 fw-bold mb-4 text-gradient animate-title">启智AI伴学</h1>
+            <div class="title-decoration"></div>
+        </div>
+        <p class="lead mb-3 animate-text">基于开源大模型的实训智教平台</p>
+        <p class="text-muted mb-4 animate-text-delay">为每个学习者定制个性化学习体验</p>
+        <div class="cta-wrapper">
+            <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg px-5 py-3 animate-button">
+                <span class="btn-content">
+                    <span class="btn-text">立即体验</span>
+                    <i class="fas fa-arrow-right ms-2"></i>
+                </span>
+                <span class="btn-glow"></span>
+            </a>
+            <div class="button-decoration"></div>
+        </div>
+    </div>
+
+    <!-- 特性展示 -->
+    <div class="features-grid">
+        <div class="feature-card">
+            <div class="card-icon-wrapper">
+                <i class="fas fa-robot"></i>
+                <div class="icon-background"></div>
+            </div>
+            <h3>AI智能助教</h3>
+            <p>24小时在线解答问题，提供个性化学习指导</p>
+            <div class="card-decoration"></div>
+        </div>
+        <div class="feature-card">
+            <div class="card-icon-wrapper">
+                <i class="fas fa-chart-line"></i>
+                <div class="icon-background"></div>
+            </div>
+            <h3>学习分析</h3>
+            <p>实时跟踪学习进度，科学评估学习效果</p>
+            <div class="card-decoration"></div>
+        </div>
+        <div class="feature-card">
+            <div class="card-icon-wrapper">
+                <i class="fas fa-book"></i>
+                <div class="icon-background"></div>
+            </div>
+            <h3>知识库</h3>
+            <p>海量优质学习资源，助你构建知识体系</p>
+            <div class="card-decoration"></div>
+        </div>
+        <div class="feature-card">
+            <div class="card-icon-wrapper">
+                <i class="fas fa-users"></i>
+                <div class="icon-background"></div>
+            </div>
+            <h3>互动学习</h3>
+            <p>师生互动平台，营造良好学习氛围</p>
+            <div class="card-decoration"></div>
+        </div>
+        <div class="feature-card">
+            <div class="card-icon-wrapper">
+                <i class="fas fa-chalkboard-teacher"></i>
+                <div class="icon-background"></div>
+            </div>
+            <h3>智能备课</h3>
+            <p>AI辅助教案设计，智能生成教学资源</p>
+            <div class="card-decoration"></div>
+        </div>
+        <div class="feature-card">
+            <div class="card-icon-wrapper">
+                <i class="fas fa-brain"></i>
+                <div class="icon-background"></div>
+            </div>
+            <h3>AI错题分析</h3>
+            <p>深度解析错题原因，制定针对性提升方案</p>
+            <div class="card-decoration"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap');
+
+    :root {
+        --primary: #4e54c8;
+        --primary-light: #8f94fb;
+        --secondary: #00cdac;
+        --secondary-light: #8ddad5;
+        --accent: #FF6B6B;
+        --accent-light: #FFE66D;
+        --text-dark: #2D3436;
+        --text-muted: #636E72;
+        --primary-rgb: 78, 84, 200;
+        --primary-light-rgb: 143, 148, 251;
+        --secondary-rgb: 0, 205, 172;
+        --secondary-light-rgb: 141, 218, 213;
+        --accent-rgb: 255, 107, 107;
+    }
+
+    body {
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+    }
+
+    .landing-page {
+        overflow-x: hidden;
+        font-family: 'Noto Sans SC', sans-serif;
+        position: relative;
+        min-height: 100vh;
+    }
+
+    .landing-wrapper {
+        position: relative;
+        z-index: 2;
+        min-height: 100vh;
+        padding: 4rem 2rem;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .landing-content {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 3rem 0;
+    }
+
+    .title-wrapper {
+        position: relative;
+        display: inline-block;
+        margin-bottom: 2rem;
+    }
+
+    .text-gradient {
+        font-size: 4rem;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 50%, var(--primary-light) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        background-size: 200% auto;
+        animation: gradient 8s linear infinite;
+        text-shadow: 0 0 30px rgba(78, 84, 200, 0.3);
+    }
+
+    .title-decoration {
+        position: absolute;
+        width: 120%;
+        height: 100%;
+        left: -10%;
+        top: 0;
+        background: linear-gradient(90deg,
+                rgba(78, 84, 200, 0) 0%,
+                rgba(78, 84, 200, 0.1) 25%,
+                rgba(143, 148, 251, 0.2) 50%,
+                rgba(78, 84, 200, 0.1) 75%,
+                rgba(78, 84, 200, 0) 100%);
+        filter: blur(8px);
+        transform: skewX(-15deg);
+        pointer-events: none;
+        animation: shimmer 3s infinite;
+    }
+
+    /* 动态背景 */
+    .animated-background {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+        background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+    }
+
+    .particle {
+        position: absolute;
+        border-radius: 50%;
+        will-change: transform;
+    }
+
+    .particle-1 {
+        background: linear-gradient(135deg, rgba(0, 205, 172, 0.2) 0%, rgba(141, 218, 213, 0.2) 100%);
+        filter: blur(20px);
+        animation: float-particle 20s infinite linear;
+    }
+
+    .particle-2 {
+        background: linear-gradient(135deg, rgba(78, 84, 200, 0.2) 0%, rgba(143, 148, 251, 0.2) 100%);
+        filter: blur(20px);
+        animation: float-particle 25s infinite linear reverse;
+    }
+
+    .particle-3 {
+        background: linear-gradient(135deg, rgba(255, 107, 107, 0.2) 0%, rgba(255, 230, 109, 0.2) 100%);
+        filter: blur(20px);
+        animation: float-particle 30s infinite linear;
+    }
+
+    .particle-4 {
+        background: linear-gradient(135deg, rgba(0, 205, 172, 0.2) 0%, rgba(78, 84, 200, 0.2) 100%);
+        filter: blur(20px);
+        animation: float-particle 35s infinite linear reverse;
+    }
+
+    .animate-title {
+        opacity: 0;
+        transform: translateY(30px);
+        animation: fadeInUp 1s ease forwards;
+    }
+
+    .animate-text {
+        opacity: 0;
+        transform: translateY(20px);
+        animation: fadeInUp 0.8s ease 0.3s forwards;
+    }
+
+    .animate-text-delay {
+        opacity: 0;
+        transform: translateY(20px);
+        animation: fadeInUp 0.8s ease 0.6s forwards;
+    }
+
+    .btn-primary {
+        position: relative;
+        background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%);
+        border: none;
+        padding: 1rem 2.5rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        overflow: hidden;
+        transition: all 0.4s ease;
+        z-index: 1;
+        opacity: 0;
+        transform: translateY(20px);
+        animation: fadeInUp 0.8s ease 0.9s forwards;
+    }
+
+    .btn-content {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .btn-glow {
+        position: absolute;
+        width: 200%;
+        height: 100%;
+        background: linear-gradient(90deg,
+                transparent 0%,
+                rgba(255, 255, 255, 0.3) 50%,
+                transparent 100%);
+        top: 0;
+        left: -100%;
+        transform: skewX(-15deg);
+        transition: all 0.4s ease;
+    }
+
+    .btn-primary:hover {
+        background: linear-gradient(135deg, var(--secondary-light) 0%, var(--primary-light) 100%);
+    }
+
+    .btn-primary:hover .btn-glow {
+        animation: shine 1.5s infinite;
+    }
+
+    .button-decoration {
+        position: absolute;
+        width: 150%;
+        height: 150%;
+        left: -25%;
+        top: -25%;
+        background: radial-gradient(circle at center,
+                rgba(78, 84, 200, 0.2) 0%,
+                rgba(78, 84, 200, 0) 70%);
+        filter: blur(15px);
+        pointer-events: none;
+        animation: pulse 2s infinite;
+    }
+
+    /* 特性展示卡片样式 */
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 2.5rem;
+        margin-top: 4rem;
+        padding: 0 2rem;
+        max-width: 1400px;
+        margin-left: auto;
+        margin-right: auto;
+        opacity: 0;
+        transform: translateY(20px);
+        animation: fadeInUp 0.8s ease 1.2s forwards;
+    }
+
+    .feature-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        padding: 2.5rem 2rem;
+        border-radius: 24px;
+        text-align: center;
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        box-shadow:
+            0 4px 15px rgba(0, 0, 0, 0.05),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+    }
+
+    .feature-card::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg,
+                rgba(255, 255, 255, 0.4) 0%,
+                rgba(255, 255, 255, 0) 100%);
+        transform: translateY(100%);
+        transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .feature-card:hover {
+        transform: translateY(-10px) scale(1.02);
+        box-shadow:
+            0 20px 40px rgba(0, 0, 0, 0.08),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+    }
+
+    .feature-card:hover::before {
+        transform: translateY(0);
+    }
+
+    .card-icon-wrapper {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 80px;
+        height: 80px;
+        margin-bottom: 1.5rem;
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.1);
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .feature-card:hover .card-icon-wrapper {
+        transform: rotateY(180deg);
+    }
+
+    .card-icon-wrapper i {
+        font-size: 2.5rem;
+        position: relative;
+        z-index: 1;
+        backface-visibility: hidden;
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .icon-background {
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        background: linear-gradient(135deg,
+                rgba(var(--secondary-rgb), 0.2) 0%,
+                rgba(var(--primary-rgb), 0.2) 100%);
+        opacity: 0;
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .feature-card:hover .icon-background {
+        opacity: 1;
+        transform: scale(1.2);
+    }
+
+    .feature-card:nth-child(odd) .card-icon-wrapper {
+        background: linear-gradient(135deg,
+                rgba(var(--secondary-rgb), 0.1) 0%,
+                rgba(var(--secondary-light-rgb), 0.1) 100%);
+    }
+
+    .feature-card:nth-child(even) .card-icon-wrapper {
+        background: linear-gradient(135deg,
+                rgba(var(--primary-rgb), 0.1) 0%,
+                rgba(var(--accent-rgb), 0.1) 100%);
+    }
+
+    .card-decoration {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 100px;
+        height: 100px;
+        background: linear-gradient(135deg,
+                rgba(var(--secondary-rgb), 0.1) 0%,
+                rgba(var(--primary-rgb), 0.1) 100%);
+        border-radius: 0 24px 0 100%;
+        opacity: 0;
+        transform: translate(50%, -50%) scale(0.8);
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .feature-card:hover .card-decoration {
+        opacity: 1;
+        transform: translate(30%, -30%) scale(1);
+    }
+
+    .feature-card h3 {
+        font-size: 1.5rem;
+        margin: 1rem 0;
+        font-weight: 600;
+        background: linear-gradient(135deg,
+                var(--text-dark) 0%,
+                var(--text-muted) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        transition: all 0.3s ease;
+    }
+
+    .feature-card:hover h3 {
+        transform: scale(1.05);
+    }
+
+    .feature-card p {
+        color: var(--text-muted);
+        line-height: 1.6;
+        font-size: 1rem;
+        margin: 0;
+        transition: all 0.3s ease;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes gradient {
+        0% {
+            background-position: 0% 50%;
+        }
+
+        50% {
+            background-position: 100% 50%;
+        }
+
+        100% {
+            background-position: 0% 50%;
+        }
+    }
+
+    @keyframes shimmer {
+        0% {
+            opacity: 0.5;
+            transform: skewX(-15deg) translateX(-20%);
+        }
+
+        50% {
+            opacity: 0.8;
+            transform: skewX(-15deg) translateX(20%);
+        }
+
+        100% {
+            opacity: 0.5;
+            transform: skewX(-15deg) translateX(-20%);
+        }
+    }
+
+    @keyframes shine {
+        0% {
+            left: -100%;
+        }
+
+        100% {
+            left: 100%;
+        }
+    }
+
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+            opacity: 0.6;
+        }
+
+        50% {
+            transform: scale(1.1);
+            opacity: 0.4;
+        }
+
+        100% {
+            transform: scale(1);
+            opacity: 0.6;
+        }
+    }
+
+    @keyframes float-particle {
+        0% {
+            transform: translate(0, 0) rotate(0deg);
+        }
+
+        25% {
+            transform: translate(100px, 100px) rotate(90deg);
+        }
+
+        50% {
+            transform: translate(0, 200px) rotate(180deg);
+        }
+
+        75% {
+            transform: translate(-100px, 100px) rotate(270deg);
+        }
+
+        100% {
+            transform: translate(0, 0) rotate(360deg);
+        }
+    }
+
+    /* 顶部按钮样式 */
+    .top-buttons {
+        position: fixed;
+        top: 2rem;
+        right: 2rem;
+        display: flex;
+        gap: 1rem;
+        z-index: 100;
+    }
+
+    .top-btn {
+        padding: 0.8rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        align-items: center;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .login-btn {
+        background: rgba(255, 255, 255, 0.9);
+        color: var(--primary);
+    }
+
+    .login-btn:hover {
+        background: rgba(255, 255, 255, 1);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        color: var(--primary);
+    }
+
+    .register-btn {
+        background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%);
+        color: white;
+    }
+
+    .register-btn:hover {
+        background: linear-gradient(135deg, var(--secondary-light) 0%, var(--primary-light) 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(78, 84, 200, 0.3);
+        color: white;
+    }
+
+    /* 响应式调整 */
+    @media (max-width: 768px) {
+        .text-gradient {
+            font-size: 3rem;
+        }
+
+        .landing-wrapper {
+            padding: 3rem 1rem;
+        }
+
+        .landing-content {
+            padding: 2rem 0;
+        }
+
+        .features-grid {
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            margin-top: 3rem;
+            padding: 0 1rem;
+        }
+
+        .feature-card {
+            padding: 2rem 1.5rem;
+        }
+
+        .card-icon-wrapper {
+            width: 70px;
+            height: 70px;
+        }
+
+        .card-icon-wrapper i {
+            font-size: 2rem;
+        }
+
+        .feature-card h3 {
+            font-size: 1.25rem;
+        }
+
+        .feature-card p {
+            font-size: 0.9rem;
+        }
+
+        .particle {
+            opacity: 0.5;
+        }
+
+        .top-buttons {
+            top: 1rem;
+            right: 1rem;
+            gap: 0.5rem;
+        }
+
+        .top-btn {
+            padding: 0.6rem 1rem;
+            font-size: 0.9rem;
+        }
+    }
+
+    @media (min-width: 769px) and (max-width: 1200px) {
+        .features-grid {
+            grid-template-columns: repeat(2, 1fr);
+            padding: 0 2rem;
+        }
+    }
+
+    @media (min-width: 1201px) {
+        .features-grid {
+            grid-template-columns: repeat(3, 1fr);
+            padding: 0;
+        }
+    }
+</style>
+{% endblock %}

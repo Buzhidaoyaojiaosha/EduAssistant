@@ -10,7 +10,7 @@ from app.services.question_generator_service import QuestionGeneratorService
 from app.services.teaching_preparation_service import TeachingPreparationService
 from app.models.user import User
 
-dashboard_bp = Blueprint('dashboard', __name__)
+dashboard_bp = Blueprint('dashboard', __name__, url_prefix='/dashboard')
 
 @dashboard_bp.route('/')
 def index():

@@ -19,6 +19,7 @@ def create_app(config_class=Config):
     initialize_extensions()
     
     # 注册蓝图
+    from app.views.landing import landing_bp
     from app.views.auth import auth_bp
     from app.views.dashboard import dashboard_bp
     from app.views.admin import admin_bp
@@ -30,6 +31,8 @@ def create_app(config_class=Config):
     from app.views.homework_api import homework_api_bp
     from app.views.wrongbook import wrongbook_bp
 
+    # 首先注册landing蓝图，它将处理根路由
+    app.register_blueprint(landing_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(admin_bp)

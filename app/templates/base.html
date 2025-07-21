@@ -21,6 +21,54 @@
             --hover-background: rgba(78, 84, 200, 0.1);
             --sidebar-width: 280px;
             --sidebar-mini-width: 80px;
+            --primary: #4e54c8;
+            --primary-light: #8f94fb;
+            --secondary: #00cdac;
+            --secondary-light: #8ddad5;
+        }
+
+        /* 全局h2标题样式 */
+        h2 {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 50%, var(--primary-light) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            background-size: 200% auto;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            position: relative;
+            display: inline-block;
+        }
+
+        h2::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            opacity: 0.3;
+            border-radius: 2px;
+        }
+
+        /* 保持原有的hover效果 */
+        h2:hover {
+            animation: gradient 8s linear infinite;
+        }
+
+        @keyframes gradient {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
         }
 
         body {
@@ -443,6 +491,7 @@
     </div>
 
     <!-- 移动端菜单按钮 -->
+    {% if request.endpoint != 'landing.index' %}
     <button class="mobile-toggle d-lg-none" onclick="toggleSidebar()">
         <i class="fas fa-bars"></i>
     </button>
@@ -451,7 +500,7 @@
     <div class="sidebar-backdrop" onclick="toggleSidebar()"></div>
 
     <!-- 侧边导航栏 -->
-    <nav class="sidebar">
+    <nav class="sidebar {% if request.endpoint in ['auth.login', 'auth.register'] %}collapsed{% endif %}">
         <a class="sidebar-brand" href="{{ url_for('dashboard.index') }}">
             <i class="fas fa-graduation-cap"></i>
             <span>启智AI伴学</span>
@@ -543,9 +592,10 @@
         </div>
         {% endif %}
     </nav>
+    {% endif %}
 
     <!-- 主要内容 -->
-    <div class="main-content">
+    <div class="main-content {% if request.endpoint == 'landing.index' %}p-0 m-0{% endif %}">
         <!-- 消息提示 -->
         {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -569,30 +619,11 @@
     <!-- 自定义JS -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script>
-        // 保存侧边栏状态到本地存储
-        function saveSidebarState(isCollapsed) {
-            localStorage.setItem('sidebarCollapsed', isCollapsed);
-        }
-
-        // 从本地存储获取侧边栏状态
-        function getSidebarState() {
-            return localStorage.getItem('sidebarCollapsed') === 'true';
-        }
-
         // 切换侧边栏折叠状态
         function toggleSidebarCollapse() {
             const sidebar = document.querySelector('.sidebar');
             sidebar.classList.toggle('collapsed');
-            saveSidebarState(sidebar.classList.contains('collapsed'));
         }
-
-        // 页面加载时恢复侧边栏状态
-        document.addEventListener('DOMContentLoaded', function () {
-            const sidebar = document.querySelector('.sidebar');
-            if (getSidebarState()) {
-                sidebar.classList.add('collapsed');
-            }
-        });
 
         // 移动端侧边栏控制
         function toggleSidebar() {

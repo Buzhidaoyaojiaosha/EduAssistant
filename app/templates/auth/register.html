@@ -4,108 +4,347 @@
 
 {% block body_class %}auth-page{% endblock %}
 
-{% block nav_class %}{% endblock %}
-
-{% block main_class %}{% endblock %}
+{% block nav_class %}collapsed{% endblock %}
 
 {% block content %}
-<div class="flex-grow-1 d-flex align-items-center justify-content-center position-relative">
-    <!-- Decorative Background Elements -->
-    <div class="position-absolute w-100 h-100 overflow-hidden" style="z-index: 1;">
-        <div class="position-absolute"
-            style="width: 300px; height: 300px; background: linear-gradient(45deg, #4e54c8 0%, #8f94fb 100%); border-radius: 50%; filter: blur(80px); opacity: 0.3; top: -100px; left: -100px;">
-        </div>
-        <div class="position-absolute"
-            style="width: 250px; height: 250px; background: linear-gradient(45deg, #00cdac 0%, #8ddad5 100%); border-radius: 50%; filter: blur(60px); opacity: 0.2; bottom: -50px; right: -50px;">
-        </div>
-    </div>
-
-    <div class="container position-relative" style="z-index: 2;">
-        <div class="row justify-content-center">
-            <div class="col-md-6 col-lg-5">
-                <!-- Register Card -->
-                <div class="card shadow-lg border-0 rounded-lg"
-                    style="backdrop-filter: blur(10px); background: rgba(255, 255, 255, 0.9);">
-                    <div class="card-header bg-transparent border-0 text-center pt-4">
-                        <h3 class="font-weight-bold text-primary mb-2">创建账号</h3>
-                        <p class="text-muted mb-0">请填写以下信息完成注册</p>
-                    </div>
-                    <div class="card-body px-4 py-4">
-                        <form method="post" action="{{ url_for('auth.register') }}">
-                            <div class="mb-4">
-                                <label for="username" class="form-label small text-muted mb-1">用户名</label>
-                                <div class="input-group input-group-lg">
-                                    <span class="input-group-text border-0 bg-light">
-                                        <i class="fas fa-user text-primary"></i>
-                                    </span>
-                                    <input type="text" class="form-control border-0 bg-light" id="username"
-                                        name="username" placeholder="请设置用户名" required>
-                                </div>
-                            </div>
-                            <div class="mb-4">
-                                <label for="name" class="form-label small text-muted mb-1">姓名</label>
-                                <div class="input-group input-group-lg">
-                                    <span class="input-group-text border-0 bg-light">
-                                        <i class="fas fa-id-card text-primary"></i>
-                                    </span>
-                                    <input type="text" class="form-control border-0 bg-light" id="name" name="name"
-                                        placeholder="请输入真实姓名" required>
-                                </div>
-                            </div>
-                            <div class="mb-4">
-                                <label for="email" class="form-label small text-muted mb-1">电子邮箱</label>
-                                <div class="input-group input-group-lg">
-                                    <span class="input-group-text border-0 bg-light">
-                                        <i class="fas fa-envelope text-primary"></i>
-                                    </span>
-                                    <input type="email" class="form-control border-0 bg-light" id="email" name="email"
-                                        placeholder="请输入电子邮箱" required>
-                                </div>
-                            </div>
-                            <div class="mb-4">
-                                <label for="password" class="form-label small text-muted mb-1">密码</label>
-                                <div class="input-group input-group-lg">
-                                    <span class="input-group-text border-0 bg-light">
-                                        <i class="fas fa-lock text-primary"></i>
-                                    </span>
-                                    <input type="password" class="form-control border-0 bg-light" id="password"
-                                        name="password" placeholder="请设置密码" required>
-                                </div>
-                            </div>
-                            <div class="mb-4">
-                                <label for="confirmPassword" class="form-label small text-muted mb-1">确认密码</label>
-                                <div class="input-group input-group-lg">
-                                    <span class="input-group-text border-0 bg-light">
-                                        <i class="fas fa-lock text-primary"></i>
-                                    </span>
-                                    <input type="password" class="form-control border-0 bg-light" id="confirmPassword"
-                                        name="confirmPassword" placeholder="请再次输入密码" required>
-                                </div>
-                            </div>
-                            <div class="d-grid gap-2 mt-5">
-                                <button type="submit" class="btn btn-primary btn-lg"
-                                    style="background: linear-gradient(135deg, #4e54c8 0%, #8f94fb 100%); border: none; box-shadow: 0 4px 15px rgba(78, 84, 200, 0.2);">
-                                    注册
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                    <div class="card-footer bg-transparent border-0 text-center pb-4">
-                        <p class="mb-0 text-muted">
-                            已有账号？
-                            <a href="{{ url_for('auth.login') }}"
-                                class="text-primary text-decoration-none fw-bold">立即登录</a>
-                        </p>
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-content">
+            <div class="auth-card-header">
+                <div class="logo-wrapper">
+                    <i class="fas fa-graduation-cap"></i>
+                </div>
+                <h3>创建账号</h3>
+                <p class="text-muted">请填写以下信息完成注册</p>
+            </div>
+            <form method="post" action="{{ url_for('auth.register') }}" class="register-form">
+                <div class="form-group">
+                    <label for="username" class="form-label">
+                        <i class="fas fa-user"></i>
+                        <span>用户名</span>
+                    </label>
+                    <input type="text" class="form-control" id="username" name="username" placeholder="请设置用户名" required>
+                </div>
+                <div class="form-group">
+                    <label for="name" class="form-label">
+                        <i class="fas fa-id-card"></i>
+                        <span>姓名</span>
+                    </label>
+                    <input type="text" class="form-control" id="name" name="name" placeholder="请输入真实姓名" required>
+                </div>
+                <div class="form-group">
+                    <label for="email" class="form-label">
+                        <i class="fas fa-envelope"></i>
+                        <span>电子邮箱</span>
+                    </label>
+                    <input type="email" class="form-control" id="email" name="email" placeholder="请输入电子邮箱" required>
+                </div>
+                <div class="form-group">
+                    <label for="password" class="form-label">
+                        <i class="fas fa-lock"></i>
+                        <span>密码</span>
+                    </label>
+                    <div class="password-input-group">
+                        <input type="password" class="form-control" id="password" name="password" placeholder="请设置密码"
+                            required>
+                        <button type="button" class="toggle-password" onclick="togglePassword('password')">
+                            <i class="fas fa-eye"></i>
+                        </button>
                     </div>
                 </div>
+                <div class="form-group">
+                    <label for="confirmPassword" class="form-label">
+                        <i class="fas fa-lock"></i>
+                        <span>确认密码</span>
+                    </label>
+                    <div class="password-input-group">
+                        <input type="password" class="form-control" id="confirmPassword" name="confirmPassword"
+                            placeholder="请再次输入密码" required>
+                        <button type="button" class="toggle-password" onclick="togglePassword('confirmPassword')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary login-btn">
+                    <span>注册</span>
+                    <i class="fas fa-user-plus"></i>
+                </button>
+            </form>
+            <div class="auth-card-footer">
+                <p>已有账号？
+                    <a href="{{ url_for('auth.login') }}" class="register-link">
+                        立即登录
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </p>
+            </div>
+        </div>
+        <div class="auth-decoration">
+            <div class="decoration-content">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 240' fill='none'%3E%3Cstyle%3E.animate-float%7Banimation:float 3s ease-in-out infinite%7D@keyframes float%7B0%25,100%25%7Btransform:translateY(0)%7D50%25%7Btransform:translateY(-10px)%7D%7D%3C/style%3E%3Cg class='animate-float'%3E%3Cpath d='M120 50l-80 40 80 40 80-40-80-40z' fill='white' opacity='0.9'/%3E%3Cpath d='M60 90v60l60 30V120L60 90z' fill='white' opacity='0.7'/%3E%3Cpath d='M180 90v60l-60 30V120l60-30z' fill='white' opacity='0.8'/%3E%3Cpath d='M120 50l-80 40 80 40 80-40-80-40zm0 10l60 30-60 30-60-30 60-30z' fill='white' opacity='0.9'/%3E%3Cpath d='M115 145v35l-45-22.5V125l45 20zm10 0v35l45-22.5V125l-45 20z' fill='white' opacity='0.95'/%3E%3Cpath d='M120 170c-11 0-20-9-20-20s9-20 20-20 20 9 20 20-9 20-20 20z' fill='white'/%3E%3Cpath d='M130 150h-20v-10h20v10zm-10-15c-2.8 0-5-2.2-5-5s2.2-5 5-5 5 2.2 5 5-2.2 5-5 5z' fill='%234e54c8'/%3E%3C/g%3E%3C/svg%3E"
+                    alt="Education Logo" class="decoration-logo">
+                <p>启智AI伴学是一个基于开源大模型的实训智教平台，通过大语言模型、智能体和知识图谱技术，致力于通过技术创新推动教育个性化和智能化发展，为教师提升教学效率，为每个学习者定制个性化学习体验，为提升教育质量贡献力量。
+                </p>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
 
-<!-- 确认密码验证 -->
+{% block extra_css %}
+<style>
+    .auth-page {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+    }
+
+    .auth-container {
+        width: 100%;
+        max-width: 800px;
+        margin: auto;
+    }
+
+    .auth-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 30px;
+        box-shadow:
+            0 20px 50px rgba(0, 0, 0, 0.08),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+        overflow: hidden;
+        transition: all 0.3s ease;
+        display: grid;
+        grid-template-columns: 1.5fr 1fr;
+    }
+
+    .auth-content {
+        padding: 2.5rem;
+    }
+
+    .auth-card-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .logo-wrapper {
+        width: 70px;
+        height: 70px;
+        margin: 0 auto 1.5rem;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transform: rotate(-10deg);
+        transition: all 0.3s ease;
+    }
+
+    .logo-wrapper i {
+        font-size: 2rem;
+        color: white;
+    }
+
+    .auth-card-header h3 {
+        font-size: 1.75rem;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+
+    .form-label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+        color: var(--text-muted);
+        font-weight: 500;
+        font-size: 0.95rem;
+    }
+
+    .form-label i {
+        color: var(--primary);
+        font-size: 0.9rem;
+    }
+
+    .form-control {
+        border: 2px solid rgba(0, 0, 0, 0.05);
+        border-radius: 12px;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.9);
+        height: auto;
+    }
+
+    .form-control:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(78, 84, 200, 0.1);
+    }
+
+    .password-input-group {
+        position: relative;
+    }
+
+    .toggle-password {
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        padding: 0.25rem;
+        transition: all 0.3s ease;
+    }
+
+    .toggle-password:hover {
+        color: var(--primary);
+    }
+
+    .btn-primary {
+        width: 100%;
+        padding: 0.875rem;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        border: none;
+        color: white;
+        font-weight: 600;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        transition: all 0.3s ease;
+        margin-top: 1.75rem;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(78, 84, 200, 0.3);
+    }
+
+    .auth-card-footer {
+        padding: 1.5rem 0 0;
+        text-align: center;
+    }
+
+    .register-link {
+        color: var(--primary);
+        text-decoration: none;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        transition: all 0.3s ease;
+    }
+
+    .register-link:hover {
+        color: var(--secondary);
+    }
+
+    .register-link i {
+        font-size: 0.75rem;
+        transition: transform 0.3s ease;
+    }
+
+    .register-link:hover i {
+        transform: translateX(4px);
+    }
+
+    .auth-decoration {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        padding: 2.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .decoration-content {
+        text-align: center;
+        color: white;
+        position: relative;
+        z-index: 1;
+        padding: 0 1rem;
+    }
+
+    .decoration-logo {
+        width: 160px;
+        height: auto;
+        margin-bottom: 2rem;
+        filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.2));
+        animation: float 6s ease-in-out infinite;
+    }
+
+    .decoration-content p {
+        font-size: 1rem;
+        color: rgba(255, 255, 255, 0.95);
+        line-height: 1.5;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+    }
+
+    @media (max-width: 768px) {
+        .auth-page {
+            padding: 1rem;
+        }
+
+        .auth-card {
+            grid-template-columns: 1fr;
+        }
+
+        .auth-content {
+            padding: 1.75rem;
+        }
+
+        .auth-decoration {
+            display: none;
+        }
+
+        .logo-wrapper {
+            width: 60px;
+            height: 60px;
+        }
+
+        .logo-wrapper i {
+            font-size: 1.75rem;
+        }
+
+        .auth-card-header h3 {
+            font-size: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block extra_js %}
 <script>
+    function togglePassword(inputId) {
+        const passwordInput = document.getElementById(inputId);
+        const toggleBtn = event.currentTarget.querySelector('i');
+
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            toggleBtn.classList.remove('fa-eye');
+            toggleBtn.classList.add('fa-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            toggleBtn.classList.remove('fa-eye-slash');
+            toggleBtn.classList.add('fa-eye');
+        }
+    }
+
     document.querySelector('form').addEventListener('submit', function (e) {
         const password = document.getElementById('password').value;
         const confirmPassword = document.getElementById('confirmPassword').value;
@@ -116,5 +355,4 @@
         }
     });
 </script>
-{% endblock %}
 {% endblock %}

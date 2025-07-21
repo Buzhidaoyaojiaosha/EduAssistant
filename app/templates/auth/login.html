@@ -4,78 +4,525 @@
 
 {% block body_class %}auth-page{% endblock %}
 
-{% block nav_class %}{% endblock %}
+{% block nav_class %}collapsed{% endblock %}
 
 {% block main_class %}{% endblock %}
 
 {% block content %}
-<div class="flex-grow-1 d-flex align-items-center justify-content-center">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-md-6 col-lg-5">
-                <!-- Login Card -->
-                <div class="card shadow-lg border-0 rounded-lg" style="background: rgba(255, 255, 255, 0.9);">
-                    <div class="card-header bg-transparent border-0 text-center pt-4">
-                        <h3 class="font-weight-bold text-primary mb-2">欢迎回来</h3>
-                        <p class="text-muted mb-0">请登录您的账号</p>
-                    </div>
-                    <div class="card-body px-4 py-4">
-                        <form method="post" action="{{ url_for('auth.login') }}">
-                            <div class="mb-4">
-                                <label for="username" class="form-label small text-muted mb-1">用户名</label>
-                                <div class="input-group input-group-lg">
-                                    <span class="input-group-text border-0 bg-light">
-                                        <i class="fas fa-user text-primary"></i>
-                                    </span>
-                                    <input type="text" class="form-control border-0 bg-light" id="username"
-                                        name="username" placeholder="请输入用户名" required>
-                                </div>
-                            </div>
-                            <div class="mb-4">
-                                <label for="password" class="form-label small text-muted mb-1">密码</label>
-                                <div class="input-group input-group-lg">
-                                    <span class="input-group-text border-0 bg-light">
-                                        <i class="fas fa-lock text-primary"></i>
-                                    </span>
-                                    <input type="password" class="form-control border-0 bg-light" id="password"
-                                        name="password" placeholder="请输入密码" required>
-                                </div>
-                            </div>
-                            <div class="d-grid gap-2 mt-5">
-                                <button type="submit" class="btn btn-primary btn-lg"
-                                    style="background: linear-gradient(135deg, #4e54c8 0%, #8f94fb 100%); border: none; box-shadow: 0 4px 15px rgba(78, 84, 200, 0.2);">
-                                    登录
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                    <div class="card-footer bg-transparent border-0 text-center pb-4">
-                        <p class="mb-0 text-muted">
-                            还没有账号？
-                            <a href="{{ url_for('auth.register') }}"
-                                class="text-primary text-decoration-none fw-bold">立即注册</a>
-                        </p>
-                    </div>
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-content">
+            <div class="auth-card-header">
+                <div class="logo-wrapper">
+                    <i class="fas fa-graduation-cap"></i>
                 </div>
-
-                <!-- System Initialization Alert -->
-                <div class="alert border-0 shadow-sm mt-4" style="background: rgba(255, 255, 255, 0.9);">
-                    <div class="d-flex align-items-center">
-                        <i class="fas fa-info-circle text-primary me-2"></i>
-                        <div>
-                            <h6 class="alert-heading mb-1">系统初始化</h6>
-                            <p class="mb-0 small">
-                                如果这是第一次使用系统，请先
-                                <a href="{{ url_for('admin.initialize_system') }}"
-                                    class="alert-link text-primary text-decoration-none fw-bold">
-                                    进行系统初始化
-                                </a>
-                            </p>
+                <h3>欢迎回来</h3>
+                <p class="text-muted">登录您的账号开始学习之旅</p>
+            </div>
+            <div class="auth-card-body">
+                <form method="post" action="{{ url_for('auth.login') }}" class="login-form">
+                    <div class="form-group">
+                        <label for="username" class="form-label">
+                            <i class="fas fa-user"></i>
+                            <span>用户名</span>
+                        </label>
+                        <input type="text" class="form-control" id="username" name="username" placeholder="请输入用户名"
+                            required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password" class="form-label">
+                            <i class="fas fa-lock"></i>
+                            <span>密码</span>
+                        </label>
+                        <div class="password-input-group">
+                            <input type="password" class="form-control" id="password" name="password"
+                                placeholder="请输入密码" required>
+                            <button type="button" class="toggle-password" onclick="togglePassword()">
+                                <i class="fas fa-eye"></i>
+                            </button>
                         </div>
                     </div>
-                </div>
+                    <button type="submit" class="btn btn-primary login-btn">
+                        <span>登录</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </form>
+            </div>
+            <div class="auth-card-footer">
+                <p>还没有账号？
+                    <a href="{{ url_for('auth.register') }}" class="register-link">
+                        立即注册
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </p>
+                <a href="{{ url_for('admin.initialize_system') }}" class="init-link">
+                    <i class="fas fa-cog"></i>
+                    系统初始化
+                </a>
+            </div>
+        </div>
+        <div class="auth-decoration">
+            <div class="decoration-content">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 240' fill='none'%3E%3Cstyle%3E.animate-float%7Banimation:float 3s ease-in-out infinite%7D@keyframes float%7B0%25,100%25%7Btransform:translateY(0)%7D50%25%7Btransform:translateY(-10px)%7D%7D%3C/style%3E%3Cg class='animate-float'%3E%3Cpath d='M120 50l-80 40 80 40 80-40-80-40z' fill='white' opacity='0.9'/%3E%3Cpath d='M60 90v60l60 30V120L60 90z' fill='white' opacity='0.7'/%3E%3Cpath d='M180 90v60l-60 30V120l60-30z' fill='white' opacity='0.8'/%3E%3Cpath d='M120 50l-80 40 80 40 80-40-80-40zm0 10l60 30-60 30-60-30 60-30z' fill='white' opacity='0.9'/%3E%3Cpath d='M115 145v35l-45-22.5V125l45 20zm10 0v35l45-22.5V125l-45 20z' fill='white' opacity='0.95'/%3E%3Cpath d='M120 170c-11 0-20-9-20-20s9-20 20-20 20 9 20 20-9 20-20 20z' fill='white'/%3E%3Cpath d='M130 150h-20v-10h20v10zm-10-15c-2.8 0-5-2.2-5-5s2.2-5 5-5 5 2.2 5 5-2.2 5-5 5z' fill='%234e54c8'/%3E%3C/g%3E%3C/svg%3E"
+                    alt="Education Logo" class="decoration-logo">
+                <p>启智AI伴学是一个基于开源大模型的实训智教平台，通过大语言模型、智能体和知识图谱技术，致力于通过技术创新推动教育个性化和智能化发展，为教师提升教学效率，为每个学习者定制个性化学习体验，为提升教育质量贡献力量。
+                </p>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .h3 {
+        color: #ffffff;
+    }
+
+    .auth-page {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+    }
+
+    .auth-container {
+        width: 100%;
+        max-width: 800px;
+        margin: auto;
+        position: relative;
+    }
+
+    .auth-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 30px;
+        box-shadow:
+            0 20px 50px rgba(0, 0, 0, 0.08),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+        overflow: hidden;
+        transition: all 0.3s ease;
+        display: grid;
+        grid-template-columns: 1.5fr 1fr;
+    }
+
+    .auth-card:hover {
+        transform: translateY(-5px);
+        box-shadow:
+            0 25px 60px rgba(0, 0, 0, 0.1),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+    }
+
+    .auth-content {
+        padding: 2.5rem;
+    }
+
+    .auth-card-header {
+        text-align: center;
+        position: relative;
+        margin-bottom: 1.5rem;
+    }
+
+    .logo-wrapper {
+        width: 70px;
+        height: 70px;
+        margin: 0 auto 1.5rem;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transform: rotate(-10deg);
+        transition: all 0.3s ease;
+    }
+
+    .logo-wrapper i {
+        font-size: 2rem;
+        color: white;
+    }
+
+    .auth-card-header h3 {
+        font-size: 1.75rem;
+        margin-bottom: 0.5rem;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 600;
+    }
+
+    .auth-card-header p {
+        font-size: 1rem;
+        color: var(--text-muted);
+        margin-bottom: 0;
+    }
+
+    .auth-card-body {
+        padding: 2rem 3rem 3rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+
+    .form-label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+        color: var(--text-muted);
+        font-weight: 500;
+        font-size: 0.95rem;
+    }
+
+    .form-label i {
+        color: var(--primary);
+        font-size: 1.1rem;
+    }
+
+    .form-control {
+        border: 2px solid rgba(0, 0, 0, 0.05);
+        border-radius: 12px;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.9);
+        height: auto;
+    }
+
+    .form-control:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(78, 84, 200, 0.1);
+    }
+
+    .password-input-group {
+        position: relative;
+    }
+
+    .toggle-password {
+        position: absolute;
+        right: 1.25rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        padding: 0.5rem;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+    }
+
+    .toggle-password:hover {
+        color: var(--primary);
+    }
+
+    .login-btn {
+        width: 100%;
+        padding: 0.875rem;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        border: none;
+        color: white;
+        font-weight: 600;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        transition: all 0.3s ease;
+        margin-top: 1.75rem;
+    }
+
+    .login-btn:hover {
+        background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%);
+        transform: translateY(-2px);
+    }
+
+    .login-btn i {
+        transition: transform 0.3s ease;
+    }
+
+    .login-btn:hover i {
+        transform: translateX(4px);
+    }
+
+    .auth-card-footer {
+        padding: 1.5rem 2.5rem;
+        background: rgba(0, 0, 0, 0.02);
+        text-align: center;
+        position: relative;
+    }
+
+    .auth-card-footer p {
+        font-size: 1.1rem;
+        margin-bottom: 0;
+    }
+
+    .register-link {
+        color: var(--primary);
+        text-decoration: none;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        font-size: 1.1rem;
+    }
+
+    .register-link:hover {
+        color: var(--secondary);
+    }
+
+    .register-link i {
+        font-size: 0.75rem;
+        transition: transform 0.3s ease;
+    }
+
+    .register-link:hover i {
+        transform: translateX(4px);
+    }
+
+    .init-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 1rem;
+        margin-top: 1.5rem;
+        padding: 0.75rem 1.5rem;
+        background: rgba(0, 0, 0, 0.03);
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+
+    .init-link:hover {
+        background: rgba(0, 0, 0, 0.05);
+        color: var(--primary);
+    }
+
+    .auth-decoration {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2.5rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .auth-decoration::before {
+        content: '';
+        position: absolute;
+        width: 150%;
+        height: 150%;
+        background: linear-gradient(135deg,
+                rgba(255, 255, 255, 0.1) 0%,
+                rgba(255, 255, 255, 0.05) 100%);
+        transform: rotate(-45deg);
+        animation: decorationShine 8s linear infinite;
+    }
+
+    .auth-decoration::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        opacity: 0.2;
+    }
+
+    .decoration-content {
+        text-align: center;
+        position: relative;
+        z-index: 1;
+        padding: 0 1rem;
+    }
+
+    .decoration-content h2 {
+        font-size: 2rem;
+        margin: 0 0 1.5rem;
+        font-weight: 700;
+        color: #ffffff;
+        letter-spacing: 1px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    }
+
+    .decoration-content p {
+        font-size: 1rem;
+        color: rgba(255, 255, 255, 0.95);
+        max-width: 280px;
+        margin: 0 auto;
+        line-height: 1.5;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+    }
+
+    .decoration-logo {
+        width: 160px;
+        height: auto;
+        margin-bottom: 2rem;
+        filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.2));
+        animation: float 6s ease-in-out infinite;
+    }
+
+    .title-gradient {
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 15px;
+        padding: 1rem 2rem;
+        margin-bottom: 1.5rem;
+        backdrop-filter: blur(5px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .title-gradient h2 {
+        font-size: 1.75rem;
+        margin: 0;
+        font-weight: 700;
+        background: linear-gradient(135deg,
+                #FFE53B 0%,
+                #FF2525 50%,
+                #FFE53B 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        background-size: 200% auto;
+        animation: shine 3s linear infinite;
+        letter-spacing: 1px;
+        text-shadow: none;
+    }
+
+    @keyframes decorationShine {
+        0% {
+            transform: rotate(-45deg) translateY(-50%);
+        }
+
+        100% {
+            transform: rotate(-45deg) translateY(50%);
+        }
+    }
+
+    @keyframes float {
+
+        0%,
+        100% {
+            transform: translateY(0);
+        }
+
+        50% {
+            transform: translateY(-10px);
+        }
+    }
+
+    @keyframes shine {
+        0% {
+            background-position: 200% center;
+        }
+
+        100% {
+            background-position: -200% center;
+        }
+    }
+
+    @media (max-width: 1024px) {
+        .auth-container {
+            max-width: 700px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .auth-page {
+            padding: 1rem;
+        }
+
+        .auth-container {
+            max-width: 100%;
+        }
+
+        .auth-card {
+            grid-template-columns: 1fr;
+        }
+
+        .auth-decoration {
+            display: none;
+        }
+
+        .auth-content {
+            padding: 1.75rem;
+        }
+
+        .auth-card-header {
+            margin-bottom: 1.25rem;
+        }
+
+        .logo-wrapper {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 1.25rem;
+        }
+
+        .logo-wrapper i {
+            font-size: 1.75rem;
+        }
+
+        .auth-card-header h3 {
+            font-size: 1.5rem;
+        }
+
+        .auth-card-body {
+            padding: 1.5rem 2rem 2.5rem;
+        }
+
+        .auth-card-footer {
+            padding: 1.25rem 1.75rem;
+        }
+
+        .decoration-logo {
+            width: 120px;
+            margin-bottom: 1.5rem;
+        }
+
+        .title-gradient {
+            padding: 0.75rem 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .title-gradient h2 {
+            font-size: 1.5rem;
+            background: linear-gradient(135deg,
+                    #FFE53B 0%,
+                    #FF2525 50%,
+                    #FFE53B 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .decoration-content h2 {
+            font-size: 1.75rem;
+            margin-bottom: 1rem;
+            color: #ffffff;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function togglePassword() {
+        const passwordInput = document.getElementById('password');
+        const toggleBtn = document.querySelector('.toggle-password i');
+
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            toggleBtn.classList.remove('fa-eye');
+            toggleBtn.classList.add('fa-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            toggleBtn.classList.remove('fa-eye-slash');
+            toggleBtn.classList.add('fa-eye');
+        }
+    }
+</script>
 {% endblock %}
