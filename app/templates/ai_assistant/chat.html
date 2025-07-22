@@ -6,25 +6,32 @@
 <div class="chat-container">
     <!-- 左侧边栏 - 聊天历史 -->
     <div class="chat-sidebar">
-        <div class="card h-100 border-0">
+        <div class="card h-100 border-0 glass-effect">
             <div class="card-body p-3">
                 <button id="new-chat-btn" class="btn btn-primary new-chat-btn mb-3">
                     <i class="fas fa-plus me-2"></i>新建聊天
+                    <div class="button-glow"></div>
                 </button>
 
-                <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="d-flex justify-content-between align-items-center mb-3">
                     <div class="d-flex align-items-center">
-                        <div class="rounded-circle p-2 me-2" style="background: rgba(111, 66, 193, 0.1);">
-                            <i class="fas fa-history" style="color: #6f42c1;"></i>
+                        <div class="icon-wrapper me-2">
+                            <i class="fas fa-history"></i>
                         </div>
-                        <h6 class="mb-0">聊天历史</h6>
+                        <h6 class="mb-0 section-title">聊天历史</h6>
                     </div>
                 </div>
 
                 <div id="chat-history" class="chat-history">
                     {% for chat in chats %}
                     <div class="chat-history-item" data-chat-id="{{ chat.id }}">
-                        <i class="fas fa-comment-dots me-2"></i>{{ chat.title }}
+                        <div class="chat-item-content">
+                            <i class="fas fa-comment-dots me-2"></i>
+                            <span class="chat-title">{{ chat.title }}</span>
+                        </div>
+                        <div class="chat-item-actions">
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
                     </div>
                     {% endfor %}
                 </div>
@@ -34,30 +41,70 @@
 
     <!-- 右侧主聊天区域 -->
     <div class="chat-main">
-        <div class="card h-100 border-0">
+        <div class="card h-100 border-0 glass-effect">
+            <!-- 聊天头部 -->
+            <div class="chat-header">
+                <div class="d-flex align-items-center">
+                    <div class="ai-avatar me-3">
+                        <i class="fas fa-robot"></i>
+                        <div class="avatar-glow"></div>
+                    </div>
+                    <div>
+                        <h5 class="mb-0 ai-title">AI教学助手</h5>
+                        <small class="ai-status">
+                            <div class="status-indicator"></div>
+                            在线助您学习
+                        </small>
+                    </div>
+                </div>
+            </div>
+
             <div id="chat-messages" class="chat-messages card-body">
                 <div class="empty-chat-message" id="empty-chat-message">
                     <div class="text-center py-5">
-                        <div class="rounded-circle mx-auto mb-4 d-flex align-items-center justify-content-center"
-                            style="width: 80px; height: 80px; background: rgba(78, 84, 200, 0.1);">
-                            <i class="fas fa-robot fa-2x" style="color: #4e54c8;"></i>
+                        <div class="welcome-avatar mb-4">
+                            <div class="avatar-ring"></div>
+                            <div class="avatar-core">
+                                <i class="fas fa-robot fa-2x"></i>
+                            </div>
+                            <div class="avatar-particles">
+                                <div class="particle particle-1"></div>
+                                <div class="particle particle-2"></div>
+                                <div class="particle particle-3"></div>
+                                <div class="particle particle-4"></div>
+                            </div>
                         </div>
-                        <h4 class="mb-3">AI教学助手</h4>
-                        <p class="text-muted mb-4">我可以回答您关于教学、课程或学习的任何问题</p>
+                        <h4 class="welcome-title mb-3">AI教学助手</h4>
+                        <p class="welcome-subtitle mb-4">我可以回答您关于教学、课程或学习的任何问题</p>
                         <div class="row justify-content-center">
                             <div class="col-md-8">
                                 <div class="d-grid gap-3">
-                                    <button class="btn btn-light text-start sample-question">
-                                        <i class="fas fa-lightbulb me-2" style="color: #ffc107;"></i>
-                                        如何制定一个有效的教学计划？
+                                    <button class="btn sample-question lightbulb-question">
+                                        <div class="question-icon">
+                                            <i class="fas fa-lightbulb"></i>
+                                        </div>
+                                        <span>如何制定一个有效的教学计划？</span>
+                                        <div class="question-arrow">
+                                            <i class="fas fa-arrow-right"></i>
+                                        </div>
                                     </button>
-                                    <button class="btn btn-light text-start sample-question">
-                                        <i class="fas fa-graduation-cap me-2" style="color: #20c997;"></i>
-                                        帮我分析学生的学习难点
+                                    <button class="btn sample-question graduation-question">
+                                        <div class="question-icon">
+                                            <i class="fas fa-graduation-cap"></i>
+                                        </div>
+                                        <span>帮我分析学生的学习难点</span>
+                                        <div class="question-arrow">
+                                            <i class="fas fa-arrow-right"></i>
+                                        </div>
                                     </button>
-                                    <button class="btn btn-light text-start sample-question">
-                                        <i class="fas fa-tasks me-2" style="color: #6f42c1;"></i>
-                                        生成一份课程测验题目
+                                    <button class="btn sample-question tasks-question">
+                                        <div class="question-icon">
+                                            <i class="fas fa-tasks"></i>
+                                        </div>
+                                        <span>生成一份课程测验题目</span>
+                                        <div class="question-arrow">
+                                            <i class="fas fa-arrow-right"></i>
+                                        </div>
                                     </button>
                                 </div>
                             </div>
@@ -68,11 +115,15 @@
 
             <div class="chat-input-container">
                 <form id="chat-form" class="chat-form">
-                    <div class="input-group">
-                        <input type="text" id="message-input" class="form-control border-0 bg-light"
-                            placeholder="输入您的问题..." required>
-                        <button type="submit" class="btn btn-primary">
+                    <div class="input-group enhanced-input">
+                        <div class="input-icon">
+                            <i class="fas fa-edit"></i>
+                        </div>
+                        <input type="text" id="message-input" class="form-control border-0" placeholder="输入您的问题..."
+                            required>
+                        <button type="submit" class="btn btn-primary send-btn">
                             <i class="fas fa-paper-plane"></i>
+                            <div class="send-ripple"></div>
                         </button>
                     </div>
                 </form>
@@ -83,11 +134,22 @@
 
 <style>
     :root {
-        --primary-gradient: linear-gradient(135deg, #4e54c8 0%, #8f94fb 100%);
-        --secondary-gradient: linear-gradient(135deg, #00cdac 0%, #8ddad5 100%);
-        --background-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        --card-background: rgba(255, 255, 255, 0.9);
-        --hover-background: rgba(78, 84, 200, 0.1);
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        --purple-gradient: linear-gradient(135deg, #a855f7 0%, #6366f1 100%);
+        --background-gradient: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+        --glass-background: rgba(255, 255, 255, 0.25);
+        --glass-border: rgba(255, 255, 255, 0.18);
+        --shadow-color: rgba(139, 92, 246, 0.3);
+        --text-primary: #2d3748;
+        --text-secondary: #718096;
+    }
+
+    body {
+        background: linear-gradient(135deg, #d1d7f3 0%, #e3d1f4 100%);
+        min-height: 100vh;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
     .chat-container {
@@ -96,6 +158,13 @@
         gap: 1.5rem;
         margin: -0.5rem;
         padding: 1rem;
+    }
+
+    .glass-effect {
+        background: var(--glass-background);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--glass-border);
+        box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
     }
 
     .chat-sidebar {
@@ -109,32 +178,93 @@
         min-width: 600px;
     }
 
+    /* 聊天头部样式 */
+    .chat-header {
+        padding: 1.5rem 2rem;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%);
+        border-bottom: 1px solid var(--glass-border);
+        backdrop-filter: blur(10px);
+    }
+
+    .ai-avatar {
+        position: relative;
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: var(--purple-gradient);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.2rem;
+    }
+
+    .avatar-glow {
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        border-radius: 50%;
+        background: var(--purple-gradient);
+        opacity: 0.5;
+        animation: pulse 2s infinite;
+        z-index: -1;
+    }
+
+    .ai-title {
+        color: var(--text-primary);
+        font-weight: 600;
+    }
+
+    .ai-status {
+        color: var(--text-secondary);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .status-indicator {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #10b981;
+        animation: pulse 2s infinite;
+    }
+
     .chat-messages {
-        height: calc(100% - 100px);
+        height: calc(100% - 180px);
         overflow-y: auto;
         padding: 2rem;
         padding-bottom: calc(2rem + 100px);
-        /* Add extra padding at bottom to prevent content from showing behind input */
         margin-bottom: 0;
     }
 
     .chat-input-container {
         position: absolute;
-        bottom: 2rem;
+        bottom: 1.5rem;
         left: 2rem;
         right: 2rem;
-        background: var(--card-background);
-        border-radius: 12px;
-        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+        background: var(--glass-background);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--glass-border);
+        border-radius: 16px;
+        box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
         padding: 1rem;
         z-index: 100;
     }
 
-    .chat-form {
-        background: transparent;
-        border-radius: 12px;
-        padding: 0;
-        box-shadow: none;
+    .enhanced-input {
+        position: relative;
+    }
+
+    .input-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-secondary);
+        z-index: 2;
     }
 
     .message {
@@ -142,75 +272,302 @@
         z-index: 1;
         max-width: 90%;
         margin-bottom: 2rem;
-        padding: 1.25rem;
-        border-radius: 12px;
+        padding: 1.25rem 1.5rem;
+        border-radius: 16px;
         font-size: 1.1rem;
+        line-height: 1.6;
+        backdrop-filter: blur(10px);
     }
 
     .message-user {
         background: var(--primary-gradient);
         color: white;
         margin-left: auto;
-        box-shadow: 0 4px 15px rgba(78, 84, 200, 0.2);
+        box-shadow: 0 8px 25px var(--shadow-color);
+        border: 1px solid rgba(255, 255, 255, 0.2);
     }
 
     .message-assistant {
-        background: var(--card-background);
-        border: 1px solid rgba(0, 0, 0, 0.05);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        background: var(--glass-background);
+        border: 1px solid var(--glass-border);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        color: var(--text-primary);
+    }
+
+    /* 聊天历史样式 */
+    .section-title {
+        color: var(--text-primary);
+        font-weight: 600;
+    }
+
+    .icon-wrapper {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: var(--purple-gradient);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
     }
 
     .chat-history-item {
-        padding: 0.75rem 1rem;
-        border-radius: 8px;
-        margin-bottom: 0.5rem;
+        padding: 1rem;
+        border-radius: 12px;
+        margin-bottom: 0.75rem;
         cursor: pointer;
-        transition: all 0.3s ease;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
     }
 
     .chat-history-item:hover {
-        background: var(--hover-background);
-        transform: translateY(-1px);
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
     }
 
     .chat-history-item.active {
         background: var(--primary-gradient);
         color: white;
-        box-shadow: 0 4px 15px rgba(78, 84, 200, 0.2);
+        box-shadow: 0 8px 25px var(--shadow-color);
     }
 
+    .chat-item-content {
+        display: flex;
+        align-items: center;
+        flex: 1;
+    }
+
+    .chat-item-actions {
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .chat-history-item:hover .chat-item-actions {
+        opacity: 1;
+    }
+
+    /* 按钮样式 */
     .btn-primary {
-        padding: 0.75rem 1.5rem;
+        position: relative;
+        padding: 0.875rem 1.5rem;
         background: var(--primary-gradient);
         border: none;
-        box-shadow: 0 4px 15px rgba(78, 84, 200, 0.2);
-        transition: all 0.3s ease;
+        border-radius: 12px;
+        font-weight: 600;
+        box-shadow: 0 8px 25px var(--shadow-color);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
     }
 
     .btn-primary:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 6px 20px rgba(78, 84, 200, 0.3);
+        transform: translateY(-2px);
+        box-shadow: 0 12px 35px var(--shadow-color);
     }
 
-    .btn-light {
-        border: none;
-        background: var(--card-background);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-        transition: all 0.3s ease;
+    .button-glow {
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s;
     }
 
-    .btn-light:hover {
-        transform: translateY(-1px);
-        background: var(--hover-background);
+    .btn-primary:hover .button-glow {
+        left: 100%;
     }
 
+    /* 欢迎区域样式 */
+    .welcome-avatar {
+        position: relative;
+        width: 120px;
+        height: 120px;
+        margin: 0 auto;
+    }
+
+    .avatar-ring {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border: 3px solid;
+        border-image: var(--primary-gradient) 1;
+        border-radius: 50%;
+        animation: rotate 3s linear infinite;
+    }
+
+    .avatar-core {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 80px;
+        height: 80px;
+        background: var(--primary-gradient);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        box-shadow: 0 8px 25px var(--shadow-color);
+    }
+
+    .avatar-particles {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+    }
+
+    .particle {
+        position: absolute;
+        width: 6px;
+        height: 6px;
+        background: var(--accent-gradient);
+        border-radius: 50%;
+        animation: float 2s ease-in-out infinite;
+    }
+
+    .particle-1 {
+        top: 20%;
+        left: 20%;
+        animation-delay: 0s;
+    }
+
+    .particle-2 {
+        top: 20%;
+        right: 20%;
+        animation-delay: 0.5s;
+    }
+
+    .particle-3 {
+        bottom: 20%;
+        left: 20%;
+        animation-delay: 1s;
+    }
+
+    .particle-4 {
+        bottom: 20%;
+        right: 20%;
+        animation-delay: 1.5s;
+    }
+
+    .welcome-title {
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-weight: 700;
+    }
+
+    .welcome-subtitle {
+        color: var(--text-secondary);
+        font-size: 1.1rem;
+    }
+
+    /* 示例问题样式 */
     .sample-question {
-        padding: 0.75rem;
+        position: relative;
+        padding: 1.25rem 1.5rem;
+        background: var(--glass-background);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--glass-border);
+        border-radius: 12px;
         text-align: left;
-        border-radius: 8px;
-        white-space: normal;
-        word-wrap: break-word;
-        line-height: 1.4;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        overflow: hidden;
+    }
+
+    .sample-question:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
+        background: rgba(255, 255, 255, 0.3);
+    }
+
+    .question-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.1rem;
+    }
+
+    .lightbulb-question .question-icon {
+        background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    }
+
+    .graduation-question .question-icon {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    }
+
+    .tasks-question .question-icon {
+        background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    }
+
+    .sample-question span {
+        flex: 1;
+        color: var(--text-primary);
+        font-weight: 500;
+    }
+
+    .question-arrow {
+        opacity: 0;
+        transform: translateX(-10px);
+        transition: all 0.3s ease;
+        color: var(--text-secondary);
+    }
+
+    .sample-question:hover .question-arrow {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    /* 输入框样式 */
+    #message-input {
+        padding: 1rem 1rem 1rem 3rem;
+        font-size: 1.1rem;
+        min-height: 56px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        color: var(--text-primary);
+        backdrop-filter: blur(10px);
+    }
+
+    #message-input::placeholder {
+        color: var(--text-secondary);
+    }
+
+    .send-btn {
+        position: relative;
+        width: 56px;
+        height: 56px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+    .send-ripple {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        transform: scale(0);
+        animation: ripple 0.6s linear;
     }
 
     .typing-indicator {
@@ -220,12 +577,12 @@
     }
 
     .typing-indicator span {
-        width: 6px;
-        height: 6px;
+        width: 8px;
+        height: 8px;
         border-radius: 50%;
-        background: #4e54c8;
-        margin: 0 2px;
-        animation: typing 1s infinite ease-in-out;
+        background: var(--primary-gradient);
+        margin: 0 3px;
+        animation: typing 1.4s infinite ease-in-out;
     }
 
     .typing-indicator span:nth-child(2) {
@@ -236,15 +593,63 @@
         animation-delay: 0.4s;
     }
 
+    /* 动画 */
+    @keyframes pulse {
+
+        0%,
+        100% {
+            opacity: 0.5;
+            transform: scale(1);
+        }
+
+        50% {
+            opacity: 0.8;
+            transform: scale(1.05);
+        }
+    }
+
+    @keyframes rotate {
+        from {
+            transform: rotate(0deg);
+        }
+
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    @keyframes float {
+
+        0%,
+        100% {
+            transform: translateY(0px) scale(1);
+            opacity: 0.7;
+        }
+
+        50% {
+            transform: translateY(-10px) scale(1.1);
+            opacity: 1;
+        }
+    }
+
     @keyframes typing {
 
         0%,
         100% {
             transform: translateY(0);
+            opacity: 0.7;
         }
 
         50% {
-            transform: translateY(-4px);
+            transform: translateY(-8px);
+            opacity: 1;
+        }
+    }
+
+    @keyframes ripple {
+        to {
+            transform: scale(4);
+            opacity: 0;
         }
     }
 
@@ -256,19 +661,36 @@
 
     .chat-messages::-webkit-scrollbar-track,
     .chat-history::-webkit-scrollbar-track {
-        background: transparent;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 3px;
     }
 
     .chat-messages::-webkit-scrollbar-thumb,
     .chat-history::-webkit-scrollbar-thumb {
-        background: rgba(0, 0, 0, 0.1);
+        background: rgba(255, 255, 255, 0.3);
         border-radius: 3px;
     }
 
-    #message-input {
-        padding: 1rem;
-        font-size: 1.1rem;
-        min-height: 50px;
+    .chat-messages::-webkit-scrollbar-thumb:hover,
+    .chat-history::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.5);
+    }
+
+    /* 响应式设计 */
+    @media (max-width: 768px) {
+        .chat-container {
+            flex-direction: column;
+            height: calc(100vh - 60px);
+        }
+
+        .chat-sidebar {
+            width: 100%;
+            height: 200px;
+        }
+
+        .chat-main {
+            min-width: auto;
+        }
     }
 </style>
 
