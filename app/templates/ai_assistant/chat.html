@@ -62,49 +62,26 @@
             <div id="chat-messages" class="chat-messages card-body">
                 <div class="empty-chat-message" id="empty-chat-message">
                     <div class="text-center py-5">
-                        <div class="welcome-avatar mb-4">
-                            <div class="avatar-ring"></div>
-                            <div class="avatar-core">
-                                <i class="fas fa-robot fa-2x"></i>
-                            </div>
-                            <div class="avatar-particles">
-                                <div class="particle particle-1"></div>
-                                <div class="particle particle-2"></div>
-                                <div class="particle particle-3"></div>
-                                <div class="particle particle-4"></div>
-                            </div>
+                        <div class="rounded-circle mx-auto mb-4 d-flex align-items-center justify-content-center"
+                            style="width: 80px; height: 80px; background: rgba(78, 84, 200, 0.1);">
+                            <i class="fas fa-robot fa-2x" style="color: #4e54c8;"></i>
                         </div>
-                        <h4 class="welcome-title mb-3">AI教学助手</h4>
-                        <p class="welcome-subtitle mb-4">我可以回答您关于教学、课程或学习的任何问题</p>
+                        <h4 class="mb-3">AI教学助手</h4>
+                        <p class="text-muted mb-4">我可以回答您关于教学、课程或学习的任何问题</p>
                         <div class="row justify-content-center">
                             <div class="col-md-8">
                                 <div class="d-grid gap-3">
-                                    <button class="btn sample-question lightbulb-question">
-                                        <div class="question-icon">
-                                            <i class="fas fa-lightbulb"></i>
-                                        </div>
-                                        <span>如何制定一个有效的教学计划？</span>
-                                        <div class="question-arrow">
-                                            <i class="fas fa-arrow-right"></i>
-                                        </div>
+                                    <button class="btn btn-light text-start sample-question">
+                                        <i class="fas fa-lightbulb me-2" style="color: #ffc107;"></i>
+                                        如何合理利用数字工具辅助学习？
                                     </button>
-                                    <button class="btn sample-question graduation-question">
-                                        <div class="question-icon">
-                                            <i class="fas fa-graduation-cap"></i>
-                                        </div>
-                                        <span>帮我分析学生的学习难点</span>
-                                        <div class="question-arrow">
-                                            <i class="fas fa-arrow-right"></i>
-                                        </div>
+                                    <button class="btn btn-light text-start sample-question">
+                                        <i class="fas fa-graduation-cap me-2" style="color: #20c997;"></i>
+                                        帮我制定个性化的学习计划
                                     </button>
-                                    <button class="btn sample-question tasks-question">
-                                        <div class="question-icon">
-                                            <i class="fas fa-tasks"></i>
-                                        </div>
-                                        <span>生成一份课程测验题目</span>
-                                        <div class="question-arrow">
-                                            <i class="fas fa-arrow-right"></i>
-                                        </div>
+                                    <button class="btn btn-light text-start sample-question">
+                                        <i class="fas fa-tasks me-2" style="color: #6f42c1;"></i>
+                                        生成一份课程知识清单
                                     </button>
                                 </div>
                             </div>
@@ -147,13 +124,13 @@
     }
 
     body {
-        background: linear-gradient(135deg, #d1d7f3 0%, #e3d1f4 100%);
+        background: #e8e8f0;
         min-height: 100vh;
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
     .chat-container {
-        height: calc(100vh - 100px);
+        height: calc(115vh - 100px);
         display: flex;
         gap: 1.5rem;
         margin: -0.5rem;
@@ -321,7 +298,6 @@
         border: 1px solid rgba(255, 255, 255, 0.1);
         display: flex;
         align-items: center;
-        justify-content: space-between;
     }
 
     .chat-history-item:hover {
@@ -383,96 +359,6 @@
         left: 100%;
     }
 
-    /* 欢迎区域样式 */
-    .welcome-avatar {
-        position: relative;
-        width: 120px;
-        height: 120px;
-        margin: 0 auto;
-    }
-
-    .avatar-ring {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        border: 3px solid;
-        border-image: var(--primary-gradient) 1;
-        border-radius: 50%;
-        animation: rotate 3s linear infinite;
-    }
-
-    .avatar-core {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 80px;
-        height: 80px;
-        background: var(--primary-gradient);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        box-shadow: 0 8px 25px var(--shadow-color);
-    }
-
-    .avatar-particles {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-    }
-
-    .particle {
-        position: absolute;
-        width: 6px;
-        height: 6px;
-        background: var(--accent-gradient);
-        border-radius: 50%;
-        animation: float 2s ease-in-out infinite;
-    }
-
-    .particle-1 {
-        top: 20%;
-        left: 20%;
-        animation-delay: 0s;
-    }
-
-    .particle-2 {
-        top: 20%;
-        right: 20%;
-        animation-delay: 0.5s;
-    }
-
-    .particle-3 {
-        bottom: 20%;
-        left: 20%;
-        animation-delay: 1s;
-    }
-
-    .particle-4 {
-        bottom: 20%;
-        right: 20%;
-        animation-delay: 1.5s;
-    }
-
-    .welcome-title {
-        background: var(--primary-gradient);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        font-weight: 700;
-    }
-
-    .welcome-subtitle {
-        color: var(--text-secondary);
-        font-size: 1.1rem;
-    }
-
     /* 示例问题样式 */
     .sample-question {
         position: relative;
@@ -493,47 +379,6 @@
         transform: translateY(-2px);
         box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
         background: rgba(255, 255, 255, 0.3);
-    }
-
-    .question-icon {
-        width: 40px;
-        height: 40px;
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 1.1rem;
-    }
-
-    .lightbulb-question .question-icon {
-        background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-    }
-
-    .graduation-question .question-icon {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    }
-
-    .tasks-question .question-icon {
-        background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-    }
-
-    .sample-question span {
-        flex: 1;
-        color: var(--text-primary);
-        font-weight: 500;
-    }
-
-    .question-arrow {
-        opacity: 0;
-        transform: translateX(-10px);
-        transition: all 0.3s ease;
-        color: var(--text-secondary);
-    }
-
-    .sample-question:hover .question-arrow {
-        opacity: 1;
-        transform: translateX(0);
     }
 
     /* 输入框样式 */
@@ -591,66 +436,6 @@
 
     .typing-indicator span:nth-child(3) {
         animation-delay: 0.4s;
-    }
-
-    /* 动画 */
-    @keyframes pulse {
-
-        0%,
-        100% {
-            opacity: 0.5;
-            transform: scale(1);
-        }
-
-        50% {
-            opacity: 0.8;
-            transform: scale(1.05);
-        }
-    }
-
-    @keyframes rotate {
-        from {
-            transform: rotate(0deg);
-        }
-
-        to {
-            transform: rotate(360deg);
-        }
-    }
-
-    @keyframes float {
-
-        0%,
-        100% {
-            transform: translateY(0px) scale(1);
-            opacity: 0.7;
-        }
-
-        50% {
-            transform: translateY(-10px) scale(1.1);
-            opacity: 1;
-        }
-    }
-
-    @keyframes typing {
-
-        0%,
-        100% {
-            transform: translateY(0);
-            opacity: 0.7;
-        }
-
-        50% {
-            transform: translateY(-8px);
-            opacity: 1;
-        }
-    }
-
-    @keyframes ripple {
-        to {
-            transform: scale(4);
-            opacity: 0;
-        }
     }
 
     /* 滚动条样式 */
@@ -724,7 +509,16 @@
                 const chatItem = document.createElement('div');
                 chatItem.className = 'chat-history-item active';
                 chatItem.dataset.chatId = data.id;
-                chatItem.innerHTML = `<i class="fas fa-comment-dots me-2"></i>${data.title}`;
+                chatItem.innerHTML = `
+    <div class="chat-item-content">
+        <i class="fas fa-comment-dots me-2"></i>
+        <span class="chat-title">${data.title}</span>
+    </div>
+    <div class="chat-item-actions">
+        <i class="fas fa-chevron-right"></i>
+    </div>
+`;
+
                 document.getElementById('chat-history').prepend(chatItem);
 
                 // 更新当前聊天ID
@@ -752,15 +546,15 @@
                                     <div class="d-grid gap-3">
                                         <button class="btn btn-light text-start sample-question">
                                             <i class="fas fa-lightbulb me-2" style="color: #ffc107;"></i>
-                                            如何制定一个有效的教学计划？
+                                            如何合理利用数字工具辅助学习？
                                         </button>
                                         <button class="btn btn-light text-start sample-question">
                                             <i class="fas fa-graduation-cap me-2" style="color: #20c997;"></i>
-                                            帮我分析学生的学习难点
+                                            帮我制定个性化的学习计划
                                         </button>
                                         <button class="btn btn-light text-start sample-question">
                                             <i class="fas fa-tasks me-2" style="color: #6f42c1;"></i>
-                                            生成一份课程测验题目
+                                            生成一份课程知识清单
                                         </button>
                                     </div>
                                 </div>
@@ -845,15 +639,15 @@
                                     <div class="d-grid gap-3">
                                         <button class="btn btn-light text-start sample-question">
                                             <i class="fas fa-lightbulb me-2" style="color: #ffc107;"></i>
-                                            如何制定一个有效的教学计划？
+                                            如何合理利用数字工具辅助学习？
                                         </button>
                                         <button class="btn btn-light text-start sample-question">
                                             <i class="fas fa-graduation-cap me-2" style="color: #20c997;"></i>
-                                            帮我分析学生的学习难点
+                                            帮我制定个性化的学习计划
                                         </button>
                                         <button class="btn btn-light text-start sample-question">
                                             <i class="fas fa-tasks me-2" style="color: #6f42c1;"></i>
-                                            生成一份课程测验题目
+                                            生成一份课程知识清单
                                         </button>
                                     </div>
                                 </div>
@@ -931,7 +725,16 @@
                 // 更新聊天标题
                 const chatItem = document.querySelector(`.chat-history-item[data-chat-id="${currentChatId}"]`);
                 if (chatItem && chatItem.innerText.includes('新会话')) {
-                    chatItem.innerHTML = `<i class="fas fa-comment-dots me-2"></i>${data.user_message.content.substring(0, 30)}${data.user_message.content.length > 30 ? '...' : ''}`;
+                    const titleText = data.user_message.content.substring(0, 30) + (data.user_message.content.length > 30 ? '...' : '');
+                    chatItem.innerHTML = `
+    <div class="chat-item-content">
+        <i class="fas fa-comment-dots me-2"></i>
+        <span class="chat-title">${titleText}</span>
+    </div>
+    <div class="chat-item-actions">
+        <i class="fas fa-chevron-right"></i>
+    </div>
+`;
                 }
             })
             .catch(error => {
@@ -1051,12 +854,17 @@
         }
 
         // 添加示例问题点击事件
-        document.querySelectorAll('.sample-question').forEach(button => {
-            button.addEventListener('click', function () {
-                const question = this.textContent.trim();
+        document.getElementById('chat-messages').addEventListener('click', function (e) {
+            if (e.target.closest('.sample-question')) {
+                const button = e.target.closest('.sample-question');
+                // 获取按钮文本，但要去除图标部分
+                const fullText = button.textContent.trim();
+                // 移除图标字符，只保留问题文本
+                const question = fullText.replace(/^\s*/, '').trim();
+
                 document.getElementById('message-input').value = question;
                 document.getElementById('chat-form').dispatchEvent(new Event('submit'));
-            });
+            }
         });
     });
 </script>
