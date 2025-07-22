@@ -40,6 +40,214 @@
         padding: 0.375rem 1rem;
         border-radius: 8px;
     }
+
+    /* AI 教学建议样式 */
+    .markdown-content h1 {
+        color: #4e54c8;
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid rgba(78, 84, 200, 0.1);
+    }
+
+    .markdown-content h2 {
+        color: #6f42c1;
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-top: 1.5rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .markdown-content h2::before {
+        content: '';
+        display: inline-block;
+        width: 4px;
+        height: 1em;
+        background: linear-gradient(to bottom, #4e54c8, #6f42c1);
+        border-radius: 2px;
+    }
+
+    .markdown-content p {
+        color: #495057;
+        line-height: 1.6;
+        margin-bottom: 1rem;
+    }
+
+    .markdown-content ul,
+    .markdown-content ol {
+        color: #495057;
+        padding-left: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .markdown-content li {
+        margin-bottom: 0.5rem;
+        line-height: 1.6;
+    }
+
+    .markdown-content strong {
+        color: #2b2d3e;
+        font-weight: 600;
+    }
+
+    .markdown-content em {
+        color: #6f42c1;
+        font-style: normal;
+        padding: 0.1em 0.3em;
+        background: rgba(111, 66, 193, 0.1);
+        border-radius: 4px;
+    }
+
+    .markdown-content blockquote {
+        border-left: 4px solid #4e54c8;
+        padding: 0.5rem 1rem;
+        margin: 1rem 0;
+        background: rgba(78, 84, 200, 0.05);
+        border-radius: 0 8px 8px 0;
+    }
+
+    .markdown-content blockquote p {
+        margin-bottom: 0;
+        color: #4e54c8;
+    }
+
+    /* 建议卡片样式 */
+    .suggestion-card {
+        background: rgba(255, 255, 255, 0.8);
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border: 1px solid rgba(78, 84, 200, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .suggestion-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(78, 84, 200, 0.1);
+    }
+
+    /* 标签样式 */
+    .tag {
+        display: inline-block;
+        padding: 0.25em 0.75em;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        margin: 0.25rem;
+        background: rgba(78, 84, 200, 0.1);
+        color: #4e54c8;
+    }
+
+    .tag-primary {
+        background: rgba(78, 84, 200, 0.1);
+        color: #4e54c8;
+    }
+
+    .tag-success {
+        background: rgba(25, 135, 84, 0.1);
+        color: #198754;
+    }
+
+    .tag-warning {
+        background: rgba(255, 193, 7, 0.1);
+        color: #ffc107;
+    }
+
+    /* AI 教学建议内容样式 */
+    #markdown-content .empty-state {
+        display: block;
+    }
+
+    #markdown-content.has-content .empty-state {
+        display: none;
+    }
+
+    #markdown-content a {
+        color: #0d47a1;
+        /* 深蓝色 */
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    #markdown-content a:hover {
+        color: #1565c0;
+        /* 悬停时稍微亮一点的蓝色 */
+        text-decoration: underline;
+    }
+
+    #markdown-content .ai-content h1,
+    #markdown-content .ai-content h2,
+    #markdown-content .ai-content h3 {
+        color: #0d47a1;
+        /* 深蓝色 */
+        margin-bottom: 1rem;
+    }
+
+    #markdown-content .ai-content ul,
+    #markdown-content .ai-content ol {
+        color: #495057;
+        padding-left: 2rem;
+        margin-bottom: 1.5rem;
+        list-style: disc;
+    }
+
+    #markdown-content .ai-content li {
+        margin-bottom: 0.75rem;
+        line-height: 1.6;
+    }
+
+    #markdown-content .ai-content p {
+        color: #495057;
+        line-height: 1.7;
+        margin-bottom: 1rem;
+    }
+
+    /* 强调文本样式 */
+    #markdown-content .ai-content strong,
+    #markdown-content .ai-content em {
+        color: #0d47a1;
+        /* 深蓝色 */
+        font-style: normal;
+        font-weight: 500;
+        padding: 0.1em 0.3em;
+        background: rgba(13, 71, 161, 0.1);
+        /* 深蓝色背景 */
+        border-radius: 3px;
+    }
+
+    /* 引用块样式 */
+    #markdown-content .ai-content blockquote {
+        margin: 1.5rem 0;
+        padding: 1rem 1.5rem;
+        background: rgba(13, 71, 161, 0.05);
+        /* 深蓝色背景 */
+        border-left: 4px solid #0d47a1;
+        /* 深蓝色边框 */
+        border-radius: 0 8px 8px 0;
+    }
+
+    #markdown-content .ai-content blockquote p {
+        margin-bottom: 0;
+        color: #0d47a1;
+        /* 深蓝色 */
+        font-weight: 500;
+    }
+
+    /* 标题前的装饰 */
+    #markdown-content .ai-content h2::before {
+        content: '';
+        display: inline-block;
+        width: 4px;
+        height: 1em;
+        background: linear-gradient(to bottom, #0d47a1, #1565c0);
+        /* 深蓝色渐变 */
+        border-radius: 2px;
+        margin-right: 0.5rem;
+        vertical-align: middle;
+    }
 </style>
 {% endblock %}
 
@@ -374,28 +582,25 @@
         </div>
     </div>
 </div>
-</div>
 
 <!-- AI 建议模块 -->
 <div class="row mb-4">
     <div class="col-12">
         <div class="card">
             <div class="card-header bg-transparent border-0">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div class="d-flex align-items-center">
-                        <div class="rounded-circle p-2 me-2" style="background: rgba(13, 202, 240, 0.1);">
-                            <i class="fas fa-robot" style="color: #0dcaf0;"></i>
-                        </div>
-                        <h5 class="mb-0">AI 教学建议</h5>
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle p-2 me-2" style="background: rgba(13, 202, 240, 0.1);">
+                        <i class="fas fa-robot" style="color: #0dcaf0;"></i>
                     </div>
-                    <button id="refresh-suggestions" class="btn btn-sm btn-primary"
+                    <h5 class="mb-0">AI 教学建议</h5>
+                    <button id="refresh-suggestions" class="btn btn-sm btn-primary ms-auto"
                         style="background: linear-gradient(135deg, #4e54c8 0%, #8f94fb 100%); border: none; box-shadow: 0 4px 15px rgba(78, 84, 200, 0.2);">
                         <i class="fas fa-sync-alt me-1"></i>刷新建议
                     </button>
                 </div>
             </div>
             <div class="card-body">
-                <div id="loading-suggestions" class="text-center py-5" style="display: none;">
+                <div id="loading-suggestions" class="text-center py-4" style="display: none;">
                     <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
                         style="width: 60px; height: 60px; background: rgba(13, 202, 240, 0.1);">
                         <div class="spinner-border" style="color: #0dcaf0;" role="status">
@@ -404,20 +609,19 @@
                     </div>
                     <p class="text-muted mb-0">正在加载 AI 教学建议...</p>
                 </div>
-                <div id="markdown-content" class="py-5">
-                    <div class="text-center">
+                <div id="markdown-content" class="py-4">
+                    <div class="text-center empty-state">
                         <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
                             style="width: 60px; height: 60px; background: rgba(13, 202, 240, 0.1);">
                             <i class="fas fa-robot fa-lg" style="color: #0dcaf0;"></i>
                         </div>
-                        <p class="text-muted mb-0">暂无 AI 教学建议，请点击上方按钮获取</p>
+                        <p class="text-muted mb-0">暂无 AI 教学建议，请点击右上角按钮获取</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
 {% endblock %}
 
 {% block extra_js %}
@@ -511,8 +715,33 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        markdownContent.innerHTML = marked.marked(data.teaching_suggestions);
+                        // 配置 marked 选项
+                        marked.setOptions({
+                            breaks: true,
+                            gfm: true
+                        });
+
+                        // 自定义渲染器
+                        const renderer = new marked.Renderer();
+
+                        // 包装所有内容到 ai-content 类中
+                        const htmlContent = `<div class="ai-content">${marked.marked(data.teaching_suggestions, { renderer })}</div>`;
+                        markdownContent.innerHTML = htmlContent;
+                        markdownContent.classList.add('has-content');
+
+                        // 添加动画效果
+                        const elements = markdownContent.querySelectorAll('.ai-content > *');
+                        elements.forEach((element, index) => {
+                            element.style.opacity = '0';
+                            element.style.transform = 'translateY(20px)';
+                            element.style.transition = 'all 0.3s ease';
+                            setTimeout(() => {
+                                element.style.opacity = '1';
+                                element.style.transform = 'translateY(0)';
+                            }, index * 100);
+                        });
                     } else {
+                        markdownContent.classList.remove('has-content');
                         markdownContent.innerHTML = `
                         <div class="alert" style="background: rgba(220, 53, 69, 0.1); border: none;">
                             <div class="d-flex align-items-center">
@@ -527,6 +756,7 @@
                 })
                 .catch(error => {
                     console.error('获取教学建议失败:', error);
+                    markdownContent.classList.remove('has-content');
                     markdownContent.innerHTML = `
                     <div class="alert" style="background: rgba(220, 53, 69, 0.1); border: none;">
                         <div class="d-flex align-items-center">
@@ -544,45 +774,60 @@
                     markdownContent.style.display = 'block';
                 });
         });
-    });
 
-    // 更新知识点掌握度函数
-    function updateKnowledgeMastery() {
-        const courseId = parseInt('{{ course.id }}', 10);
-        const updateProgress = document.getElementById('updateProgress');
-        const updateResult = document.getElementById('updateResult');
-        const resultMessage = document.getElementById('resultMessage');
+        // 更新知识点掌握度函数
+        function updateKnowledgeMastery() {
+            const courseId = parseInt('{{ course.id }}', 10);
+            const updateProgress = document.getElementById('updateProgress');
+            const updateResult = document.getElementById('updateResult');
+            const resultMessage = document.getElementById('resultMessage');
 
-        updateProgress.style.display = 'block';
-        updateResult.style.display = 'none';
+            updateProgress.style.display = 'block';
+            updateResult.style.display = 'none';
 
-        fetch(`/analytics/course/${courseId}/update_mastery`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        })
-            .then(response => response.json())
-            .then(data => {
-                updateProgress.style.display = 'none';
-                updateResult.style.display = 'block';
+            fetch(`/analytics/course/${courseId}/update_mastery`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    updateProgress.style.display = 'none';
+                    updateResult.style.display = 'block';
 
-                if (data.success) {
-                    updateResult.className = 'alert';
-                    updateResult.style.background = 'rgba(25, 135, 84, 0.1)';
-                    updateResult.style.border = 'none';
-                    resultMessage.innerHTML = `
-                <div class="d-flex align-items-center">
-                    <div class="rounded-circle p-2 me-2" style="background: rgba(25, 135, 84, 0.2);">
-                        <i class="fas fa-check" style="color: #198754;"></i>
+                    if (data.success) {
+                        updateResult.className = 'alert';
+                        updateResult.style.background = 'rgba(25, 135, 84, 0.1)';
+                        updateResult.style.border = 'none';
+                        resultMessage.innerHTML = `
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle p-2 me-2" style="background: rgba(25, 135, 84, 0.2);">
+                            <i class="fas fa-check" style="color: #198754;"></i>
+                        </div>
+                        <span class="text-success">${data.message}</span>
                     </div>
-                    <span class="text-success">${data.message}</span>
-                </div>
-            `;
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 3000);
-                } else {
+                `;
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 3000);
+                    } else {
+                        updateResult.className = 'alert';
+                        updateResult.style.background = 'rgba(220, 53, 69, 0.1)';
+                        updateResult.style.border = 'none';
+                        resultMessage.innerHTML = `
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle p-2 me-2" style="background: rgba(220, 53, 69, 0.2);">
+                            <i class="fas fa-times" style="color: #dc3545;"></i>
+                        </div>
+                        <span class="text-danger">${data.message}</span>
+                    </div>
+                `;
+                    }
+                })
+                .catch(error => {
+                    updateProgress.style.display = 'none';
+                    updateResult.style.display = 'block';
                     updateResult.className = 'alert';
                     updateResult.style.background = 'rgba(220, 53, 69, 0.1)';
                     updateResult.style.border = 'none';
@@ -591,33 +836,18 @@
                     <div class="rounded-circle p-2 me-2" style="background: rgba(220, 53, 69, 0.2);">
                         <i class="fas fa-times" style="color: #dc3545;"></i>
                     </div>
-                    <span class="text-danger">${data.message}</span>
+                    <span class="text-danger">更新失败，请稍后重试。错误信息：${error.message}</span>
                 </div>
             `;
-                }
-            })
-            .catch(error => {
-                updateProgress.style.display = 'none';
-                updateResult.style.display = 'block';
-                updateResult.className = 'alert';
-                updateResult.style.background = 'rgba(220, 53, 69, 0.1)';
-                updateResult.style.border = 'none';
-                resultMessage.innerHTML = `
-            <div class="d-flex align-items-center">
-                <div class="rounded-circle p-2 me-2" style="background: rgba(220, 53, 69, 0.2);">
-                    <i class="fas fa-times" style="color: #dc3545;"></i>
-                </div>
-                <span class="text-danger">更新失败，请稍后重试。错误信息：${error.message}</span>
-            </div>
-        `;
-            });
-    }
-
-    // 课程跳转函数
-    function redirectToCourse(url) {
-        if (url) {
-            window.location.href = url;
+                });
         }
-    }
+
+        // 课程跳转函数
+        function redirectToCourse(url) {
+            if (url) {
+                window.location.href = url;
+            }
+        }
+    });
 </script>
 {% endblock %}

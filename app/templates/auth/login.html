@@ -200,18 +200,55 @@
         position: relative;
     }
 
+    .password-input-group .form-control {
+        width: 100%;
+        padding-right: 3rem;
+    }
+
+    .password-input-group .form-control::-ms-reveal,
+    .password-input-group .form-control::-ms-clear {
+        display: none;
+    }
+
+    .password-input-group .form-control::-webkit-credentials-auto-fill-button {
+        visibility: hidden;
+        position: absolute;
+        right: 0;
+    }
+
+    .password-input-group .form-control::-webkit-contacts-auto-fill-button {
+        visibility: hidden;
+        position: absolute;
+        right: 0;
+    }
+
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover,
+    input:-webkit-autofill:focus,
+    input:-webkit-autofill:active {
+        -webkit-box-shadow: 0 0 0 30px white inset !important;
+    }
+
+    /* 确保自定义的密码切换按钮始终可见 */
     .toggle-password {
         position: absolute;
-        right: 1.25rem;
+        right: 1rem;
         top: 50%;
         transform: translateY(-50%);
         background: none;
         border: none;
         color: var(--text-muted);
         cursor: pointer;
-        padding: 0.5rem;
+        padding: 0.25rem;
         font-size: 1.1rem;
         transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        height: 2rem;
+        outline: none;
+        z-index: 10;
     }
 
     .toggle-password:hover {

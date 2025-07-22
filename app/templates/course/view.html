@@ -531,22 +531,27 @@
                 {% if wrong_questions %}
                 <div class="accordion" id="wrongQuestionsAccordion">
                     {% for assignment_data in wrong_questions %}
-                    <div class="accordion-item border-0 mb-2">
-                        <h2 class="accordion-header">
-                            <button class="accordion-button collapsed bg-transparent" type="button"
-                                data-bs-toggle="collapse" data-bs-target="#collapse{{ assignment_data.assignment.id }}">
-                                <div class="d-flex align-items-center w-100">
-                                    <div class="me-auto">{{ assignment_data.assignment.title }}</div>
+                    <div class="card mb-3">
+                        <div class="card-header bg-white border-0 py-3">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center">
+                                    <h6 class="mb-0" style="color: #1e3a8a; font-weight: bold;">{{
+                                        assignment_data.assignment.title }}</h6>
                                     <span class="badge rounded-pill ms-2"
                                         style="background: rgba(220, 53, 69, 0.1); color: #dc3545;">
                                         {{ assignment_data.questions|length }} 题
                                     </span>
                                 </div>
-                            </button>
-                        </h2>
-                        <div id="collapse{{ assignment_data.assignment.id }}" class="accordion-collapse collapse"
-                            data-bs-parent="#wrongQuestionsAccordion">
-                            <div class="accordion-body p-0">
+                                <button class="btn btn-link p-0 text-decoration-none" type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#collapse{{ assignment_data.assignment.id }}">
+                                    <i class="fas fa-angle-down fs-5"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="collapse" id="collapse{{ assignment_data.assignment.id }}">
+                            <div class="card-body pt-0">
+                                <!-- 展开内容 -->
                                 <div class="list-group list-group-flush">
                                     {% for question in assignment_data.questions %}
                                     <div class="list-group-item border-0 py-3">
