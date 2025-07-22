@@ -532,13 +532,14 @@
                 <div class="accordion" id="wrongQuestionsAccordion">
                     {% for assignment_data in wrong_questions %}
                     <div class="card mb-3">
-                        <div class="card-header bg-white border-0 py-3">
+                        <div class="card-header border-0 py-3"
+                            style="background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%); box-shadow: 0 4px 12px rgba(30, 58, 138, 0.15), 0 2px 6px rgba(0, 0, 0, 0.08); border-radius: 8px 8px 0 0; position: relative; z-index: 1;">
                             <div class="d-flex align-items-center justify-content-between">
                                 <div class="d-flex align-items-center">
                                     <h6 class="mb-0" style="color: #1e3a8a; font-weight: bold;">{{
                                         assignment_data.assignment.title }}</h6>
                                     <span class="badge rounded-pill ms-2"
-                                        style="background: rgba(220, 53, 69, 0.1); color: #dc3545;">
+                                        style="background: rgba(220, 53, 69, 0.1); color: #dc3545; box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2);">
                                         {{ assignment_data.questions|length }} 题
                                     </span>
                                 </div>
@@ -550,11 +551,11 @@
                             </div>
                         </div>
                         <div class="collapse" id="collapse{{ assignment_data.assignment.id }}">
-                            <div class="card-body pt-0">
+                            <div class="card-body pt-0" style="background-color: #fafbff; border-radius: 0 0 8px 8px;">
                                 <!-- 展开内容 -->
                                 <div class="list-group list-group-flush">
                                     {% for question in assignment_data.questions %}
-                                    <div class="list-group-item border-0 py-3">
+                                    <div class="list-group-item border-0 py-3" style="background-color: transparent;">
                                         <div class="d-flex justify-content-between align-items-center mb-2">
                                             <h6 class="mb-0">{{ question.question_name }}</h6>
                                             <span class="badge rounded-pill"

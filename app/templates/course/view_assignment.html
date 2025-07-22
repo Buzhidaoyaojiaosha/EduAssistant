@@ -284,6 +284,160 @@
 
 
     <div class="col-md-4">
+        {% if not is_teacher and not is_admin %}
+        <div class="card mb-4 shadow-lg border-0 tips-card">
+            <div class="card-header position-relative overflow-hidden"
+                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <div class="position-absolute top-0 end-0 opacity-10">
+                    <i class="fas fa-star fa-4x"></i>
+                </div>
+                <div class="d-flex align-items-center position-relative">
+                    <div class="tips-icon-wrapper me-3">
+                        <i class="fas fa-lightbulb fa-lg"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-1 fw-600">💡 温馨提示</h5>
+                        <small class="opacity-90" style="font-size: 13px;">助您顺利完成作业</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body p-4" style="background: #fafbfc;">
+                <!-- 主要提示 -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <div class="tip-item h-100">
+                            <div class="tip-content">
+                                <div class="tip-number">1</div>
+                                <div class="tip-icon">📋</div>
+                                <div class="tip-text">
+                                    <h6 class="tip-title">仔细审题</h6>
+                                    <p class="tip-desc">仔细阅读题目要求，确保理解每个问题的意图和评分标准</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="tip-item h-100">
+                            <div class="tip-content tip-green">
+                                <div class="tip-number">2</div>
+                                <div class="tip-icon">💻</div>
+                                <div class="tip-text">
+                                    <h6 class="tip-title">算法设计</h6>
+                                    <p class="tip-desc">编程题请先设计算法思路，画出流程图再编写代码</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="tip-item h-100">
+                            <div class="tip-content tip-orange">
+                                <div class="tip-number">3</div>
+                                <div class="tip-icon">🎯</div>
+                                <div class="tip-text">
+                                    <h6 class="tip-title">概念辨析</h6>
+                                    <p class="tip-desc">选择题注意区分相似概念，仔细分析选项差异</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="tip-item h-100">
+                            <div class="tip-content tip-purple">
+                                <div class="tip-number">4</div>
+                                <div class="tip-icon">⏰</div>
+                                <div class="tip-text">
+                                    <h6 class="tip-title">时间管理</h6>
+                                    <p class="tip-desc">合理分配时间，预留检查时间</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 快捷提醒 -->
+                <div class="row g-2 mb-4">
+                    <div class="col-md-4">
+                        <div class="quick-reminder-item">
+                            <i class="fas fa-save"></i>
+                            <span>定期保存答案</span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="quick-reminder-item">
+                            <i class="fas fa-code"></i>
+                            <span>代码规范书写</span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="quick-reminder-item">
+                            <i class="fas fa-spell-check"></i>
+                            <span>检查拼写错误</span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="quick-reminder-item">
+                            <i class="fas fa-check-circle"></i>
+                            <span>验算计算结果</span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="quick-reminder-item">
+                            <i class="fas fa-comment-alt"></i>
+                            <span>添加必要注释</span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="quick-reminder-item">
+                            <i class="fas fa-tasks"></i>
+                            <span>逐题完成检查</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- 截止时间提醒 -->
+                <div class="deadline-alert mb-3">
+                    <div class="deadline-content">
+                        <div class="deadline-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="deadline-text">
+                            <h6 class="deadline-title">截止时间提醒</h6>
+                            <p class="deadline-date">📅 {{ assignment.due_date.strftime('%Y年%m月%d日 %H:%M') }}</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- 最终检查提醒 -->
+                <div class="final-reminder">
+                    <div class="reminder-header">
+                        <i class="fas fa-shield-alt me-2"></i>
+                        <strong>提交前务必检查</strong>
+                    </div>
+                    <div class="checklist">
+                        <div class="check-item">✅ 所有题目已完成</div>
+                        <div class="check-item">✅ 答案格式正确</div>
+                        <div class="check-item">✅ 计算结果准确</div>
+                    </div>
+                </div>
+                <!-- 祝福语 -->
+                <div class="blessing-section">
+                    <div class="blessing-content">
+                        <span class="blessing-emoji">🌟</span>
+                        <span class="blessing-text">祝您答题顺利，取得优异成绩！</span>
+                        <span class="blessing-emoji">🎯</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% endif %}
         {% if is_teacher %}
         <!-- 作业管理 -->
         <div class="card mb-4">
@@ -847,6 +1001,279 @@
 
     .action-group:nth-child(3) {
         animation-delay: 0.2s;
+    }
+
+    /* 字体优化 */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+    .tips-card {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        border-radius: 16px;
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    .tips-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 40px rgba(102, 126, 234, 0.15) !important;
+    }
+
+    /* 头部样式 */
+    .tips-icon-wrapper {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        padding: 12px;
+        backdrop-filter: blur(10px);
+    }
+
+    .fw-600 {
+        font-weight: 600;
+    }
+
+    /* 主要提示卡片 */
+    .tip-item {
+        height: 100%;
+    }
+
+    .tip-content {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        height: 100%;
+        position: relative;
+        border: 1px solid #e8ecef;
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .tip-content:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.1);
+        border-color: #667eea;
+    }
+
+    .tip-content.tip-green:hover {
+        border-color: #10b981;
+    }
+
+    .tip-content.tip-orange:hover {
+        border-color: #f59e0b;
+    }
+
+    .tip-content.tip-purple:hover {
+        border-color: #8b5cf6;
+    }
+
+    .tip-number {
+        position: absolute;
+        top: -8px;
+        left: -8px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .tip-green .tip-number {
+        background: linear-gradient(135deg, #10b981, #059669);
+    }
+
+    .tip-orange .tip-number {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+    }
+
+    .tip-purple .tip-number {
+        background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    }
+
+    .tip-icon {
+        font-size: 24px;
+        margin-bottom: 12px;
+        text-align: center;
+    }
+
+    .tip-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 8px;
+    }
+
+    .tip-desc {
+        font-size: 13px;
+        color: #6b7280;
+        line-height: 1.5;
+        margin: 0;
+    }
+
+    /* 快捷提醒样式 */
+    .quick-reminder-item {
+        display: flex;
+        align-items: center;
+        padding: 12px 16px;
+        background: white;
+        border: 1px solid #e8ecef;
+        border-radius: 10px;
+        transition: all 0.2s ease;
+        font-size: 13px;
+        font-weight: 500;
+    }
+
+    .quick-reminder-item:hover {
+        background: #f8fafc;
+        border-color: #667eea;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+    }
+
+    .quick-reminder-item i {
+        color: #667eea;
+        margin-right: 8px;
+        font-size: 14px;
+        width: 16px;
+        text-align: center;
+    }
+
+    /* 截止时间提醒 */
+    .deadline-alert {
+        background: linear-gradient(135deg, #fef3c7, #fde68a);
+        border-radius: 12px;
+        padding: 16px;
+        border: 1px solid #f59e0b;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .deadline-alert::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        animation: shimmer 3s infinite;
+    }
+
+    @keyframes shimmer {
+        0% {
+            left: -100%;
+        }
+
+        100% {
+            left: 100%;
+        }
+    }
+
+    .deadline-content {
+        display: flex;
+        align-items: center;
+    }
+
+    .deadline-icon {
+        background: #f59e0b;
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 16px;
+        font-size: 16px;
+    }
+
+    .deadline-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #92400e;
+        margin-bottom: 4px;
+    }
+
+    .deadline-date {
+        font-size: 13px;
+        color: #b45309;
+        margin: 0;
+    }
+
+    /* 最终检查提醒 */
+    .final-reminder {
+        background: linear-gradient(135deg, #ddd6fe, #c4b5fd);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 16px;
+        border: 1px solid #8b5cf6;
+    }
+
+    .reminder-header {
+        font-size: 15px;
+        font-weight: 600;
+        color: #5b21b6;
+        margin-bottom: 12px;
+        text-align: center;
+    }
+
+    .checklist {
+        display: flex;
+        justify-content: space-around;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .check-item {
+        font-size: 12px;
+        color: #6d28d9;
+        font-weight: 500;
+    }
+
+    /* 祝福语 */
+    .blessing-section {
+        text-align: center;
+        padding: 12px;
+    }
+
+    .blessing-content {
+        background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+        padding: 12px 20px;
+        border-radius: 50px;
+        border: 1px solid #0ea5e9;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .blessing-emoji {
+        font-size: 16px;
+    }
+
+    .blessing-text {
+        font-size: 13px;
+        font-weight: 500;
+        color: #0c4a6e;
+    }
+
+    /* 响应式优化 */
+    @media (max-width: 768px) {
+        .quick-tips-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .checklist {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .tip-content {
+            padding: 16px;
+        }
     }
 </style>
 <!-- 初始化工具提示 -->
