@@ -144,6 +144,7 @@ def view(course_id):
 
     # 确认用户是课程的教师或学生
     is_teacher = course.teacher_id == user_id
+    is_student = False
     
     if not is_teacher:
         student_courses = CourseService.get_courses_by_student(user_id)
