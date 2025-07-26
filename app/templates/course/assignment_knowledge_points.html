@@ -80,7 +80,7 @@
                                             {{ kp.name }}
                                         </div>
                                     </td>
-                                    <td>{{ kp.description|truncate(50) }}</td>
+                                    <td>{{ kp.description|default('无描述', true)|truncate(50) }}</td>
                                     <td>
                                         {% if kp.parent %}
                                         <span class="text-primary">{{ kp.parent.name }}</span>

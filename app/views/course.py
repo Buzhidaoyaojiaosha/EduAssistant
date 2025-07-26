@@ -305,7 +305,7 @@ def create_assignment(course_id):
         assigned_count = AssignmentService.assign_to_students(assignment.id)
         
         flash(f'作业已创建并分配给{assigned_count}名学生。', 'success')
-        return redirect(url_for('course.view', course_id=course_id))
+        return redirect(url_for('course.view_assignment', assignment_id=assignment.id))
     
     return render_template('course/create_assignment.html', course=course)
 
@@ -1074,7 +1074,7 @@ def assignment_knowledge_points(assignment_id):
     
     # 获取课程所有知识点
     course_knowledge_points = KnowledgePointService.get_course_knowledge_points(course_id)
-    
+    course_knowledge_points = [kp for kp in course_knowledge_points if kp is not None]  # 过滤掉None
     # 获取作业已关联的知识点
     assignment_knowledge_points = KnowledgePointService.get_assignment_knowledge_points(assignment_id)
     
