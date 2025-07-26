@@ -1134,23 +1134,23 @@ def add_question(assignment_id):
             # 更新作业总分
             AssignmentService.update_assignment_total_points(assignment_id)
             
-            # 添加成功后才生成相似题目
-            try:
-                # 调用生成相似题目的函数
-                generated_questions = AssignmentService.generate_similar_questions_with_ai(
-                    original_question=question,
-                    assignment=assignment,
-                    num_questions=3
-                )
+            # # 添加成功后才生成相似题目
+            # try:
+            #     # 调用生成相似题目的函数
+            #     generated_questions = AssignmentService.generate_similar_questions_with_ai(
+            #         original_question=question,
+            #         assignment=assignment,
+            #         num_questions=3
+            #     )
                 
-                if generated_questions:
-                    print(f'题目添加成功，并已生成{len(generated_questions)}道相似题目，请到AI题目管理中审核', 'success')
-                else:
-                    print('题目添加成功，但生成相似题目失败', 'warning')
-            except Exception as ai_error:
-                logger.error(f"生成相似题目失败: {str(ai_error)}")
-                print('题目添加成功，但生成相似题目时出错', 'warning')
-            
+            #     if generated_questions:
+            #         print(f'题目添加成功，并已生成{len(generated_questions)}道相似题目，请到AI题目管理中审核', 'success')
+            #     else:
+            #         print('题目添加成功，但生成相似题目失败', 'warning')
+            # except Exception as ai_error:
+            #     logger.error(f"生成相似题目失败: {str(ai_error)}")
+            #     print('题目添加成功，但生成相似题目时出错', 'warning')
+            print(f'题目添加成功，ID: {question.question_id}', 'success')
             return redirect(url_for('course.view_assignment', assignment_id=assignment_id))
         
         except Exception as e:
