@@ -49,10 +49,10 @@ def initialize_extensions():
                                                                   embedding_function=embedding_fn)
 
     # initialize graph
-    global graph
-    with GraphDatabase.driver(
-            os.getenv("NEO4J_URI"),
-            auth=(os.getenv("NEO4J_USERNAME"), os.getenv("NEO4J_PASSWORD"))) as graph:
-            graph.verify_connectivity()
-            print("Connected to Neo4j successfully!")
+    # global graph
+    # with GraphDatabase.driver(
+    #         os.getenv("NEO4J_URI"),
+    #         auth=(os.getenv("NEO4J_USERNAME"), os.getenv("NEO4J_PASSWORD"))) as graph:
+    #         graph.verify_connectivity()
+    #         print("Connected to Neo4j successfully!")
 

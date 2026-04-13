@@ -4,6 +4,7 @@ from typing import Dict
 from typing import Any 
 import json 
 import yaml
+import os
 
 
 def read_file(path: str) -> Optional[str]:
@@ -98,6 +99,9 @@ def write_to_file(path: str, content: str) -> None:
         Exception: For any other exceptions encountered during file writing.
     """
     try:
+        directory = os.path.dirname(path)
+        if directory:
+            os.makedirs(directory, exist_ok=True)
         with open(path, 'a', encoding='utf-8') as file:
             file.write(content)
         logger.info(f"Content written to file: {path}")
