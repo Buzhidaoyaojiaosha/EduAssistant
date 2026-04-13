@@ -1,0 +1,196 @@
+// ========== 教师图表 ==========
+const teacherNames = [];
+const teacherDailyData = [];
+const teacherWeeklyData = [];
+{% for teacher in teachers %}
+teacherNames.push("{{ teacher.name }}");
+{% if teacher.id in course_activity %}
+teacherDailyData.push({{ course_activity[teacher.id].daily }});
+teacherWeeklyData.push({{ course_activity[teacher.id].weekly }});
+{% else %}
+teacherDailyData.push(0);
+teacherWeeklyData.push(0);
+{% endif %}
+{% endfor %}
+
+teacherDailyChart = new Chart(document.getElementById('teacher-daily-chart').getContext('2d'), {
+type: 'bar',
+data: {
+labels: teacherNames,
+datasets: [{
+label: '教师日活跃度',
+data: teacherDailyData,
+backgroundColor: 'rgba(255, 99, 132, 0.6)',
+borderColor: 'rgba(255, 99, 132, 1)',
+borderWidth: 1
+}]
+},
+options: commonOptions('教师')
+});
+
+teacherWeeklyChart = new Chart(document.getElementById('teacher-weekly-chart').getContext('2d'), {
+type: 'bar',
+data: {
+labels: teacherNames,
+datasets: [{
+label: '教师周活跃度',
+data: teacherWeeklyData,
+backgroundColor: 'rgba(255, 205, 86, 0.6)',
+borderColor: 'rgba(255, 205, 86, 1)',
+borderWidth: 1
+}]
+},
+options: commonOptions('教师')
+});
+
+
+切换角色
+function switchRole(role) {
+currentRole = role;
+updateChartVisibility();
+
+document.getElementById('student-tab')?.classList.toggle('active', role === 'student');
+document.getElementById('teacher-tab')?.classList.toggle('active', role === 'teacher');
+}
+
+
+
+script
+{% block extra_js %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+<script>
+  let studentDailyChart, studentWeeklyChart;
+  let teacherDailyChart, teacherWeeklyChart;
+
+  let currentRole = 'student';  // 'student' or 'teacher'
+  let currentType = 'daily';    // 'daily' or 'weekly'
+
+  document.addEventListener('DOMContentLoaded', function () {
+    // 统计总活动数（以周活跃度为例）
+    let totalActivities = 0;
+    {% for student in students %}
+    totalActivities += {{ course_activity[student.id].weekly }
+  };
+  {% endfor %}
+  const totalDom = document.getElementById('totalActivityCount');
+  if (totalDom) totalDom.innerText = totalActivities;
+
+  // ========== 学生图表 ==========
+  const studentNames = [];
+  const studentDailyData = [];
+  const studentWeeklyData = [];
+  {% for student in students %}
+  studentNames.push("{{ student.name }}");
+  studentDailyData.push({{ course_activity[student.id].daily }});
+  studentWeeklyData.push({{ course_activity[student.id].weekly }});
+  {% endfor %}
+
+  studentDailyChart = new Chart(document.getElementById('student-daily-chart').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: studentNames,
+      datasets: [{
+        label: '学生日活跃度',
+        data: studentDailyData,
+        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+        borderColor: 'rgba(54, 162, 235, 1)',
+        borderWidth: 1
+      }]
+    },
+    options: commonOptions('学生')
+  });
+
+  studentWeeklyChart = new Chart(document.getElementById('student-weekly-chart').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: studentNames,
+      datasets: [{
+        label: '学生周活跃度',
+        data: studentWeeklyData,
+        backgroundColor: 'rgba(75, 192, 192, 0.6)',
+        borderColor: 'rgba(75, 192, 192, 1)',
+        borderWidth: 1
+      }]
+    },
+    options: commonOptions('学生')
+  });
+
+  // 教师图表（如有教师数据可在此补充）
+
+  updateChartVisibility();  // 显示初始图表
+    });
+
+  // 通用图表样式
+  function commonOptions(xLabel) {
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: {
+        duration: 1200,
+        easing: 'easeOutQuart'
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: '活动次数'
+          }
+        },
+        x: {
+          title: {
+            display: true,
+            text: xLabel
+          }
+        }
+      }
+    };
+  }
+
+  // 切换显示图表
+  function updateChartVisibility() {
+    const charts = ['student-daily', 'student-weekly', 'teacher-daily', 'teacher-weekly'];
+    charts.forEach(id => {
+      const el = document.getElementById(`${id}-chart`);
+      el.style.display = (id === `${currentRole}-${currentType}`) ? 'block' : 'none';
+    });
+  }
+
+  // 用户点击切换角色
+
+
+  // 用户点击切换时间粒度
+  function switchType(type) {
+    currentType = type;
+    updateChartVisibility();
+
+    document.getElementById('daily-btn')?.classList.toggle('active', type === 'daily');
+    document.getElementById('weekly-btn')?.classList.toggle('active', type === 'weekly');
+  }
+
+  function refreshDashboard() {
+    fetch("{{ url_for('admin.index') }}", {
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+      .then(response => response.text())
+      .then(html => {
+        document.open();
+        document.write(html);
+        document.close();
+      })
+      .catch(error => {
+        console.error('刷新失败:', error);
+        alert('刷新数据失败，请稍后再试');
+      });
+  }
+
+  // 自动刷新数据（每5分钟）
+  setTimeout(refreshDashboard, 300000);
+
+
+</script>
+
+{% endblock %}

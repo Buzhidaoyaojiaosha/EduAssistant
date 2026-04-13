@@ -1,0 +1,297 @@
+{% extends 'base.html' %}
+
+{% block title %}登录 - 启智引航{% endblock %}
+
+{% block body_class %}auth-page{% endblock %}
+
+{% block content %}
+<style>
+    /* ===== 页面整体容器 ===== */
+    .auth-split {
+        display: flex;
+        min-height: 100vh;
+        width: 100vw;
+        position: fixed;
+        top: 0;
+        left: 0;
+        background: var(--bg-main);
+        z-index: 1100;
+        /* 盖住导航栏以获得全屏沉浸感 */
+    }
+
+    /* ===== 左侧品牌面板 (移植 Landing 风格) ===== */
+    .auth-brand-panel {
+        flex: 1;
+        background: #154D31;
+        /* 深色底 */
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 4rem;
+        color: white;
+    }
+
+    .auth-brand-panel::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image: url("https://www.transparenttextures.com/patterns/stardust.png");
+        /* 胶片颗粒感 */
+        opacity: 0.15;
+        pointer-events: none;
+    }
+
+    /* 极光光效 */
+    .auth-glow {
+        position: absolute;
+        width: 600px;
+        height: 600px;
+        filter: blur(100px);
+        border-radius: 50%;
+        opacity: 0.4;
+    }
+
+    .glow-1 {
+        background: var(--primary);
+        top: -200px;
+        left: -100px;
+    }
+
+    .glow-2 {
+        background: var(--accent-gold);
+        bottom: -150px;
+        right: -50px;
+        opacity: 0.2;
+    }
+
+    .brand-content {
+        position: relative;
+        z-index: 2;
+    }
+
+    .brand-logo {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .brand-logo i {
+        width: 60px;
+        height: 60px;
+        background: white;
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 18px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .brand-slogan {
+        font-size: 2.2rem;
+        font-weight: 700;
+        line-height: 1.3;
+        opacity: 0.95;
+        margin-bottom: 1rem;
+        color: #1B120B;
+    }
+
+    .brand-desc {
+        font-size: 1.1rem;
+        opacity: 0.7;
+        max-width: 400px;
+    }
+
+    /* ===== 右侧表单面板 ===== */
+    .auth-form-panel {
+        flex: 1.2;
+        background: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem;
+        position: relative;
+    }
+
+    .form-box {
+        width: 100%;
+        max-width: 420px;
+    }
+
+    .form-header {
+        margin-bottom: 2.5rem;
+    }
+
+    .form-title {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--dark);
+        margin-bottom: 0.5rem;
+    }
+
+    .form-subtitle {
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+    }
+
+    .input-group-modern {
+        margin-bottom: 1.5rem;
+    }
+
+    .input-group-modern label {
+        display: block;
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: var(--text-primary);
+        margin-bottom: 8px;
+        margin-left: 4px;
+    }
+
+    .input-wrapper {
+        position: relative;
+    }
+
+    .input-wrapper i {
+        position: absolute;
+        left: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-secondary);
+        transition: color 0.3s;
+    }
+
+    .input-modern {
+        width: 100%;
+        padding: 14px 16px 14px 48px;
+        background: #F8FAF9;
+        border: 1px solid var(--primary-soft);
+        border-radius: 14px;
+        transition: all 0.3s;
+        font-size: 1rem;
+    }
+
+    .input-modern:focus {
+        background: white;
+        border-color: var(--primary);
+        outline: none;
+        box-shadow: 0 0 0 4px var(--primary-light);
+    }
+
+    .input-modern:focus+i {
+        color: var(--primary);
+    }
+
+    .btn-auth {
+        width: 100%;
+        padding: 14px;
+        border-radius: 14px;
+        font-weight: 700;
+        font-size: 1rem;
+        letter-spacing: 1px;
+        background: var(--primary);
+        color: white;
+        border: none;
+        box-shadow: 0 8px 24px rgba(37, 113, 74, 0.2);
+        transition: all 0.3s;
+        margin-top: 1rem;
+    }
+
+    .btn-auth:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 30px rgba(37, 113, 74, 0.3);
+        background: var(--dark);
+    }
+
+    .auth-footer {
+        margin-top: 2rem;
+        text-align: center;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+    }
+
+    .auth-footer a {
+        color: var(--primary);
+        font-weight: 700;
+        text-decoration: none;
+    }
+
+    .auth-footer a:hover {
+        text-decoration: underline;
+    }
+
+    /* 响应式 */
+    @media (max-width: 992px) {
+        .auth-brand-panel {
+            display: none;
+        }
+
+        .auth-split {
+            background: white;
+        }
+    }
+</style>
+
+<div class="auth-split">
+    <div class="auth-brand-panel">
+        <div class="auth-glow glow-1"></div>
+        <div class="auth-glow glow-2"></div>
+        <div class="brand-content">
+            <div class="brand-logo">
+                <i class="fas fa-leaf"></i>
+                <span>启智引航</span>
+            </div>
+            <h1 class="brand-slogan">探索知识的<br>无限边界</h1>
+            <p class="brand-desc">集成领先 AI Agent 技术，为您打造沉浸式、个性化的智慧学习旅程。</p>
+        </div>
+    </div>
+
+    <div class="auth-form-panel">
+        <div class="form-box">
+            <div class="form-header">
+                <h2 class="form-title">欢迎回来</h2>
+                <p class="form-subtitle">请输入您的凭据以访问控制台</p>
+            </div>
+
+            <form action="{{ url_for('auth.login') }}" method="POST">
+                <div class="input-group-modern">
+                    <label>用户名 / 邮箱</label>
+                    <div class="input-wrapper">
+                        <input type="text" name="username" class="input-modern" placeholder="请输入您的账号" required>
+                        <i class="fas fa-user"></i>
+                    </div>
+                </div>
+
+                <div class="input-group-modern">
+                    <label>访问密码</label>
+                    <div class="input-wrapper">
+                        <input type="password" name="password" id="password" class="input-modern" placeholder="••••••••"
+                            required>
+                        <i class="fas fa-lock"></i>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="remember">
+                        <label class="form-check-label text-secondary" style="font-size: 0.85rem;"
+                            for="remember">记住我</label>
+                    </div>
+                    <a href="#" class="auth-link"
+                        style="font-size: 0.85rem; color: var(--primary); text-decoration: none; font-weight: 600;">忘记密码?</a>
+                </div>
+
+                <button type="submit" class="btn-auth">立即进入系统</button>
+            </form>
+
+            <div class="auth-footer">
+                还没有账号? <a href="{{ url_for('auth.register') }}">点击免费注册</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

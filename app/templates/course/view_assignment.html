@@ -1,0 +1,1353 @@
+{% extends 'base.html' %}
+
+{% block head %}
+{{ super() }}
+<!-- 添加课程ID元数据 -->
+<meta name="course-id" content="{{ assignment.course.id }}">
+{% endblock %}
+
+{% block title %}{{ assignment.title }} - 启智引航{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <div class="d-flex align-items-center">
+            <div class="rounded-circle p-3 me-3" style="background: rgba(111, 66, 193, 0.1);">
+                <i class="fas fa-file-alt" style="color: #6f42c1;"></i>
+            </div>
+            <div>
+                <h2 class="text-primary mb-1">{{ assignment.title }}</h2>
+                <p class="text-muted mb-0">
+                    <i class="fas fa-book me-1"></i>{{ assignment.course.name }} ({{ assignment.course.code }})
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-auto">
+        <a href="{{ url_for('course.view', course_id=assignment.course.id) }}" class="btn btn-light">
+            <i class="fas fa-arrow-left me-1"></i>返回课程
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header bg-transparent border-0">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle p-2 me-2" style="background: rgba(111, 66, 193, 0.1);">
+                        <i class="fas fa-file-alt" style="color: #6f42c1;"></i>
+                    </div>
+                    <h5 class="mb-0">作业内容</h5>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- 显示关联知识点 -->
+                {% if knowledge_points %}
+                <div class="mb-4">
+                    <h6 class="text-muted mb-2">关联知识点</h6>
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for kp_item in knowledge_points %}
+                        <span class="badge rounded-pill" style="background: rgba(255, 193, 7, 0.1); color: #ffc107;"
+                            data-bs-toggle="tooltip" title="权重: {{ kp_item.weight }}">
+                            <i class="fas fa-lightbulb me-1"></i>{{ kp_item.knowledge_point.name }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <hr class="my-4">
+
+                <div class="row g-4 mb-4">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle p-2 me-2" style="background: rgba(32, 201, 151, 0.1);">
+                                <i class="fas fa-calendar-alt" style="color: #20c997;"></i>
+                            </div>
+                            <div>
+                                <h6 class="text-muted mb-1">截止日期</h6>
+                                <p class="mb-0">{{ assignment.due_date.strftime('%Y-%m-%d %H:%M') }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle p-2 me-2" style="background: rgba(253, 126, 20, 0.1);">
+                                <i class="fas fa-star" style="color: #fd7e14;"></i>
+                            </div>
+                            <div>
+                                <h6 class="text-muted mb-1">总分</h6>
+                                <p class="mb-0" id="total-points">{{ assignment.total_points }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 题目显示和答题区域 -->
+                {% if questions %}
+                {% if not is_teacher %}
+                <!-- 学生答题表单 -->
+                <form method="post" action="{{ url_for('course.submit_assignment', assignment_id=assignment.id) }}"
+                    id="assignmentForm">
+                    <!-- 添加CSRF保护或其他必要的隐藏字段 -->
+                    <input type="hidden" name="assignment_id" value="{{ assignment.id }}">
+                    {% endif %}
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="rounded-circle p-2 me-2" style="background: rgba(111, 66, 193, 0.1);">
+                                <i class="fas fa-question-circle" style="color: #6f42c1;"></i>
+                            </div>
+                            <h5 class="mb-0">作业题目</h5>
+                        </div>
+                        <div class="list-group">
+                            {% for question in questions %}
+                            <div class="list-group-item border-0 mb-3" style="background: rgba(111, 66, 193, 0.02);">
+                                <div class="d-flex w-100 justify-content-between align-items-center mb-3">
+                                    <h6 class="mb-0">{{ loop.index }}. {{ question.question_name }}</h6>
+                                    <div class="d-flex gap-2">
+                                        <span class="badge rounded-pill"
+                                            style="background: rgba(108, 117, 125, 0.1); color: #6c757d;">
+                                            <i class="fas fa-star-half-alt me-1"></i>{{ question.score }}分
+                                        </span>
+                                        <span class="badge rounded-pill"
+                                            style="background: rgba(111, 66, 193, 0.1); color: #6f42c1;">
+                                            <i class="fas fa-{{ 'list-ul' if question.status == 1 
+                                                               else 'check-square' if question.status == 2
+                                                               else 'pen' if question.status == 3
+                                                               else 'code' }} me-1"></i>
+                                            {{ '选择题' if question.status == 1
+                                            else '判断题' if question.status == 2
+                                            else '简答题' if question.status == 3
+                                            else '编程题' if question.status == 4
+                                            }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <!-- 题目内容 -->
+                                <div class="mt-2">
+                                    <div class="card bg-light mb-2">
+                                        <div class="card-body p-3">
+                                            {% if question.status == 1 %} <!-- 选择题 -->
+                                            <p class="mb-2">{{ question.context.split('\n')[0] }}</p>
+                                            {% if not is_teacher %}
+                                            <div class="options">
+                                                {% for option in question.context.split('\n')[1:] if option.strip() %}
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="radio"
+                                                        name="answer_{{ question.question_id }}"
+                                                        id="option_{{ question.question_id }}_{{ loop.index }}"
+                                                        value="{{ option[0] }}" required>
+                                                    <label class="form-check-label"
+                                                        for="option_{{ question.question_id }}_{{ loop.index }}">
+                                                        {{ option }}
+                                                    </label>
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+                                            {% else %}
+                                            <!-- 教师查看选项 -->
+                                            <div class="options">
+                                                {% for option in question.context.split('\n')[1:] if option.strip() %}
+                                                <div class="text-muted">{{ option }}</div>
+                                                {% endfor %}
+                                            </div>
+                                            {% endif %}
+                                            {% elif question.status == 2 %} <!-- 判断题 -->
+                                            <p class="mb-2">{{ question.context }}</p>
+                                            {% if not is_teacher %}
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio"
+                                                    name="answer_{{ question.question_id }}"
+                                                    id="true_{{ question.question_id }}" value="1" required>
+                                                <label class="form-check-label"
+                                                    for="true_{{ question.question_id }}">正确</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio"
+                                                    name="answer_{{ question.question_id }}"
+                                                    id="false_{{ question.question_id }}" value="0">
+                                                <label class="form-check-label"
+                                                    for="false_{{ question.question_id }}">错误</label>
+                                            </div>
+                                            {% endif %}
+                                            {% elif question.status == 4 %} <!-- 编程题 -->
+                                            <p class="mb-2">{{ question.context }}</p>
+                                            {% if not is_teacher %}
+                                            <textarea class="form-control" name="answer_{{ question.question_id }}"
+                                                rows="{{ 3 if question.status == 3 else 5 }}" placeholder="请输入您的答案..."
+                                                required></textarea>
+                                            {% endif %}
+                                            {% else %} <!-- 简答题 -->
+                                            <p class="mb-2">{{ question.context }}</p>
+                                            {% if not is_teacher %}
+                                            <textarea class="form-control" name="answer_{{ question.question_id }}"
+                                                rows="{{ 3 if question.status == 3 else 5 }}" placeholder="请输入您的答案..."
+                                                required></textarea>
+                                            {% endif %}
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {% if is_teacher %}
+                                <div class="mt-2">
+                                    <small class="text-muted">正确答案: {{ question.answer }}</small>
+                                    {% if question.question_id %}
+                                    <a href="{{ url_for('course.edit_question', question_id=question.question_id) }}"
+                                        class="btn btn-sm btn-outline-secondary ms-2">编辑</a>
+                                    <form method="post"
+                                        action="{{ url_for('course.delete_question', question_id=question.question_id) }}"
+                                        class="d-inline" onsubmit="return confirm('确定要删除这个题目吗？此操作不可恢复。');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger ms-1">删除</button>
+                                    </form>
+                                    <button class="btn btn-sm btn-outline-info ms-1 generate-similar-btn"
+                                        data-question-id="{{ question.question_id }}">
+                                        <i class="fas fa-robot me-1"></i>AI生成相似题目
+                                    </button>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    {% if not is_teacher and not is_admin %}
+                    <div class="d-grid mb-4">
+                        <button type="submit" class="btn btn-primary btn-lg">提交作业</button>
+                    </div>
+                </form>
+                {% endif %}
+                {% else %}
+                <p class="text-center py-4">该作业暂无题目</p>
+                {% endif %}
+
+                {% if is_teacher %}
+                <div class="mt-3">
+                    <a href="{{ url_for('course.add_question', assignment_id=assignment.id) }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>添加题目
+                    </a>
+                </div>
+                {% endif %}
+
+                {% if not is_teacher and not is_admin %}
+                <!-- 提交状态显示 -->
+                <div class="card border-light bg-light" style="border-radius: 12px;">
+                    <div class="card-body">
+                        <h5>提交状态</h5>
+                        {% if student_assignment %}
+                        {% if student_assignment.status == 2 %}
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle me-2"></i>您已完成此作业
+                            <p class="mb-0 mt-2"><strong>得分:</strong> {{ student_assignment.final_score or 0 }} / {{
+                                assignment.total_points }}</p>
+                            {% if feedback and feedback.comment %}
+                            <hr>
+                            <p class="mb-0"><strong>总体评语:</strong> {{ feedback.comment }}</p>
+                            {% endif %}
+                            <div class="mt-3">
+                                <a href="{{ url_for('course.view_submission', assignment_id=assignment.id, student_id=session['user_id']) }}"
+                                    class="btn btn-info btn-sm">
+                                    <i class="fas fa-eye me-1"></i>查看批改详情
+                                </a>
+                            </div>
+                        </div>
+                        {% elif student_assignment.status == 1 %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-clock me-2"></i>已提交，等待评分
+                            <p class="mb-0 mt-2"><strong>提交时间:</strong> {{
+                                student_assignment.work_time.strftime('%Y-%m-%d %H:%M') }}</p>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle me-2"></i>尚未提交
+                            {% if assignment.due_date < now %} <p class="mb-0 mt-2 text-danger"><strong>截止日期已过:</strong>
+                                {{ assignment.due_date.strftime('%Y-%m-%d %H:%M') }}</p>
+                                {% else %}
+                                <p class="mb-0 mt-2"><strong>截止日期:</strong> {{ assignment.due_date.strftime('%Y-%m-%d
+                                    %H:%M') }}</p>
+                                {% endif %}
+                        </div>
+                        {% endif %}
+                        {% else %}
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle me-2"></i>尚未提交
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+
+    <div class="col-md-4">
+        {% if not is_teacher and not is_admin %}
+        <div class="card mb-4 shadow-lg border-0 tips-card">
+            <div class="card-header position-relative overflow-hidden"
+                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <div class="position-absolute top-0 end-0 opacity-10">
+                    <i class="fas fa-star fa-4x"></i>
+                </div>
+                <div class="d-flex align-items-center position-relative">
+                    <div class="tips-icon-wrapper me-3">
+                        <i class="fas fa-lightbulb fa-lg"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-1 fw-600">💡 温馨提示</h5>
+                        <small class="opacity-90" style="font-size: 13px;">助您顺利完成作业</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body p-4" style="background: #fafbfc;">
+                <!-- 主要提示 -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <div class="tip-item h-100">
+                            <div class="tip-content">
+                                <div class="tip-number">1</div>
+                                <div class="tip-icon">📋</div>
+                                <div class="tip-text">
+                                    <h6 class="tip-title">仔细审题</h6>
+                                    <p class="tip-desc">仔细阅读题目要求，确保理解每个问题的意图和评分标准</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="tip-item h-100">
+                            <div class="tip-content tip-green">
+                                <div class="tip-number">2</div>
+                                <div class="tip-icon">💻</div>
+                                <div class="tip-text">
+                                    <h6 class="tip-title">算法设计</h6>
+                                    <p class="tip-desc">编程题请先设计算法思路，画出流程图再编写代码</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="tip-item h-100">
+                            <div class="tip-content tip-orange">
+                                <div class="tip-number">3</div>
+                                <div class="tip-icon">🎯</div>
+                                <div class="tip-text">
+                                    <h6 class="tip-title">概念辨析</h6>
+                                    <p class="tip-desc">选择题注意区分相似概念，仔细分析选项差异</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="tip-item h-100">
+                            <div class="tip-content tip-purple">
+                                <div class="tip-number">4</div>
+                                <div class="tip-icon">⏰</div>
+                                <div class="tip-text">
+                                    <h6 class="tip-title">时间管理</h6>
+                                    <p class="tip-desc">合理分配时间，预留检查时间</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 快捷提醒 -->
+                <div class="row g-2 mb-4">
+                    <div class="col-md-4">
+                        <div class="quick-reminder-item">
+                            <i class="fas fa-save"></i>
+                            <span>定期保存答案</span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="quick-reminder-item">
+                            <i class="fas fa-code"></i>
+                            <span>代码规范书写</span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="quick-reminder-item">
+                            <i class="fas fa-spell-check"></i>
+                            <span>检查拼写错误</span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="quick-reminder-item">
+                            <i class="fas fa-check-circle"></i>
+                            <span>验算计算结果</span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="quick-reminder-item">
+                            <i class="fas fa-comment-alt"></i>
+                            <span>添加必要注释</span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="quick-reminder-item">
+                            <i class="fas fa-tasks"></i>
+                            <span>逐题完成检查</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- 截止时间提醒 -->
+                <div class="deadline-alert mb-3">
+                    <div class="deadline-content">
+                        <div class="deadline-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="deadline-text">
+                            <h6 class="deadline-title">截止时间提醒</h6>
+                            <p class="deadline-date">📅 {{ assignment.due_date.strftime('%Y年%m月%d日 %H:%M') }}</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- 最终检查提醒 -->
+                <div class="final-reminder">
+                    <div class="reminder-header">
+                        <i class="fas fa-shield-alt me-2"></i>
+                        <strong>提交前务必检查</strong>
+                    </div>
+                    <div class="checklist">
+                        <div class="check-item">✅ 所有题目已完成</div>
+                        <div class="check-item">✅ 答案格式正确</div>
+                        <div class="check-item">✅ 计算结果准确</div>
+                    </div>
+                </div>
+                <!-- 祝福语 -->
+                <div class="blessing-section">
+                    <div class="blessing-content">
+                        <span class="blessing-emoji">🌟</span>
+                        <span class="blessing-text">祝您答题顺利，取得优异成绩！</span>
+                        <span class="blessing-emoji">🎯</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% endif %}
+        {% if is_teacher %}
+        <!-- 作业管理 -->
+        <div class="card mb-4">
+            <div class="card-header bg-transparent border-0">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle p-2 me-2" style="background: rgba(108, 117, 125, 0.1);">
+                        <i class="fas fa-tasks" style="color: #6c757d;"></i>
+                    </div>
+                    <h5 class="mb-0">作业管理</h5>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-3">
+                    <a href="{{ url_for('course.add_question', assignment_id=assignment.id) }}"
+                        class="btn btn-light text-start">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle p-2 me-3" style="background: rgba(111, 66, 193, 0.1);">
+                                <i class="fas fa-plus" style="color: #6f42c1;"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">添加题目</h6>
+                                <small class="text-muted">添加新的作业题目</small>
+                            </div>
+                        </div>
+                    </a>
+
+                    <button type="button" class="btn btn-light text-start" data-bs-toggle="modal"
+                        data-bs-target="#editAssignmentModal">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle p-2 me-3" style="background: rgba(32, 201, 151, 0.1);">
+                                <i class="fas fa-edit" style="color: #20c997;"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">编辑作业</h6>
+                                <small class="text-muted">修改作业信息</small>
+                            </div>
+                        </div>
+                    </button>
+
+                    <a href="{{ url_for('course.assignment_knowledge_points', assignment_id=assignment.id) }}"
+                        class="btn btn-light text-start">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle p-2 me-3" style="background: rgba(255, 193, 7, 0.1);">
+                                <i class="fas fa-lightbulb" style="color: #ffc107;"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">关联知识点</h6>
+                                <small class="text-muted">管理作业知识点</small>
+                            </div>
+                        </div>
+                    </a>
+
+                    <a href="{{ url_for('course.export_assignment', assignment_id=assignment.id, course_id=assignment.course.id) }}"
+                        class="btn btn-light text-start">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle p-2 me-3" style="background: rgba(23, 162, 184, 0.1);">
+                                <i class="fas fa-file-export" style="color: #17a2b8;"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">导出作业</h6>
+                                <small class="text-muted">导出作业内容和提交情况</small>
+                            </div>
+                        </div>
+                    </a>
+
+                    <button type="button" class="btn btn-light text-start text-danger" data-bs-toggle="modal"
+                        data-bs-target="#deleteAssignmentModal">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle p-2 me-3" style="background: rgba(220, 53, 69, 0.1);">
+                                <i class="fas fa-trash-alt" style="color: #dc3545;"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">删除作业</h6>
+                                <small class="text-muted">永久删除此作业</small>
+                            </div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 知识点分布 -->
+        {% if knowledge_points %}
+        <div class="card mb-4" style="border-radius: 12px;">
+            <div class="card-header bg-white border-0">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-lightbulb me-2" style="color: #ffc107;"></i>知识点分布
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    {% for kp_item in knowledge_points %}
+                    <div class="list-group-item border-0">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle p-2 me-2" style="background: rgba(255, 193, 7, 0.1);">
+                                    <i class="fas fa-circle" style="color: #ffc107; font-size: 0.5rem;"></i>
+                                </div>
+                                <span>{{ kp_item.knowledge_point.name }}</span>
+                            </div>
+                            <span class="badge rounded-pill"
+                                style="background: rgba(255, 193, 7, 0.1); color: #ffc107;">
+                                权重 {{ kp_item.weight }}
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- 学生提交情况 -->
+        <div class="card mb-4" style="border-radius: 12px;">
+            <div class="card-header bg-white border-0">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-list-check me-2" style="color: #0dcaf0;"></i>提交情况
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush" style="max-height: 500px; overflow-y: auto;">
+                    {% for submission in submissions %}
+                    <div class="list-group-item border-0">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle p-2 me-2" style="background: rgba(25, 135, 84, 0.1);">
+                                    <i class="fas fa-user" style="color: #198754;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0">{{ submission.student.name }}</h6>
+                                    {% if submission.work_time %}
+                                    <small class="text-muted">{{ submission.work_time.strftime('%Y-%m-%d %H:%M')
+                                        }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                {% if submission.status == 2 %}
+                                <span class="badge rounded-pill"
+                                    style="background: rgba(25, 135, 84, 0.1); color: #198754;">
+                                    <i class="fas fa-check-circle me-1"></i>已批改
+                                </span>
+                                {% elif submission.status == 1 %}
+                                <span class="badge rounded-pill"
+                                    style="background: rgba(255, 193, 7, 0.1); color: #ffc107;">
+                                    <i class="fas fa-clock me-1"></i>待批改
+                                </span>
+                                {% else %}
+                                <span class="badge rounded-pill"
+                                    style="background: rgba(220, 53, 69, 0.1); color: #dc3545;">
+                                    <i class="fas fa-times-circle me-1"></i>未提交
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% if submission.work_time %}
+                        {% if submission.status == 2 %}
+                        <div class="d-flex align-items-center mb-2 ps-5">
+                            <span class="badge rounded-pill me-2"
+                                style="background: {{ 'rgba(25, 135, 84, 0.1); color: #198754;' if submission.final_score >= assignment.total_points * 0.6 else 'rgba(220, 53, 69, 0.1); color: #dc3545;' }}">
+                                <i class="fas fa-star me-1"></i>{{ submission.final_score or 0 }} / {{
+                                assignment.total_points }}
+                            </span>
+                        </div>
+                        {% endif %}
+                        <div class="d-flex gap-2 ps-5">
+                            <a href="{{ url_for('course.view_submission', assignment_id=assignment.id, student_id=submission.student.id) }}"
+                                class="btn btn-light btn-sm">
+                                <i class="fas fa-eye me-1"></i>查看详情
+                            </a>
+                            {% if submission.status == 1 %}
+                            <a href="{{ url_for('course.grade_student_assignment', assignment_id=assignment.id, student_id=submission.student.id) }}"
+                                class="btn btn-light btn-sm text-success">
+                                <i class="fas fa-check me-1"></i>评分
+                            </a>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% if not submissions %}
+                <div class="text-center py-4">
+                    <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
+                        style="width: 60px; height: 60px; background: rgba(25, 135, 84, 0.1);">
+                        <i class="fas fa-users fa-lg" style="color: #198754;"></i>
+                    </div>
+                    <p class="text-muted mb-0">暂无学生提交作业</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- ai生成题目显示 -->
+    <div class="col-md-8">
+        <!-- 原有作业内容卡片... -->
+
+        <!-- 新增AI题目卡片 -->
+        {% if is_teacher and ai_questions %}
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-info text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-robot me-2"></i>AI生成题目</h5>
+                    <span class="badge bg-light text-dark">
+                        共 {{ ai_questions.count() }} 题
+                    </span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info mb-3">
+                    <i class="fas fa-info-circle me-2"></i>
+                    以下是AI根据作业题目生成的相似题目，您可以审核后加入题库，在学生查看错题集时有相关联的题目练手。
+                </div>
+
+                <div class="list-group">
+                    {% for ai_question in ai_questions %}
+                    <div class="list-group-item {{ 'border-success' if ai_question.is_approved }}">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">
+                                <i class="fas fa-copy text-muted me-2"></i>
+                                {{ ai_question.question_name }}
+                            </h6>
+                            <div>
+                                <span class="badge bg-{{ 'success' if ai_question.is_approved else 'warning' }}">
+                                    {{ '已入库' if ai_question.is_approved else '待审核' }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="mt-2">
+                            <div class="card bg-light mb-2">
+                                <div class="card-body p-3">
+                                    <p class="mb-2">{{ ai_question.context }}</p>
+                                    <small class="text-muted">正确答案: {{ ai_question.answer }}</small>
+                                    {% if ai_question.analysis %}
+                                    <div class="mt-2">
+                                        <button class="btn btn-sm btn-outline-info" type="button"
+                                            data-bs-toggle="collapse"
+                                            data-bs-target="#analysis_{{ ai_question.ai_question_id }}">
+                                            查看解析
+                                        </button>
+                                        <div class="collapse mt-2" id="analysis_{{ ai_question.ai_question_id }}">
+                                            <div class="card card-body bg-white">
+                                                {{ ai_question.analysis }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <div class="mt-2 d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                <i class="far fa-clock me-1"></i>
+                                生成于 {{ ai_question.created_time.strftime('%Y-%m-%d %H:%M') }}
+                            </small>
+
+                            <div>
+
+                                <!-- 添加编辑按钮 -->
+                                <a href="{{ url_for('course.edit_ai_question', question_id=ai_question.ai_question_id) }}"
+                                    class="btn btn-sm btn-outline-primary me-1" title="编辑题目">
+                                    <i class="fas fa-edit"></i> 编辑
+                                </a>
+
+                                {% if ai_question.is_approved %}
+                                <form method="post"
+                                    action="{{ url_for('course.unapprove_ai_question', question_id=ai_question.ai_question_id) }}"
+                                    class="d-inline" onsubmit="return confirm('确定要永久删除这个AI题目吗？此操作不可撤销！');">
+                                    <button type="submit" class="btn btn-sm btn-danger">
+                                        <i class="fas fa-trash-alt me-1"></i>删除
+                                    </button>
+                                </form>
+                                {% else %}
+                                <form method="post"
+                                    action="{{ url_for('course.approve_ai_question', question_id=ai_question.ai_question_id) }}"
+                                    class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-success">
+                                        <i class="fas fa-check-circle me-1"></i>加入题库
+                                    </button>
+                                </form>
+
+                                <form method="post"
+                                    action="{{ url_for('course.unapprove_ai_question', question_id=ai_question.ai_question_id) }}"
+                                    class="d-inline ms-1" onsubmit="return confirm('确定要永久删除这个AI题目吗？此操作不可撤销！');">
+                                    <button type="submit" class="btn btn-sm btn-danger">
+                                        <i class="fas fa-trash-alt me-1"></i>删除
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </div>
+
+
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+
+</div>
+<!-- 添加AI生成进度模态框 -->
+<div class="modal fade" id="generateProgressModal" tabindex="-1" aria-labelledby="generateProgressModalLabel"
+    aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="generateProgressModalLabel">正在生成相似题目</h5>
+            </div>
+            <div class="modal-body text-center">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">生成中...</span>
+                </div>
+                <p class="mb-0">AI正在分析题目并生成相似题目，请稍候...</p>
+                <div class="progress mt-3">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
+                        style="width: 100%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 添加删除确认模态框 -->
+<div class="modal fade" id="deleteAssignmentModal" tabindex="-1" aria-labelledby="deleteAssignmentModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteAssignmentModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>确认删除作业
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>您确定要删除作业 <strong>"{{ assignment.title }}"</strong> 吗？</p>
+                <p class="text-danger">此操作将永久删除作业及其所有相关数据，包括题目、学生提交记录等，且无法恢复！</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <form method="post" action="{{ url_for('course.delete_assignment', assignment_id=assignment.id) }}">
+                    <button type="submit" class="btn btn-danger">确认删除</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- 编辑作业的模态框 -->
+<div class="modal fade" id="editAssignmentModal" tabindex="-1" aria-labelledby="editAssignmentModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-white">
+                <h5 class="modal-title" id="editAssignmentModalLabel">
+                    <i class="fas fa-calendar me-2"></i>编辑作业
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <form method="post" action="{{ url_for('course.edit_assignment', assignment_id=assignment.id) }}">
+                <div class="modal-body">
+                    <!-- 作业名称输入框 -->
+                    <div class="mb-3">
+                        <label for="title" class="form-label">作业名称</label>
+                        <input type="text" class="form-control" id="title" name="title" value="{{ assignment.title }}"
+                            required>
+                    </div>
+
+                    <!-- 截止时间输入框 -->
+                    <div class="mb-3">
+                        <label for="new_due_date" class="form-label">截止时间</label>
+                        <input type="datetime-local" class="form-control" id="new_due_date" name="new_due_date"
+                            value="{{ assignment.due_date.strftime('%Y-%m-%dT%H:%M') }}" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-warning">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<style>
+    .assignment-action-panel {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 16px;
+        padding: 20px;
+        margin: 10px 0;
+    }
+
+    .action-group {
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 12px;
+        padding: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+    }
+
+    .action-group-title {
+        color: #495057;
+        font-weight: 600;
+        margin-bottom: 16px;
+        font-size: 0.95rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .btn-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(7px, 1fr));
+        gap: 12px;
+    }
+
+    .btn-action {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 16px 12px;
+        border-radius: 12px;
+        border: none;
+        text-decoration: none;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-weight: 500;
+        min-height: 90px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn-action:before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .btn-action:hover:before {
+        opacity: 1;
+    }
+
+    .btn-action i {
+        font-size: 1.5rem;
+        margin-bottom: 8px;
+        transition: transform 0.3s ease;
+    }
+
+    .btn-action:hover i {
+        transform: translateY(-2px);
+    }
+
+    .btn-action span {
+        font-size: 0.65rem;
+        line-height: 1.1;
+    }
+
+    .btn-action:hover {
+        transform: translateY(-2px);
+        text-decoration: none;
+    }
+
+    .btn-action-full {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 16px 20px;
+        border-radius: 12px;
+        border: 2px solid transparent;
+        text-decoration: none;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-weight: 500;
+        background: rgba(255, 255, 255, 0.8);
+    }
+
+    .btn-action-full:hover {
+        transform: translateY(-1px);
+        border-color: var(--bs-primary);
+        background: rgba(255, 255, 255, 1);
+        text-decoration: none;
+    }
+
+    /* 自定义按钮颜色 */
+    .btn-info.btn-action {
+        background: linear-gradient(135deg, #17a2b8, #138496);
+        color: white;
+    }
+
+    .btn-danger.btn-action {
+        background: linear-gradient(135deg, #dc3545, #c82333);
+        color: white;
+    }
+
+    .btn-warning.btn-action {
+        background: linear-gradient(135deg, #ffc107, #e0a800);
+        color: #212529;
+    }
+
+    .btn-outline-primary.btn-action-full {
+        color: #0d6efd;
+        border-color: #0d6efd;
+    }
+
+    .btn-outline-primary.btn-action-full:hover {
+        background-color: #0d6efd;
+        color: white;
+    }
+
+    /* 响应式设计 */
+    @media (max-width: 768px) {
+        .assignment-action-panel {
+            padding: 16px;
+        }
+
+        .btn-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .btn-action {
+            min-height: 70px;
+            padding: 12px;
+        }
+
+        .btn-action i {
+            font-size: 1.25rem;
+        }
+    }
+
+    /* 动画效果 */
+    @keyframes slideInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .action-group {
+        animation: slideInUp 0.6s ease-out;
+    }
+
+    .action-group:nth-child(2) {
+        animation-delay: 0.1s;
+    }
+
+    .action-group:nth-child(3) {
+        animation-delay: 0.2s;
+    }
+
+    /* 字体优化 */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+    .tips-card {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        border-radius: 16px;
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    .tips-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 40px rgba(102, 126, 234, 0.15) !important;
+    }
+
+    /* 头部样式 */
+    .tips-icon-wrapper {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        padding: 12px;
+        backdrop-filter: blur(10px);
+    }
+
+    .fw-600 {
+        font-weight: 600;
+    }
+
+    /* 主要提示卡片 */
+    .tip-item {
+        height: 100%;
+    }
+
+    .tip-content {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        height: 100%;
+        position: relative;
+        border: 1px solid #e8ecef;
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .tip-content:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.1);
+        border-color: #667eea;
+    }
+
+    .tip-content.tip-green:hover {
+        border-color: #10b981;
+    }
+
+    .tip-content.tip-orange:hover {
+        border-color: #f59e0b;
+    }
+
+    .tip-content.tip-purple:hover {
+        border-color: #8b5cf6;
+    }
+
+    .tip-number {
+        position: absolute;
+        top: -8px;
+        left: -8px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .tip-green .tip-number {
+        background: linear-gradient(135deg, #10b981, #059669);
+    }
+
+    .tip-orange .tip-number {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+    }
+
+    .tip-purple .tip-number {
+        background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    }
+
+    .tip-icon {
+        font-size: 24px;
+        margin-bottom: 12px;
+        text-align: center;
+    }
+
+    .tip-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 8px;
+    }
+
+    .tip-desc {
+        font-size: 13px;
+        color: #6b7280;
+        line-height: 1.5;
+        margin: 0;
+    }
+
+    /* 快捷提醒样式 */
+    .quick-reminder-item {
+        display: flex;
+        align-items: center;
+        padding: 12px 16px;
+        background: white;
+        border: 1px solid #e8ecef;
+        border-radius: 10px;
+        transition: all 0.2s ease;
+        font-size: 13px;
+        font-weight: 500;
+    }
+
+    .quick-reminder-item:hover {
+        background: #f8fafc;
+        border-color: #667eea;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+    }
+
+    .quick-reminder-item i {
+        color: #667eea;
+        margin-right: 8px;
+        font-size: 14px;
+        width: 16px;
+        text-align: center;
+    }
+
+    /* 截止时间提醒 */
+    .deadline-alert {
+        background: linear-gradient(135deg, #fef3c7, #fde68a);
+        border-radius: 12px;
+        padding: 16px;
+        border: 1px solid #f59e0b;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .deadline-alert::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        animation: shimmer 3s infinite;
+    }
+
+    @keyframes shimmer {
+        0% {
+            left: -100%;
+        }
+
+        100% {
+            left: 100%;
+        }
+    }
+
+    .deadline-content {
+        display: flex;
+        align-items: center;
+    }
+
+    .deadline-icon {
+        background: #f59e0b;
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 16px;
+        font-size: 16px;
+    }
+
+    .deadline-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #92400e;
+        margin-bottom: 4px;
+    }
+
+    .deadline-date {
+        font-size: 13px;
+        color: #b45309;
+        margin: 0;
+    }
+
+    /* 最终检查提醒 */
+    .final-reminder {
+        background: linear-gradient(135deg, #ddd6fe, #c4b5fd);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 16px;
+        border: 1px solid #8b5cf6;
+    }
+
+    .reminder-header {
+        font-size: 15px;
+        font-weight: 600;
+        color: #5b21b6;
+        margin-bottom: 12px;
+        text-align: center;
+    }
+
+    .checklist {
+        display: flex;
+        justify-content: space-around;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .check-item {
+        font-size: 12px;
+        color: #6d28d9;
+        font-weight: 500;
+    }
+
+    /* 祝福语 */
+    .blessing-section {
+        text-align: center;
+        padding: 12px;
+    }
+
+    .blessing-content {
+        background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+        padding: 12px 20px;
+        border-radius: 50px;
+        border: 1px solid #0ea5e9;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .blessing-emoji {
+        font-size: 16px;
+    }
+
+    .blessing-text {
+        font-size: 13px;
+        font-weight: 500;
+        color: #0c4a6e;
+    }
+
+    /* 响应式优化 */
+    @media (max-width: 768px) {
+        .quick-tips-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .checklist {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .tip-content {
+            padding: 16px;
+        }
+    }
+</style>
+<!-- 初始化工具提示 -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+
+        // 验证题目总分与作业总分是否一致 - 仅用于开发调试
+        const scoreElements = document.querySelectorAll('.badge.bg-secondary');
+        let calculatedTotal = 0;
+
+        // 遍历所有分值元素并累加
+        scoreElements.forEach((element) => {
+            const scoreText = element.textContent;
+            const score = parseFloat(scoreText.replace('分值: ', ''));
+            if (!isNaN(score)) {
+                calculatedTotal += score;
+            }
+        });
+
+        // 比较计算总分与设置总分，如果差异大于0.1则在控制台提示
+        const assignmentTotal = parseFloat(document.getElementById('total-points').textContent);
+        if (Math.abs(calculatedTotal - assignmentTotal) > 0.1 && calculatedTotal > 0) {
+            console.log(`注意: 题目分值总和(${calculatedTotal})与作业总分(${assignmentTotal})不一致`);
+        }
+    });
+    document.addEventListener('DOMContentLoaded', function () {
+        // 检查是否有flash消息，如果有则滚动到顶部
+        const flashMessages = document.querySelectorAll('.alert, .flash-message');
+        if (flashMessages.length > 0) {
+            // 页面加载完成后立即滚动到顶部
+            window.scrollTo(0, 0);
+        }
+        // 获取所有生成按钮
+        const generateButtons = document.querySelectorAll('.generate-similar-btn');
+
+        // 为每个按钮添加点击事件
+        generateButtons.forEach(button => {
+            button.addEventListener('click', function () {
+                const questionId = this.getAttribute('data-question-id');
+
+                // 显示模态框
+                const modal = new bootstrap.Modal(document.getElementById('generateProgressModal'));
+                modal.show();
+
+                // 发送AJAX请求
+                fetch(`/course/question/${questionId}/generate_similar`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    redirect: 'manual' // 手动处理重定向
+                })
+                    .then(response => {
+                        // 关闭模态框
+                        modal.hide();
+                        // 处理重定向，刷新页面
+                        window.location.reload();
+                        return;
+                    })
+                    .catch(error => {
+                        // 关闭模态框
+                        modal.hide();
+
+                        // 处理错误
+                        console.error('生成相似题目时发生错误:', error);
+                        alert('请求失败，请稍后重试');
+                    });
+            });
+        });
+    });
+
+</script>
+{% endblock %}

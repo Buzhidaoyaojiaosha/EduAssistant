@@ -1,0 +1,258 @@
+/* ==============================================================
+   全局样式强化 (对接 base.html 中的高级墨绿设计系统)
+   ============================================================== */
+
+/* 卡片样式高级化 (大圆角、微边框、悬浮呼吸感) */
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--primary-soft);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow: hidden;
+}
+
+.card.hover-effect:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-float);
+    border-color: rgba(37, 113, 74, 0.3);
+}
+
+.card-header {
+    background: transparent;
+    border-bottom: 1px solid var(--primary-soft);
+    padding: 1.25rem 1.5rem;
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: var(--dark);
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* 表格样式增强 */
+.table {
+    color: var(--text-primary);
+}
+
+.table-hover tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+.table-hover tbody tr:hover {
+    background-color: var(--primary-light);
+}
+
+/* 进度条色彩体系融合 */
+.progress {
+    height: 8px;
+    border-radius: 8px;
+    background-color: var(--primary-soft);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.progress-low .progress-bar {
+    background-color: var(--accent-coral);
+}
+
+.progress-medium .progress-bar {
+    background-color: var(--accent-gold);
+}
+
+.progress-high .progress-bar {
+    background-color: var(--primary);
+}
+
+.progress-bar {
+    border-radius: 8px;
+}
+
+/* 按钮样式质感升级 */
+.btn {
+    font-weight: 500;
+    border-radius: 10px;
+    padding: 0.5rem 1.2rem;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    box-shadow: 0 4px 12px rgba(37, 113, 74, 0.2);
+}
+
+.btn-primary:hover {
+    background-color: var(--dark);
+    border-color: var(--dark);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(37, 113, 74, 0.3);
+}
+
+.btn-outline-primary {
+    color: var(--primary);
+    border-color: var(--primary);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--primary-light);
+    color: var(--dark);
+    border-color: var(--primary);
+}
+
+/* 表单元素圆润化 */
+.form-control,
+.form-select {
+    border-radius: 12px;
+    border: 1px solid var(--primary-soft);
+    padding: 0.6rem 1rem;
+    color: var(--text-primary);
+    background-color: #FAFAFA;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus,
+.form-select:focus {
+    background-color: #FFFFFF;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px var(--primary-light);
+}
+
+/* 徽章 (Badges) */
+.badge {
+    font-weight: 600;
+    padding: 0.4em 0.8em;
+    border-radius: 6px;
+}
+
+/* ==============================================================
+   聊天页布局覆盖 (防止 main-content 的 padding 导致错位)
+   ============================================================== */
+.chat-page-override .main-content {
+    padding: 0 !important;
+    margin-top: 0 !important;
+    min-height: 0 !important;
+}
+
+/* ==============================================================
+   其他实用工具类
+   ============================================================== */
+.chart-container {
+    height: 320px;
+    margin-bottom: 1.5rem;
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    background: #FAFAFA;
+}
+
+.avatar-placeholder {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--accent-teal) 100%);
+    color: white;
+    font-size: 2.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: var(--shadow-md);
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .chart-container {
+        height: 250px;
+    }
+
+    .avatar-placeholder {
+        width: 80px;
+        height: 80px;
+        font-size: 2rem;
+    }
+}
+
+/* ==============================================================
+   课程卡片专属修复与优化 (Course Card Fixes)
+   ============================================================== */
+
+/* 1. 修复标题左侧图标隐形问题，并增加现代化的包裹感 */
+.card .course-icon,
+.card .card-title i {
+    color: var(--primary) !important;
+    /* 强制使用主题墨绿 */
+    background: rgba(52, 103, 57, 0.08);
+    /* 极浅的绿色底色 */
+    padding: 12px;
+    border-radius: 12px;
+    font-size: 1.4rem;
+    margin-right: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 0 0 0 1px rgba(52, 103, 57, 0.05);
+    /* 微边框 */
+}
+
+/* 2. 修复左下角“进入课程”文字发白的问题 */
+.card .enter-course-btn,
+.card-footer a,
+.card a.text-white {
+    color: var(--primary) !important;
+    /* 强制改变文字颜色 */
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+/* 悬浮时的交互反馈 */
+.card .enter-course-btn:hover,
+.card-footer a:hover {
+    color: var(--accent) !important;
+    /* 悬浮时变成我们在 base 中定义的橘色/调和色 */
+    transform: translateX(4px);
+}
+
+/* 3. 优化卡片内部的教师信息栏底色 */
+.card .teacher-info-bar {
+    background-color: #F8FAF9;
+    /* 替换原本可能过灰的底色，改用护眼冷灰绿 */
+    border-radius: 10px;
+    padding: 10px 16px;
+    color: var(--text-secondary);
+}
+
+.card .teacher-info-bar i {
+    color: var(--primary-light);
+}
+
+/* 强制卡片标题（课程名称）显示为深墨绿 */
+.card .card-title,
+.card h5.card-title,
+.card .card-title a {
+    color: var(--dark) !important;
+    /* 使用深墨绿，确保在白底上清晰可见 */
+    font-weight: 700 !important;
+    /* 加粗让标题更有层级感 */
+    text-decoration: none;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+}
+
+/* 课程描述/简介文字颜色修复（如果也有发白的情况） */
+.card .card-text,
+.card p.card-text {
+    color: var(--text-secondary) !important;
+    /* 使用柔和的灰绿色 */
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+.text-primary {
+    /* 如果你想要雅致墨绿，用 var(--primary) */
+    /* 如果你想要深一点的文字墨绿，用 var(--text-primary) 或者 var(--dark) */
+    color: var(--primary) !important;
+}

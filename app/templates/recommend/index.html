@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+
+{% block title %}资源推荐{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <div class="d-flex align-items-center">
+            <div class="rounded-circle p-3 me-3" style="background: rgba(78, 84, 200, 0.1);">
+                <i class="fas fa-lightbulb" style="color: #4e54c8;"></i>
+            </div>
+            <div>
+                <h2 class="text-primary mb-1">资源推荐</h2>
+                <p class="text-muted mb-0">
+                    <i class="fas fa-info-circle me-1"></i>基于您的学习记录，为您推荐相关学习资源
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-auto">
+        <button id="refresh-span" class="btn btn-light">
+            <i class="fas fa-rotate-right me-2" id="refresh-icon"></i>刷新资源
+        </button>
+    </div>
+</div>
+
+<div id="status" class="text-center py-3 text-muted"></div>
+
+<div id="recommend-history">
+    <!-- 推荐内容将通过JavaScript动态添加 -->
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 渲染到 HTML 页面
+    function renderRecommendations(recommendations, containerId = 'recommend-history') {
+        const container = document.getElementById(containerId);
+        container.innerHTML = ''; // 清空内容
+
+        if (!Array.isArray(recommendations)) recommendations = recommendations["recommendations"];
+
+        // 创建卡片容器
+        const cardContainer = document.createElement('div');
+        cardContainer.className = 'row g-4';
+
+        recommendations.forEach(item => {
+            const col = document.createElement('div');
+            col.className = 'col-md-6';
+
+            const card = document.createElement('div');
+            card.className = 'card h-100 border-0 shadow-sm';
+            card.style.borderRadius = '12px';
+            card.style.transition = 'all 0.3s ease';
+
+            card.innerHTML = `
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="rounded-circle p-2 me-2" style="background: rgba(78, 84, 200, 0.1);">
+                            <i class="fas fa-book" style="color: #4e54c8;"></i>
+                        </div>
+                        <h5 class="card-title mb-0">
+                            <a href="${item.url}" target="_blank" class="text-decoration-none stretched-link">
+                                ${item.title}
+                            </a>
+                        </h5>
+                    </div>
+                    <p class="card-text text-muted">
+                        <i class="fas fa-quote-left me-2 opacity-50"></i>
+                        ${item.reason}
+                    </p>
+                </div>
+            `;
+
+            col.appendChild(card);
+            cardContainer.appendChild(col);
+        });
+
+        container.appendChild(cardContainer);
+    }
+
+    // 获取知识推荐
+    function getRecommendations(subject = null, chapter = null) {
+        const url = (subject && chapter) ? `req/${subject}/${chapter}` : '/recommend/history';
+        const statusElement = document.getElementById("status");
+
+        // 显示加载状态
+        statusElement.innerHTML = `
+            <div class="d-flex justify-content-center align-items-center">
+                <div class="spinner-border text-primary me-2" role="status">
+                    <span class="visually-hidden">正在更新资源推荐...</span>
+                </div>
+                <span>正在更新资源推荐...</span>
+            </div>
+        `;
+
+        fetch(url)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error: ${response.status}`);
+                }
+                return response.text();
+            })
+            .then(res => {
+                window.localStorage.setItem("recommend-content", res);
+                const recommendations = JSON.parse(res.replaceAll("'", '"'));
+                renderRecommendations(recommendations);
+            })
+            .catch(error => {
+                console.error('Error loading recommendations:', error);
+                statusElement.innerHTML = `
+                    <div class="alert alert-danger d-inline-flex align-items-center" role="alert">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        加载推荐失败，请稍后重试
+                    </div>
+                `;
+            })
+            .finally(() => {
+                setTimeout(() => {
+                    statusElement.innerHTML = '';
+                }, 2000);
+            });
+    }
+
+    // 为刷新按钮添加点击事件监听器
+    document.addEventListener('DOMContentLoaded', function () {
+        const refreshSpan = document.getElementById('refresh-span');
+        const refreshIcon = document.getElementById('refresh-icon');
+
+        refreshSpan.addEventListener('click', function () {
+            refreshIcon.classList.add('rotating');
+            getRecommendations();
+        });
+
+        refreshSpan.addEventListener('animationend', function () {
+            refreshIcon.classList.remove('rotating');
+        });
+    });
+
+    // 页面加载时自动更新资源推荐
+    window.onload = () => {
+        // 尝试显示缓存的推荐结果
+        const recommendContent = window.localStorage.getItem("recommend-content");
+        if (recommendContent) {
+            try {
+                renderRecommendations(JSON.parse(recommendContent.replaceAll("'", '"'))["recommendations"]);
+            } catch (error) {
+                console.error('Error parsing local storage data:', error);
+            }
+        }
+
+        // 检查是否需要重新加载
+        const lastLoadTime = window.localStorage.getItem("recommend-load-time");
+        const nowTime = new Date().getTime();
+
+        if (lastLoadTime) {
+            const distance = nowTime - parseInt(lastLoadTime, 10);
+            if (distance < 600000) {
+                console.log("资源推荐已在10分钟内加载过，不自动重复加载");
+                return;
+            }
+        }
+
+        window.localStorage.setItem("recommend-load-time", nowTime.toString());
+        getRecommendations();
+    }
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #4e54c8 0%, #8f94fb 100%);
+        --card-background: rgba(255, 255, 255, 0.9);
+        --hover-background: rgba(78, 84, 200, 0.1);
+    }
+
+    .card {
+        background: var(--card-background);
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(78, 84, 200, 0.15) !important;
+    }
+
+    .card-title a {
+        color: #4e54c8;
+        transition: all 0.3s ease;
+    }
+
+    .card-title a:hover {
+        color: #8f94fb;
+        text-decoration: none;
+    }
+
+    .btn-light {
+        background: rgba(108, 117, 125, 0.1);
+        border: none;
+        color: #6c757d;
+        transition: all 0.3s ease;
+    }
+
+    .btn-light:hover {
+        background: rgba(108, 117, 125, 0.2);
+        color: #495057;
+        transform: translateY(-2px);
+    }
+
+    /* 刷新按钮动画 */
+    .rotating {
+        animation: rotating 1s linear;
+    }
+
+    @keyframes rotating {
+        from {
+            transform: rotate(0deg);
+        }
+
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    /* 加载动画 */
+    .spinner-border {
+        width: 1.5rem;
+        height: 1.5rem;
+        border-width: 0.2em;
+    }
+
+    /* 响应式设计 */
+    @media (max-width: 768px) {
+        .card {
+            margin-bottom: 1rem;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}

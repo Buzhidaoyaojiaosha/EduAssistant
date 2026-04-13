@@ -1,0 +1,291 @@
+{% extends 'base.html' %}
+
+{% block title %}开启旅程 - 启智引航{% endblock %}
+
+{% block body_class %}auth-page{% endblock %}
+
+{% block content %}
+<style>
+    /* 继承登录页面的基础结构，仅针对注册页做微调 */
+    .auth-split {
+        display: flex;
+        min-height: 100vh;
+        width: 100vw;
+        position: fixed;
+        top: 0;
+        left: 0;
+        background: var(--bg-main);
+        z-index: 1100;
+    }
+
+    .auth-brand-panel {
+        flex: 1;
+        background: #154D31;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 4rem;
+        color: white;
+    }
+
+    .auth-brand-panel::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image: url("https://www.transparenttextures.com/patterns/stardust.png");
+        opacity: 0.15;
+    }
+
+    .auth-glow {
+        position: absolute;
+        width: 600px;
+        height: 600px;
+        filter: blur(100px);
+        border-radius: 50%;
+        opacity: 0.4;
+    }
+
+    .glow-1 {
+        background: var(--primary);
+        top: -200px;
+        left: -100px;
+    }
+
+    .brand-content {
+        position: relative;
+        z-index: 2;
+    }
+
+    .brand-logo {
+        font-size: 2rem;
+        font-weight: 800;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .brand-logo i {
+        width: 48px;
+        height: 48px;
+        background: white;
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 14px;
+    }
+
+    .auth-form-panel {
+        flex: 1.2;
+        background: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem;
+    }
+
+    .form-box {
+        width: 100%;
+        max-width: 520px;
+    }
+
+    .form-header {
+        margin-bottom: 2rem;
+    }
+
+    .form-title {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--dark);
+    }
+
+    .grid-form {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .full-width {
+        grid-column: span 2;
+    }
+
+    .input-group-modern {
+        margin-bottom: 1.2rem;
+    }
+
+    .input-group-modern label {
+        display: block;
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: var(--text-primary);
+        margin-bottom: 6px;
+    }
+
+    .input-wrapper {
+        position: relative;
+    }
+
+    .input-wrapper i {
+        position: absolute;
+        left: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-secondary);
+    }
+
+    .input-modern {
+        width: 100%;
+        padding: 12px 16px 12px 48px;
+        background: #F8FAF9;
+        border: 1px solid var(--primary-soft);
+        border-radius: 12px;
+        transition: all 0.3s;
+    }
+
+    .input-modern:focus {
+        background: white;
+        border-color: var(--primary);
+        outline: none;
+        box-shadow: 0 0 0 4px var(--primary-light);
+    }
+
+    .btn-auth {
+        width: 100%;
+        padding: 14px;
+        border-radius: 14px;
+        font-weight: 700;
+        background: var(--primary);
+        color: white;
+        border: none;
+        box-shadow: 0 8px 24px rgba(37, 113, 74, 0.2);
+        transition: all 0.3s;
+        margin-top: 1rem;
+    }
+
+    .btn-auth:hover {
+        transform: translateY(-2px);
+        background: var(--dark);
+    }
+
+    .auth-footer {
+        margin-top: 1.5rem;
+        text-align: center;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+    }
+
+    .auth-footer a {
+        color: var(--primary);
+        font-weight: 700;
+        text-decoration: none;
+    }
+
+    @media (max-width: 992px) {
+        .auth-brand-panel {
+            display: none;
+        }
+
+        .grid-form {
+            grid-template-columns: 1fr;
+        }
+
+        .full-width {
+            grid-column: span 1;
+        }
+    }
+</style>
+
+<div class="auth-split">
+    <div class="auth-brand-panel">
+        <div class="auth-glow glow-1"></div>
+        <div class="brand-content">
+            <div class="brand-logo">
+                <i class="fas fa-leaf"></i>
+                <span>启智引航</span>
+            </div>
+            <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 1rem; color: #1B120B;">加入智慧学习社区</h1>
+            <p style="opacity: 0.7;">创建一个账号，开启由 AI 驱动的沉浸式学习新篇章。管理课程、追踪进度、与智能助手实时互动。</p>
+
+            <div class="features-mini" style="margin-top: 3rem;">
+                <div class="d-flex align-items-center mb-3" style="gap: 12px;">
+                    <i class="fas fa-check-circle" style="color: var(--primary-light);"></i>
+                    <span>全平台 AI 导师 24/7 在线响应</span>
+                </div>
+                <div class="d-flex align-items-center mb-3" style="gap: 12px;">
+                    <i class="fas fa-check-circle" style="color: var(--primary-light);"></i>
+                    <span>个性化知识图谱与能力画像</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="auth-form-panel">
+        <div class="form-box">
+            <div class="form-header">
+                <h2 class="form-title">创建新账号</h2>
+                <p class="text-secondary">只需几秒钟即可开启您的学习之旅</p>
+            </div>
+
+            <form action="{{ url_for('auth.register') }}" method="POST" id="registerForm">
+                <div class="grid-form">
+                    <div class="input-group-modern">
+                        <label>用户名</label>
+                        <div class="input-wrapper">
+                            <input type="text" name="username" class="input-modern" placeholder="用于登录" required>
+                            <i class="fas fa-user-tag"></i>
+                        </div>
+                    </div>
+                    <div class="input-group-modern">
+                        <label>真实姓名</label>
+                        <div class="input-wrapper">
+                            <input type="text" name="name" class="input-modern" placeholder="您的称呼" required>
+                            <i class="fas fa-id-card"></i>
+                        </div>
+                    </div>
+                    <div class="input-group-modern full-width">
+                        <label>电子邮箱</label>
+                        <div class="input-wrapper">
+                            <input type="email" name="email" class="input-modern" placeholder="name@example.com"
+                                required>
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                    </div>
+                    <div class="input-group-modern">
+                        <label>设置密码</label>
+                        <div class="input-wrapper">
+                            <input type="password" name="password" id="password" class="input-modern" placeholder="至少8位"
+                                required>
+                            <i class="fas fa-key"></i>
+                        </div>
+                    </div>
+                    <div class="input-group-modern">
+                        <label>确认密码</label>
+                        <div class="input-wrapper">
+                            <input type="password" name="confirm_password" id="confirm_password" class="input-modern"
+                                placeholder="重复输入" required>
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-check mb-4">
+                    <input class="form-check-input" type="checkbox" id="terms" required>
+                    <label class="form-check-label text-secondary" style="font-size: 0.85rem;" for="terms">
+                        我同意并接受 <a href="#" style="color: var(--primary);">服务条款</a> 与 <a href="#"
+                            style="color: var(--primary);">隐私政策</a>
+                    </label>
+                </div>
+
+                <button type="submit" class="btn-auth">创建我的账号</button>
+            </form>
+
+            <div class="auth-footer">
+                已经有账号了? <a href="{{ url_for('auth.login') }}">立即登录</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

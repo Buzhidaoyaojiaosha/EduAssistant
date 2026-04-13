@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+
+{% block title %}个人资料 - 启智引航{% endblock %}
+
+{% block content %}
+<div class="profile-page">
+    <div class="profile-card">
+        <!-- 头部 -->
+        <div class="profile-header">
+            <div class="profile-avatar">
+                {{ user.name[0] }}
+            </div>
+            <h3 class="profile-name">{{ user.name }}</h3>
+            <p class="profile-username">
+                <i class="fas fa-at"></i>{{ user.username }}
+            </p>
+        </div>
+
+        <!-- 信息区域 -->
+        <div class="profile-body">
+            <div class="info-section">
+                <div class="info-row">
+                    <div class="info-icon">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="info-content">
+                        <span class="info-label">用户名</span>
+                        <span class="info-value">{{ user.username }}</span>
+                    </div>
+                </div>
+
+                <div class="info-row">
+                    <div class="info-icon">
+                        <i class="fas fa-id-card"></i>
+                    </div>
+                    <div class="info-content">
+                        <span class="info-label">姓名</span>
+                        <span class="info-value">{{ user.name }}</span>
+                    </div>
+                </div>
+
+                <div class="info-row">
+                    <div class="info-icon">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <div class="info-content">
+                        <span class="info-label">电子邮箱</span>
+                        <span class="info-value">{{ user.email }}</span>
+                    </div>
+                </div>
+
+                <div class="info-row">
+                    <div class="info-icon">
+                        <i class="fas fa-user-tag"></i>
+                    </div>
+                    <div class="info-content">
+                        <span class="info-label">角色</span>
+                        <div class="info-badges">
+                            {% for user_role in user.roles %}
+                            <span class="info-badge">{{ user_role.role.name }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-row">
+                    <div class="info-icon">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <div class="info-content">
+                        <span class="info-label">加入时间</span>
+                        <span class="info-value">{{ user.created_at.strftime('%Y-%m-%d') }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .profile-page {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 2rem 1.5rem;
+    }
+
+    .profile-card {
+        background: var(--bg-card, #fff);
+        border: 1px solid var(--border-color, rgba(0, 0, 0, 0.06));
+        border-radius: var(--radius-md, 12px);
+        overflow: hidden;
+    }
+
+    /* ===== 头部 ===== */
+    .profile-header {
+        text-align: center;
+        padding: 2.5rem 2rem 1.5rem;
+        background: linear-gradient(180deg, rgba(52, 103, 57, 0.04) 0%, transparent 100%);
+    }
+
+    .profile-avatar {
+        width: 88px;
+        height: 88px;
+        background: linear-gradient(135deg, var(--primary, #346739) 0%, var(--primary-light, #79AE6F) 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        font-size: 2rem;
+        font-weight: 700;
+        color: #fff;
+        font-family: 'DM Sans', 'Noto Sans SC', sans-serif;
+        box-shadow: 0 8px 24px rgba(52, 103, 57, 0.2);
+    }
+
+    .profile-name {
+        font-family: 'DM Sans', 'Noto Sans SC', sans-serif;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary, #1a1a2e);
+        margin: 0 0 0.25rem;
+    }
+
+    .profile-username {
+        font-size: 0.85rem;
+        color: var(--text-secondary, #6b7280);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.35rem;
+    }
+
+    .profile-username i {
+        font-size: 0.75rem;
+        color: var(--primary-light, #79AE6F);
+    }
+
+    /* ===== 信息区域 ===== */
+    .profile-body {
+        padding: 0 1.5rem 2rem;
+    }
+
+    .info-section {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .info-row {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.85rem 1rem;
+        border-radius: var(--radius-sm, 8px);
+        transition: background 0.2s ease;
+    }
+
+    .info-row:hover {
+        background: rgba(52, 103, 57, 0.03);
+    }
+
+    .info-icon {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, rgba(52, 103, 57, 0.08) 0%, rgba(121, 174, 111, 0.12) 100%);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary, #346739);
+        font-size: 0.85rem;
+        flex-shrink: 0;
+    }
+
+    .info-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .info-label {
+        display: block;
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: var(--text-secondary, #6b7280);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.15rem;
+    }
+
+    .info-value {
+        display: block;
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: var(--text-primary, #1a1a2e);
+    }
+
+    .info-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        margin-top: 0.15rem;
+    }
+
+    .info-badge {
+        display: inline-block;
+        padding: 0.2rem 0.65rem;
+        background: linear-gradient(135deg, rgba(52, 103, 57, 0.08) 0%, rgba(121, 174, 111, 0.12) 100%);
+        color: var(--primary, #346739);
+        border-radius: var(--radius-pill, 100px);
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    /* ===== 响应式 ===== */
+    @media (max-width: 600px) {
+        .profile-page {
+            padding: 1rem;
+        }
+
+        .profile-header {
+            padding: 2rem 1.5rem 1.25rem;
+        }
+
+        .profile-avatar {
+            width: 72px;
+            height: 72px;
+            font-size: 1.75rem;
+        }
+
+        .profile-body {
+            padding: 0 1rem 1.5rem;
+        }
+    }
+</style>
+{% endblock %}

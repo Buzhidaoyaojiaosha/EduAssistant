@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}启智引航 - 智能教学平台{% endblock %}</title>
+    {% block head %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            /* 核心调色板 */
+            --primary: #25714A;
+            /* 雅致墨绿 */
+            --primary-soft: #D3E4DA;
+            /* 柔和边框绿 */
+            --primary-light: #E3EFE8;
+            /* 极浅悬浮绿 */
+            --dark: #103B24;
+            /* 深墨绿文本 */
+
+            /* 辅助调和色 */
+            --accent-gold: #D97706;
+            --accent-blue: #1D3557;
+
+            /* 背景与文本 */
+            --bg-main: #F4F9F6;
+            /* 护眼灰绿底色 */
+            --bg-card: #FFFFFF;
+            /* 卡片纯白 */
+            --text-primary: #2C3E35;
+            /* 正文色 */
+            --text-secondary: #5B7064;
+            /* 次要信息 */
+
+            /* 阴影与圆角 */
+            --shadow-sm: 0 4px 12px rgba(37, 113, 74, 0.04);
+            --shadow-md: 0 8px 24px rgba(37, 113, 74, 0.08);
+            --shadow-float: 0 12px 32px rgba(37, 113, 74, 0.12);
+            --navbar-height: 72px;
+            --radius-md: 16px;
+            --radius-lg: 24px;
+            --radius-pill: 100px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg-main);
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            font-family: 'Inter', 'Noto Sans SC', sans-serif;
+            color: var(--text-primary);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            color: var(--dark);
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+
+        /* ====================================================
+           MODERN TOP NAVBAR (毛玻璃高级感)
+           ==================================================== */
+        .top-navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: var(--navbar-height);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            padding: 0 2rem;
+            background: rgba(252, 253, 253, 0.75);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-bottom: 1px solid rgba(37, 113, 74, 0.08);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .top-navbar.scrolled {
+            background: rgba(252, 253, 253, 0.95);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+            border-bottom-color: transparent;
+        }
+
+        /* ===== Brand ===== */
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none !important;
+            margin-right: 2rem;
+        }
+
+        .navbar-brand-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--primary) 0%, #154D31 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 1rem;
+            box-shadow: 0 4px 12px rgba(37, 113, 74, 0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .navbar-brand:hover .navbar-brand-icon {
+            transform: scale(1.08) rotate(-5deg);
+        }
+
+        .navbar-brand-text {
+            font-weight: 800;
+            font-size: 1.15rem;
+            color: var(--dark);
+            letter-spacing: 0.5px;
+        }
+
+        /* ===== Nav Menu (胶囊式高亮) ===== */
+        .top-nav-menu {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            list-style: none;
+            margin: 0 auto;
+            padding: 0;
+        }
+
+        .top-nav-item {
+            margin: 0;
+        }
+
+        .top-nav-link {
+            position: relative;
+            color: var(--text-secondary) !important;
+            padding: 8px 16px !important;
+            border-radius: var(--radius-pill);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            font-size: 0.9rem;
+            text-decoration: none !important;
+        }
+
+        .top-nav-link .nav-icon {
+            font-size: 1rem;
+            opacity: 0.7;
+            transition: all 0.3s ease;
+        }
+
+        .top-nav-link:hover {
+            color: var(--primary) !important;
+            background: var(--primary-light);
+        }
+
+        .top-nav-link:hover .nav-icon {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        .top-nav-link.active {
+            color: var(--primary) !important;
+            background: rgba(37, 113, 74, 0.1);
+            font-weight: 600;
+        }
+
+        .top-nav-link.active .nav-icon {
+            opacity: 1;
+            color: var(--primary);
+        }
+
+        /* ===== Right Area ===== */
+        .navbar-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-left: auto;
+        }
+
+        /* Icon Buttons */
+        .navbar-icon-btn {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .navbar-icon-btn:hover {
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .navbar-right-divider {
+            width: 1px;
+            height: 24px;
+            background: var(--primary-soft);
+            margin: 0 8px;
+        }
+
+        /* Avatar */
+        .navbar-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-gold) 0%, #B45309 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(217, 119, 6, 0.2);
+            border: 2px solid #fff;
+        }
+
+        .navbar-avatar:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(217, 119, 6, 0.3);
+        }
+
+        .navbar-user-dropdown {
+            background: transparent;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+
+        /* Modern Dropdown */
+        .navbar-right .dropdown-menu {
+            border: 1px solid var(--primary-soft);
+            background: var(--bg-card);
+            box-shadow: var(--shadow-float);
+            border-radius: 16px;
+            padding: 8px;
+            margin-top: 12px;
+            min-width: 200px;
+            animation: dropIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes dropIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px) scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .dropdown-item {
+            padding: 10px 16px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            border-radius: 10px;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .dropdown-item i {
+            width: 16px;
+            text-align: center;
+        }
+
+        .dropdown-item:hover {
+            background: var(--primary-light);
+            color: var(--primary);
+            transform: translateX(4px);
+        }
+
+        .dropdown-divider {
+            border-color: var(--primary-soft);
+            margin: 6px 8px;
+            opacity: 0.5;
+        }
+
+        /* ===== Main content ===== */
+        .main-content {
+            margin-top: var(--navbar-height);
+            min-height: calc(100vh - var(--navbar-height));
+            padding: 2rem;
+        }
+
+        /* ===== Decorative BG (Soft Orbs) ===== */
+        .decorative-bg {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .decorative-bg .circle {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.4;
+            filter: blur(100px);
+        }
+
+        .decorative-bg .circle-1 {
+            width: 600px;
+            height: 600px;
+            background: #9ECBAF;
+            top: -200px;
+            right: -100px;
+        }
+
+        .decorative-bg .circle-2 {
+            width: 500px;
+            height: 500px;
+            background: #FDE68A;
+            bottom: -100px;
+            left: -100px;
+            opacity: 0.25;
+        }
+
+        /* ===== Mobile Adjustments ===== */
+        @media (max-width: 991.98px) {
+            .top-navbar {
+                padding: 0 1rem;
+            }
+
+            .top-nav-menu {
+                display: none;
+                flex-direction: column;
+                position: absolute;
+                top: 100%;
+                left: 1rem;
+                right: 1rem;
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(20px);
+                border: 1px solid var(--primary-soft);
+                border-radius: 16px;
+                box-shadow: var(--shadow-float);
+                padding: 1rem;
+                gap: 8px;
+                z-index: 999;
+            }
+
+            .top-nav-menu.show {
+                display: flex;
+                animation: dropIn 0.3s ease;
+            }
+
+            .top-nav-menu.show .top-nav-link {
+                width: 100%;
+                justify-content: flex-start;
+            }
+
+            .mobile-toggle {
+                display: flex !important;
+                align-items: center;
+                justify-content: center;
+                background: transparent;
+                border: none;
+                color: var(--dark);
+                width: 40px;
+                height: 40px;
+                border-radius: 10px;
+                margin-right: 12px;
+            }
+
+            .main-content {
+                padding: 1.5rem 1rem;
+            }
+
+            .navbar-right-divider {
+                display: none;
+            }
+        }
+
+        @media (min-width: 992px) {
+            .mobile-toggle {
+                display: none !important;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% endblock %}
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body class="{% block body_class %}{% endblock %}">
+    <div class="decorative-bg">
+        <div class="circle circle-1"></div>
+        <div class="circle circle-2"></div>
+    </div>
+
+    {% if request.endpoint not in ['landing.index', 'auth.login', 'auth.register'] %}
+    <nav class="top-navbar" id="topNavbar">
+        <button class="mobile-toggle d-lg-none" onclick="toggleMobileMenu()">
+            <i class="fas fa-bars"></i>
+        </button>
+
+        <a class="navbar-brand" href="{{ url_for('dashboard.index') }}">
+            <span class="navbar-brand-icon"><i class="fas fa-leaf"></i></span>
+            <span class="navbar-brand-text">启智引航</span>
+        </a>
+
+        {% if session.get('user_id') %}
+        <ul class="top-nav-menu" id="topNavMenu">
+            <li class="top-nav-item">
+                <a class="top-nav-link {{ 'active' if request.endpoint == 'ai_assistant.chat' }}"
+                    href="{{ url_for('ai_assistant.chat') }}">
+                    <span class="nav-icon"><i class="fas fa-robot"></i></span> <span>AI助手</span>
+                </a>
+            </li>
+            <li class="top-nav-item">
+                <a class="top-nav-link {{ 'active' if request.endpoint == 'dashboard.index' }}"
+                    href="{{ url_for('dashboard.index') }}">
+                    <span class="nav-icon"><i class="fas fa-layer-group"></i></span> <span>控制台</span>
+                </a>
+            </li>
+            <li class="top-nav-item">
+                <a class="top-nav-link {{ 'active' if request.endpoint == 'course.index' }}"
+                    href="{{ url_for('course.index') }}">
+                    <span class="nav-icon"><i class="fas fa-book-open"></i></span> <span>课程学习</span>
+                </a>
+            </li>
+            <li class="top-nav-item">
+                <a class="top-nav-link {{ 'active' if request.endpoint == 'analytics.index' }}"
+                    href="{{ url_for('analytics.index') }}">
+                    <span class="nav-icon"><i class="fas fa-chart-pie"></i></span> <span>数据分析</span>
+                </a>
+            </li>
+            <li class="top-nav-item">
+                <a class="top-nav-link {{ 'active' if request.endpoint == 'search.index' }}"
+                    href="{{ url_for('search.index') }}">
+                    <span class="nav-icon"><i class="fas fa-database"></i></span> <span>知识引擎</span>
+                </a>
+            </li>
+        </ul>
+
+        <div class="navbar-right">
+            <div class="navbar-right-divider"></div>
+            <div class="dropdown">
+                <div class="navbar-user-dropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span class="navbar-avatar"><i class="fas fa-user"></i></span>
+                </div>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="{{ url_for('dashboard.profile') }}"><i
+                                class="fas fa-id-badge"></i> 个人资料</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-cog"></i> 偏好设置</a></li>
+                    <li>
+                        <hr class="dropdown-divider">
+                    </li>
+                    <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}" style="color: #DC2626;"><i
+                                class="fas fa-sign-out-alt"></i> 退出登录</a></li>
+                </ul>
+            </div>
+        </div>
+        {% else %}
+        <div class="navbar-right">
+            <a class="navbar-icon-btn" href="{{ url_for('auth.login') }}" title="登录"><i
+                    class="fas fa-sign-in-alt"></i></a>
+            <a class="navbar-icon-btn" href="{{ url_for('auth.register') }}" title="注册"><i
+                    class="fas fa-user-plus"></i></a>
+        </div>
+        {% endif %}
+    </nav>
+    {% endif %}
+
+    <div class="main-content {% if request.endpoint == 'landing.index' %}p-0 m-0{% endif %}">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="flash-messages-container" style="max-width: 600px; margin: 0 auto 20px;">
+            {% for category, message in messages %}
+            <div class="alert alert-{{ 'success' if category == 'success' else 'warning' }} alert-dismissible fade show"
+                role="alert" style="border-radius: 12px; border: none; box-shadow: var(--shadow-sm);">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="关闭"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        function toggleMobileMenu() { document.getElementById('topNavMenu').classList.toggle('show'); }
+        document.addEventListener('click', (e) => {
+            const menu = document.getElementById('topNavMenu');
+            const toggle = document.querySelector('.mobile-toggle');
+            if (menu && toggle && !menu.contains(e.target) && !toggle.contains(e.target)) menu.classList.remove('show');
+        });
+        window.addEventListener('scroll', () => {
+            const navbar = document.getElementById('topNavbar');
+            if (navbar) navbar.classList.toggle('scrolled', window.scrollY > 20);
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

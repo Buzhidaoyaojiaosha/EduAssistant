@@ -1,0 +1,965 @@
+{% extends 'base.html' %}
+
+{% block title %}学生仪表盘 - 启智引航{% endblock %}
+
+{% block content %}
+<div class="dashboard-page">
+
+    <!-- 欢迎区域 -->
+    <div class="dash-welcome">
+        <div class="welcome-blob"></div>
+        <div class="welcome-left">
+            <div class="welcome-avatar">
+                <i class="fas fa-user-graduate"></i>
+            </div>
+            <div class="welcome-text">
+                <p class="welcome-label">个性化学习中心</p>
+                <h2 class="welcome-title">欢迎，<span class="highlight">{{ user.name }}</span>！</h2>
+                <p class="welcome-subtitle">
+                    <i class="fas fa-circle status-dot"></i>AI 学习助手已就绪 · 智能分析实时更新
+                </p>
+            </div>
+        </div>
+        <div class="welcome-stats">
+            <div class="stat-pill">
+                <i class="fas fa-book"></i>
+                <span class="stat-num">{{ courses|length if courses else 0 }}</span>
+                <span class="stat-label">课程</span>
+            </div>
+            <div class="stat-pill stat-pill-accent">
+                <i class="fas fa-tasks"></i>
+                <span class="stat-num">{{ incomplete_assignments|length if incomplete_assignments else 0 }}</span>
+                <span class="stat-label">待完成</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 学习警告 -->
+    {% if learning_issues and learning_issues.has_issues %}
+    <div class="dash-alert">
+        <div class="alert-header">
+            <div class="alert-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h5 class="alert-title">学习提醒</h5>
+        </div>
+        <ul class="alert-list">
+            {% for issue in learning_issues.issues %}
+            <li>{{ issue.message }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <!-- 我的课程 -->
+    <div class="dash-card dash-card-full">
+        <div class="dash-card-header">
+            <div class="header-icon">
+                <i class="fas fa-book"></i>
+            </div>
+            <h5 class="header-title">我的课程</h5>
+            <a href="{{ url_for('course.index') }}" class="header-action">
+                <i class="fas fa-compass"></i>浏览更多
+            </a>
+        </div>
+        <div class="dash-card-body">
+            {% if courses %}
+            <div class="course-grid">
+                {% for course in courses %}
+                <div class="course-card">
+                    <div class="course-card-bg"></div>
+                    <div class="course-card-top">
+                        <div class="course-icon">
+                            <i class="fas fa-book-open"></i>
+                        </div>
+                        <div class="course-info">
+                            <h5 class="course-name">{{ course.name }}</h5>
+                            <span class="course-code">{{ course.code }}</span>
+                        </div>
+                    </div>
+                    <p class="course-desc">{{ course.description|truncate(100) }}</p>
+                    <div class="course-footer">
+                        <div class="course-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 40%"></div>
+                            </div>
+                            <span class="progress-label">40% 完成</span>
+                        </div>
+                    </div>
+                    <a href="{{ url_for('course.view', course_id=course.id) }}" class="dash-btn-primary">
+                        <i class="fas fa-arrow-right"></i>进入课程
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="dash-empty">
+                <div class="empty-icon">
+                    <i class="fas fa-book"></i>
+                </div>
+                <p class="empty-text">您还没有加入任何课程</p>
+                <a href="{{ url_for('course.index') }}" class="dash-btn-primary"
+                    style="width:auto;padding:0.6rem 1.5rem">
+                    <i class="fas fa-compass"></i>浏览课程
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 底部双列 -->
+    <div class="dash-grid-2">
+
+        <!-- 待完成作业 -->
+        <div class="dash-card">
+            <div class="dash-card-header">
+                <div class="header-icon icon-accent">
+                    <i class="fas fa-tasks"></i>
+                </div>
+                <h5 class="header-title">待完成作业</h5>
+            </div>
+            <div class="dash-card-body">
+                {% if incomplete_assignments %}
+                <div class="dash-table-wrap">
+                    <table class="dash-table">
+                        <thead>
+                            <tr>
+                                <th>作业</th>
+                                <th>课程</th>
+                                <th>截止日期</th>
+                                <th class="text-end">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sa in incomplete_assignments %}
+                            <tr>
+                                <td>
+                                    <div class="table-cell-icon">
+                                        <i class="fas fa-file-alt"></i>
+                                        {{ sa.assignment.title }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="table-cell-icon">
+                                        <i class="fas fa-book"></i>
+                                        {{ sa.assignment.course.name }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="date-badge">
+                                        <i class="fas fa-calendar-alt"></i>
+                                        {{ sa.assignment.due_date.strftime('%Y-%m-%d') }}
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <a href="{{ url_for('course.view_assignment', assignment_id=sa.assignment.id) }}"
+                                        class="dash-btn-outline">
+                                        <i class="fas fa-eye"></i>查看
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="dash-empty">
+                    <div class="empty-icon icon-accent">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                    <p class="empty-text">当前没有待完成的作业 🎉</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 学习活动概览 -->
+        <div class="dash-card">
+            <div class="dash-card-header">
+                <div class="header-icon icon-warm">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h5 class="header-title">学习活动概览</h5>
+            </div>
+            <div class="dash-card-body">
+                {% if activity_summary and activity_summary.total_activities > 0 %}
+                <div class="stat-grid">
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <div class="stat-icon">
+                                <i class="fas fa-chart-bar"></i>
+                            </div>
+                            <span class="stat-card-label">总活动次数</span>
+                        </div>
+                        <span class="stat-value">{{ activity_summary.total_activities }}</span>
+                        <span class="stat-unit">次</span>
+                    </div>
+                    <div class="stat-card stat-card-accent">
+                        <div class="stat-card-header">
+                            <div class="stat-icon icon-accent-inner">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <span class="stat-card-label label-accent">总学习时间</span>
+                        </div>
+                        <span class="stat-value value-accent">{{ (activity_summary.total_duration / 60)|int }}</span>
+                        <span class="stat-unit unit-accent">分钟</span>
+                    </div>
+                </div>
+                <a href="{{ url_for('analytics.student_analytics', student_id=user.id) }}" class="dash-btn-light">
+                    <i class="fas fa-chart-pie"></i>查看详细分析
+                </a>
+                {% else %}
+                <div class="dash-empty">
+                    <div class="empty-icon icon-warm">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <p class="empty-text">暂无学习活动记录</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<style>
+    /* ===== CSS Variables ===== */
+    :root {
+        --primary: #346739;
+        --primary-light: #79AE6F;
+        --primary-pale: #f0f7ee;
+        --primary-mid: rgba(121, 174, 111, 0.18);
+        --accent: #E8884B;
+        --accent-pale: rgba(232, 136, 75, 0.12);
+        --yellow: #f5c842;
+        --yellow-pale: rgba(245, 200, 66, 0.13);
+        --text-primary: #1a1e1b;
+        --text-secondary: #6b7280;
+        --bg-main: #f6f8f4;
+        --bg-card: #ffffff;
+        --border: rgba(52, 103, 57, 0.10);
+        --radius-lg: 16px;
+        --radius-md: 12px;
+        --radius-sm: 8px;
+        --shadow-sm: 0 2px 12px rgba(52, 103, 57, 0.07);
+        --shadow-md: 0 8px 32px rgba(52, 103, 57, 0.10);
+    }
+
+    /* ===== Layout ===== */
+    .dashboard-page {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    /* ===== Welcome ===== */
+    .dash-welcome {
+        position: relative;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1.5rem;
+        overflow: hidden;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .welcome-blob {
+        position: absolute;
+        top: -60px;
+        right: -60px;
+        width: 220px;
+        height: 220px;
+        background: radial-gradient(circle, rgba(121, 174, 111, 0.18) 0%, transparent 70%);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+
+    .welcome-left {
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        flex: 1;
+    }
+
+    .welcome-avatar {
+        width: 56px;
+        height: 56px;
+        background: linear-gradient(135deg, var(--primary-light), var(--primary));
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        color: #fff;
+        flex-shrink: 0;
+        box-shadow: 0 4px 14px rgba(52, 103, 57, 0.28);
+    }
+
+    .welcome-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        color: var(--primary-light);
+        text-transform: uppercase;
+        margin: 0 0 0.2rem;
+    }
+
+    .welcome-title {
+        font-size: 1.6rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin: 0 0 0.3rem;
+        letter-spacing: -0.4px;
+        line-height: 1.2;
+    }
+
+    .welcome-title .highlight {
+        color: var(--primary);
+    }
+
+    .welcome-subtitle {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .status-dot {
+        color: #4ade80;
+        font-size: 0.45rem;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.4;
+        }
+    }
+
+    .welcome-stats {
+        display: flex;
+        gap: 0.75rem;
+        flex-shrink: 0;
+    }
+
+    .stat-pill {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: var(--primary-pale);
+        border: 1px solid var(--primary-mid);
+        border-radius: 999px;
+        padding: 0.55rem 1rem;
+        color: var(--primary);
+        font-size: 0.82rem;
+    }
+
+    .stat-pill.stat-pill-accent {
+        background: var(--accent-pale);
+        border-color: rgba(232, 136, 75, 0.22);
+        color: var(--accent);
+    }
+
+    .stat-pill i {
+        font-size: 0.75rem;
+    }
+
+    .stat-pill .stat-num {
+        font-weight: 800;
+        font-size: 1rem;
+    }
+
+    .stat-pill .stat-label {
+        color: var(--text-secondary);
+        font-size: 0.78rem;
+    }
+
+    /* ===== Alert ===== */
+    .dash-alert {
+        background: linear-gradient(135deg, rgba(232, 136, 75, 0.06) 0%, rgba(244, 177, 131, 0.09) 100%);
+        border: 1px solid rgba(232, 136, 75, 0.2);
+        border-radius: var(--radius-lg);
+        padding: 1.25rem 1.5rem;
+    }
+
+    .alert-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .alert-icon {
+        width: 36px;
+        height: 36px;
+        background: rgba(232, 136, 75, 0.15);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--accent);
+        font-size: 0.85rem;
+        flex-shrink: 0;
+    }
+
+    .alert-title {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: var(--accent);
+        margin: 0;
+    }
+
+    .alert-list {
+        margin: 0;
+        padding-left: 1.25rem;
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+    }
+
+    .alert-list li {
+        font-size: 0.85rem;
+        color: var(--text-primary);
+        padding-left: 0.5rem;
+        position: relative;
+    }
+
+    .alert-list li::before {
+        content: '·';
+        position: absolute;
+        left: -0.75rem;
+        color: var(--accent);
+        font-weight: 700;
+    }
+
+    /* ===== Card ===== */
+    .dash-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        box-shadow: var(--shadow-sm);
+        transition: box-shadow 0.25s ease;
+    }
+
+    .dash-card:hover {
+        box-shadow: var(--shadow-md);
+    }
+
+    .dash-card-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--border);
+        background: rgba(246, 248, 244, 0.6);
+    }
+
+    .header-icon {
+        width: 36px;
+        height: 36px;
+        background: var(--primary-pale);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary);
+        font-size: 0.85rem;
+        flex-shrink: 0;
+    }
+
+    .header-icon.icon-accent {
+        background: var(--accent-pale);
+        color: var(--accent);
+    }
+
+    .header-icon.icon-warm {
+        background: var(--yellow-pale);
+        color: #c9870a;
+    }
+
+    .header-title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0;
+        flex: 1;
+    }
+
+    .header-action {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.4rem 0.9rem;
+        background: var(--primary);
+        color: #fff;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: background 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .header-action:hover {
+        background: #2a5430;
+        box-shadow: 0 4px 12px rgba(52, 103, 57, 0.25);
+        color: #fff;
+    }
+
+    .dash-card-body {
+        padding: 1.5rem;
+    }
+
+    /* ===== Course Grid ===== */
+    .course-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 1rem;
+    }
+
+    .course-card {
+        position: relative;
+        background: var(--bg-main);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: 1.25rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        transition: all 0.25s ease;
+        overflow: hidden;
+    }
+
+    .course-card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-md);
+        border-color: var(--primary-light);
+    }
+
+    .course-card-bg {
+        position: absolute;
+        top: -30px;
+        right: -30px;
+        width: 100px;
+        height: 100px;
+        background: radial-gradient(circle, var(--primary-mid) 0%, transparent 70%);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+
+    .course-card-top {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .course-icon {
+        width: 42px;
+        height: 42px;
+        background: var(--primary-pale);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary);
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+
+    .course-name {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0 0 0.15rem;
+        line-height: 1.3;
+    }
+
+    .course-code {
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: var(--primary-light);
+        background: var(--primary-pale);
+        padding: 0.1rem 0.5rem;
+        border-radius: 999px;
+    }
+
+    .course-desc {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        line-height: 1.6;
+        margin: 0;
+        flex: 1;
+    }
+
+    .course-footer {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .progress-bar {
+        flex: 1;
+        height: 5px;
+        background: rgba(52, 103, 57, 0.12);
+        border-radius: 999px;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary-light), var(--primary));
+        border-radius: 999px;
+        transition: width 0.5s ease;
+    }
+
+    .progress-label {
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: var(--primary);
+        white-space: nowrap;
+    }
+
+    /* ===== Buttons ===== */
+    .dash-btn-primary {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.45rem;
+        width: 100%;
+        padding: 0.6rem 1rem;
+        background: var(--primary);
+        color: #fff;
+        border: none;
+        border-radius: var(--radius-sm);
+        font-size: 0.82rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+    .dash-btn-primary:hover {
+        background: #2a5430;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 14px rgba(52, 103, 57, 0.28);
+        color: #fff;
+    }
+
+    .dash-btn-primary i {
+        font-size: 0.75rem;
+        transition: transform 0.2s ease;
+    }
+
+    .dash-btn-primary:hover i {
+        transform: translateX(3px);
+    }
+
+    .dash-btn-outline {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        padding: 0.45rem 0.85rem;
+        background: transparent;
+        color: var(--primary);
+        border: 1.5px solid rgba(52, 103, 57, 0.22);
+        border-radius: var(--radius-sm);
+        font-size: 0.82rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+    }
+
+    .dash-btn-outline:hover {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: #fff;
+        transform: translateY(-1px);
+    }
+
+    .dash-btn-light {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        width: 100%;
+        padding: 0.6rem 1rem;
+        background: var(--bg-main);
+        color: var(--text-primary);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        margin-top: 0.75rem;
+    }
+
+    .dash-btn-light:hover {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: #fff;
+        transform: translateY(-1px);
+    }
+
+    /* ===== Empty State ===== */
+    .dash-empty {
+        text-align: center;
+        padding: 2.5rem 1rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .empty-icon {
+        width: 64px;
+        height: 64px;
+        background: var(--primary-pale);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary);
+        font-size: 1.4rem;
+    }
+
+    .empty-icon.icon-accent {
+        background: var(--accent-pale);
+        color: var(--accent);
+    }
+
+    .empty-icon.icon-warm {
+        background: var(--yellow-pale);
+        color: #c9870a;
+    }
+
+    .empty-text {
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+        margin: 0;
+    }
+
+    /* ===== Table ===== */
+    .dash-table-wrap {
+        overflow-x: auto;
+    }
+
+    .dash-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .dash-table thead th {
+        background: rgba(52, 103, 57, 0.04);
+        color: var(--text-secondary);
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        padding: 0.7rem 1rem;
+        border-bottom: 1px solid var(--border);
+        text-align: left;
+        white-space: nowrap;
+    }
+
+    .dash-table td {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--border);
+        font-size: 0.85rem;
+        color: var(--text-primary);
+        vertical-align: middle;
+    }
+
+    .dash-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .dash-table tbody tr {
+        transition: background 0.15s ease;
+    }
+
+    .dash-table tbody tr:hover {
+        background: var(--primary-pale);
+    }
+
+    .table-cell-icon {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .table-cell-icon i {
+        color: var(--primary-light);
+        font-size: 0.8rem;
+        flex-shrink: 0;
+    }
+
+    .table-cell-icon i.fa-book {
+        color: var(--primary);
+    }
+
+    .date-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        background: var(--accent-pale);
+        color: var(--accent);
+        font-size: 0.78rem;
+        font-weight: 600;
+        padding: 0.25rem 0.65rem;
+        border-radius: 999px;
+        white-space: nowrap;
+    }
+
+    .date-badge i {
+        font-size: 0.7rem;
+    }
+
+    .text-end {
+        text-align: right;
+    }
+
+    /* ===== Activity Stats ===== */
+    .stat-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-card {
+        background: var(--primary-pale);
+        border: 1px solid var(--primary-mid);
+        border-radius: var(--radius-md);
+        padding: 1.1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+    }
+
+    .stat-card.stat-card-accent {
+        background: var(--accent-pale);
+        border-color: rgba(232, 136, 75, 0.2);
+    }
+
+    .stat-card-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-icon {
+        width: 30px;
+        height: 30px;
+        background: rgba(52, 103, 57, 0.12);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary);
+        font-size: 0.75rem;
+        flex-shrink: 0;
+    }
+
+    .stat-icon.icon-accent-inner {
+        background: rgba(232, 136, 75, 0.15);
+        color: var(--accent);
+    }
+
+    .stat-card-label {
+        font-size: 0.73rem;
+        font-weight: 700;
+        color: var(--primary);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .stat-card-label.label-accent {
+        color: var(--accent);
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--primary);
+        line-height: 1;
+        letter-spacing: -1px;
+    }
+
+    .stat-value.value-accent {
+        color: var(--accent);
+    }
+
+    .stat-unit {
+        font-size: 0.78rem;
+        color: var(--primary-light);
+        font-weight: 600;
+    }
+
+    .stat-unit.unit-accent {
+        color: rgba(232, 136, 75, 0.7);
+    }
+
+    /* ===== Grid ===== */
+    .dash-grid-2 {
+        display: grid;
+        grid-template-columns: 1.6fr 1fr;
+        gap: 1.5rem;
+    }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 960px) {
+        .dash-grid-2 {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 720px) {
+        .dash-welcome {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .welcome-stats {
+            flex-wrap: wrap;
+        }
+
+        .course-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .stat-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .dashboard-page {
+            padding: 1rem;
+        }
+
+        .dash-card-body {
+            padding: 1rem;
+        }
+    }
+</style>
+{% endblock %}

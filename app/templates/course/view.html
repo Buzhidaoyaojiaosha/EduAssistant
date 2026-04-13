@@ -1,0 +1,2648 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ course.name }} - 启智引航{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <div class="d-flex align-items-center">
+            <div class="rounded-circle p-3 me-3" style="background: rgba(37, 113, 74, 0.08);">
+                <i class="fas fa-book" style="color: var(--primary, #25714A);"></i>
+            </div>
+            <div>
+                <h2 class="text-primary mb-1">{{ course.name }}</h2>
+                <p class="text-muted mb-0">
+                    <i class="fas fa-hashtag me-1"></i>{{ course.code }}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- 课程信息 -->
+        <div class="card mb-4">
+            <div class="card-header bg-transparent border-0">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle p-2 me-2" style="background: rgba(23, 162, 184, 0.1);">
+                        <i class="fas fa-info-circle" style="color: #17a2b8;"></i>
+                    </div>
+                    <h5 class="mb-0">课程详情</h5>
+                </div>
+            </div>
+            <div class="card-body">
+                <p class="card-text">{{ course.description }}</p>
+                <div class="d-flex align-items-center text-muted mb-3">
+                    <i class="fas fa-user-tie me-2" style="color: #6c757d;"></i>
+                    <span>{{ course.teacher.name }}</span>
+                </div>
+                {% if is_student %}
+                <div class="alert mb-0" style="background: rgba(25, 135, 84, 0.1); border: none;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-check-circle me-2" style="color: #198754;"></i>
+                            <span>您已加入该课程</span>
+                        </div>
+                        <form action="{{ url_for('course.unenroll', course_id=course.id) }}" method="post">
+                            <button type="submit" class="btn btn-light text-danger"
+                                onclick="return confirm('确定要退出此课程吗？这可能会影响您的作业和成绩记录。')">
+                                <i class="fas fa-user-minus me-1"></i>退出课程
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% elif is_admin %}
+
+                {% elif not is_teacher %}
+                <div class="alert mb-0" style="background: rgba(37, 113, 74, 0.06); border: none;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-info-circle me-2" style="color: var(--primary, #25714A);"></i>
+                            <span>您尚未加入该课程</span>
+                        </div>
+                        <form action="{{ url_for('course.enroll', course_id=course.id) }}" method="post">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-user-plus me-1"></i>加入课程
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        <!-- 知识点列表 -->
+        <div class="card mb-4">
+            <div class="card-header bg-transparent border-0">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle p-2 me-2" style="background: rgba(255, 193, 7, 0.1);">
+                            <i class="fas fa-lightbulb" style="color: #ffc107;"></i>
+                        </div>
+                        <h5 class="mb-0">知识点</h5>
+                    </div>
+                    <button type="button" class="btn btn-light" data-bs-toggle="modal"
+                        data-bs-target="#knowledgeGraphModal">
+                        <i class="fas fa-project-diagram" style="color: #6c757d;"></i>
+                        查看知识图谱
+                    </button>
+                </div>
+            </div>
+
+            <div class="card-body">
+                {% if knowledge_points %}
+                <div class="table-responsive" style="max-height: 416px; overflow-y: auto;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>名称</th>
+                                <th>描述</th>
+                                <th>所属</th>
+                                {% if is_teacher %}
+                                <th class="text-end">操作</th>
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for kp in knowledge_points %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-circle me-2" style="color: #ffc107; font-size: 0.5rem;"></i>
+                                        {{ kp.name }}
+                                    </div>
+                                </td>
+                                <td>{{ kp.description|string|default('无')|truncate(50) }}</td>
+                                <td>
+                                    {% if kp.parent %}
+                                    <span class="text-primary">{{ kp.parent.name }}</span>
+                                    {% else %}
+                                    <span class="text-muted">顶级</span>
+                                    {% endif %}
+                                </td>
+                                {% if is_teacher %}
+                                <td class="text-end">
+                                    <button type="button" class="btn btn-light btn-sm"
+                                        onclick="editKnowledgePoint({{ kp.id }}, '{{ kp.name }}', '{{ kp.description }}', {% if kp.parent %}{{ kp.parent.id }}{% else %}null{% endif %})">
+                                        <i class="fas fa-edit" style="color: #6c757d;"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-light btn-sm text-danger"
+                                        onclick="deleteKnowledgePoint({{ kp.id }}, '{{ kp.name }}')">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
+                        style="width: 60px; height: 60px; background: rgba(255, 193, 7, 0.1);">
+                        <i class="fas fa-lightbulb fa-lg" style="color: #ffc107;"></i>
+                    </div>
+                    <p class="text-muted mb-0">该课程暂无知识点，请使用"新增知识点"功能添加</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        <!-- 作业列表 -->
+        <div class="card mb-4">
+            <div class="card-header bg-transparent border-0">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle p-2 me-2" style="background: rgba(37, 113, 74, 0.08);">
+                        <i class="fas fa-tasks" style="color: var(--primary, #25714A);"></i>
+                    </div>
+                    <h5 class="mb-0">作业</h5>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if assignments %}
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>标题</th>
+                                <th>截止日期</th>
+                                <th>总分</th>
+                                {% if is_student %}
+                                <th>状态</th>
+                                {% endif %}
+                                <th class="text-end">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for assignment in assignments %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-file-alt me-2" style="color: var(--primary, #25714A);"></i>
+                                        {{ assignment.title }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center text-muted">
+                                        <i class="fas fa-calendar-alt me-2" style="color: #20c997;"></i>
+                                        {{ assignment.due_date.strftime('%Y-%m-%d') }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center text-muted">
+                                        <i class="fas fa-star me-2" style="color: #fd7e14;"></i>
+                                        {{ assignment.total_points }}
+                                    </div>
+                                </td>
+                                {% if is_student %}
+                                {% set student_assignment = student_assignments|selectattr('assignment.id',
+                                'equalto',
+                                assignment.id)|first %}
+                                <td>
+                                    {% if student_assignment and student_assignment.status==1 %}
+                                    <span class="badge rounded-pill"
+                                        style="background: rgba(25, 135, 84, 0.1); color: #198754;">
+                                        <i class="fas fa-check-circle me-1"></i>已提交
+                                    </span>
+                                    {% elif student_assignment and (student_assignment.final_score or
+                                    student_assignment.status == 2) %}
+                                    <span class="badge rounded-pill"
+                                        style="background: rgba(255, 193, 7, 0.1); color: #ffc107;">
+                                        <i class="fas fa-clock me-1"></i>已批改
+                                    </span>
+                                    {% else %}
+                                    <span class="badge rounded-pill"
+                                        style="background: rgba(220, 53, 69, 0.1); color: #dc3545;">
+                                        <i class="fas fa-times-circle me-1"></i>未提交
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                {% endif %}
+                                <td class="text-end">
+                                    <a href="{{ url_for('course.view_assignment', assignment_id=assignment.id) }}"
+                                        class="btn btn-light btn-sm">
+                                        <i class="fas fa-eye me-1" style="color: #6c757d;"></i>查看
+                                    </a>
+                                    <a href="{{ url_for('course.export_assignment', assignment_id=assignment.id, course_id=assignment.course.id) }}"
+                                        class="btn btn-light btn-sm">
+                                        <i class="fas fa-download me-1" style="color: #6c757d;"></i>导出
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
+                        style="width: 60px; height: 60px; background: rgba(37, 113, 74, 0.08);">
+                        <i class="fas fa-tasks fa-lg" style="color: var(--primary, #25714A);"></i>
+                    </div>
+                    <p class="text-muted mb-0">该课程暂无作业</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 课程相关资源 -->
+        <div class="card mb-4">
+            <div class="card-header bg-transparent border-0">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle p-2 me-2" style="background: rgba(32, 201, 151, 0.1);">
+                        <i class="fas fa-file-alt" style="color: #20c997;"></i>
+                    </div>
+                    <h5 class="mb-0">课程相关资源</h5>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if knowledge_entries %}
+                <div class="list-group list-group-flush">
+                    {% for entry in knowledge_entries %}
+                    <div class="list-group-item px-0">
+                        {% if entry.type == 'text' %}
+                        <!-- 文本类型：显示标题和内容 -->
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="rounded-circle p-2 me-2" style="background: rgba(32, 201, 151, 0.1);">
+                                <i class="fas fa-align-left" style="color: #20c997;"></i>
+                            </div>
+                            <h6 class="mb-0">{{ entry.title }}</h6>
+                        </div>
+                        <div class="text-muted small ps-4">
+                            {{ entry.content|safe }}
+                        </div>
+                        {% else %}
+                        <!-- 其他类型：显示可点击下载的标题 -->
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle p-2 me-2" style="background: rgba(32, 201, 151, 0.1);">
+                                <i class="fas {{ 'fa-file-pdf' if entry.type == 'pdf' 
+                                                        else 'fa-file-word' if entry.type == 'doc' 
+                                                        else 'fa-file-image' if entry.type == 'image'
+                                                else 'fa-file-alt' }}" style="color: #20c997;"></i>
+                            </div>
+                            <a href="{{ entry.content }}" class="text-decoration-none">
+                                {{ entry.title }}
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
+                        style="width: 60px; height: 60px; background: rgba(32, 201, 151, 0.1);">
+                        <i class="fas fa-file-alt fa-lg" style="color: #20c997;"></i>
+                    </div>
+                    <p class="text-muted mb-0">暂无相关资源</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        {% if is_teacher or is_admin %}
+        <!-- 教师操作面板 -->
+        <div class="card mb-4">
+            <div class="card-header bg-transparent border-0">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle p-2 me-2" style="background: rgba(108, 117, 125, 0.1);">
+                        <i class="fas fa-tools" style="color: #6c757d;"></i>
+                    </div>
+                    <h5 class="mb-0">课程管理</h5>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-3">
+                    <a href="{{ url_for('course.create_assignment', course_id=course.id) }}"
+                        class="btn btn-light text-start">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle p-2 me-3" style="background: rgba(37, 113, 74, 0.08);">
+                                <i class="fas fa-plus" style="color: var(--primary, #25714A);"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">创建作业</h6>
+                                <small class="text-muted">发布新的课程作业</small>
+                            </div>
+                        </div>
+                    </a>
+
+                    <button type="button" class="btn btn-light text-start" data-bs-toggle="modal"
+                        data-bs-target="#addKnowledgePointModal">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle p-2 me-3" style="background: rgba(255, 193, 7, 0.1);">
+                                <i class="fas fa-lightbulb" style="color: #ffc107;"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">新增知识点</h6>
+                                <small class="text-muted">添加课程知识点</small>
+                            </div>
+                        </div>
+                    </button>
+
+                    <a href="{{ url_for('search.add_knowledge', referrer=url_for('course.view', course_id=course.id)) }}"
+                        class="btn btn-light text-start">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle p-2 me-3" style="background: rgba(32, 201, 151, 0.1);">
+                                <i class="fas fa-upload" style="color: #20c997;"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">上传资源</h6>
+                                <small class="text-muted">上传课程学习资源</small>
+                            </div>
+                        </div>
+                    </a>
+
+                    <a href="{{ url_for('search.manage_knowledge', referrer=url_for('course.view', course_id=course.id))}}"
+                        class="btn btn-light text-start">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle p-2 me-3" style="background: rgba(108, 117, 125, 0.1);">
+                                <i class="fas fa-cog" style="color: #6c757d;"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">管理知识库</h6>
+                                <small class="text-muted">管理课程知识库</small>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI 助手功能 -->
+        <div class="card mb-4">
+            <div class="card-header bg-transparent border-0">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle p-2 me-2" style="background: rgba(13, 202, 240, 0.1);">
+                        <i class="fas fa-robot" style="color: #0dcaf0;"></i>
+                    </div>
+                    <h5 class="mb-0">AI 助手</h5>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-3">
+                    <button type="button" class="btn btn-light text-start" id="generateTeachingOutlineBtn">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle p-2 me-3" style="background: rgba(13, 202, 240, 0.1);">
+                                <i class="fas fa-graduation-cap" style="color: #0dcaf0;"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">智能备课</h6>
+                                <small class="text-muted">AI生成教学大纲和课程计划</small>
+                            </div>
+                        </div>
+                    </button>
+
+                    <button type="button" class="btn btn-light text-start" id="generateAssessmentBtn">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle p-2 me-3" style="background: rgba(13, 202, 240, 0.1);">
+                                <i class="fas fa-clipboard-check" style="color: #0dcaf0;"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">生成考核</h6>
+                                <small class="text-muted">AI生成作业和测试题目</small>
+                            </div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 课程分析 -->
+        <div class="card mb-4">
+            <div class="card-header bg-transparent border-0">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle p-2 me-2" style="background: rgba(253, 126, 20, 0.1);">
+                        <i class="fas fa-chart-line" style="color: #fd7e14;"></i>
+                    </div>
+                    <h5 class="mb-0">数据分析</h5>
+                </div>
+            </div>
+            <div class="card-body">
+                <a href="{{ url_for('analytics.course_analytics', course_id=course.id) }}"
+                    class="btn btn-light text-start w-100">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle p-2 me-3" style="background: rgba(253, 126, 20, 0.1);">
+                            <i class="fas fa-chart-bar" style="color: #fd7e14;"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0">课程分析</h6>
+                            <small class="text-muted">查看课程整体数据分析</small>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- 学生列表 -->
+        <div class="card mb-4">
+            <div class="card-header bg-transparent border-0">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle p-2 me-2" style="background: rgba(25, 135, 84, 0.1);">
+                            <i class="fas fa-users" style="color: #198754;"></i>
+                        </div>
+                        <h5 class="mb-0">学生列表</h5>
+                    </div>
+                    <span class="badge rounded-pill bg-light text-primary">
+                        共 {{ students|length }} 人
+                    </span>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush" style="max-height: 416px; overflow-y: auto;">
+                    {% for student in students %}
+                    <div class="list-group-item border-0">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle p-2 me-2" style="background: rgba(25, 135, 84, 0.1);">
+                                    <i class="fas fa-user" style="color: #198754;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0">{{ student.name }}</h6>
+                                    <small class="text-muted">{{ student.username }}</small>
+                                </div>
+                            </div>
+                            <a href="{{ url_for('analytics.student_analytics', course_id=course.id, student_id=student.id) }}"
+                                class="btn btn-light btn-sm" title="查看学习分析">
+                                <i class="fas fa-chart-line" style="color: #fd7e14;"></i>
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% if not students %}
+                <div class="text-center py-4">
+                    <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
+                        style="width: 60px; height: 60px; background: rgba(25, 135, 84, 0.1);">
+                        <i class="fas fa-users fa-lg" style="color: #198754;"></i>
+                    </div>
+                    <p class="text-muted mb-0">暂无学生加入课程</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        {% if is_student %}
+        <!-- 知识库查询卡片 -->
+        <div class="card mb-4">
+            <div class="card-header bg-transparent border-0">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle p-2 me-2" style="background: rgba(13, 110, 253, 0.1);">
+                        <i class="fas fa-search" style="color: #0d6efd;"></i>
+                    </div>
+                    <h5 class="mb-0">知识库查询</h5>
+                </div>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('search.index') }}" method="get">
+                    <input type="hidden" name="course_id" value="{{ course.id }}">
+                    <div class="input-group">
+                        <span class="input-group-text border-0 bg-light">
+                            <i class="fas fa-search text-primary"></i>
+                        </span>
+                        <input type="text" class="form-control border-0 bg-light" name="q" placeholder="搜索课程相关知识...">
+                        <button class="btn btn-primary" type="submit"
+                            style="background: var(--primary, #25714A); border: none; box-shadow: 0 4px 15px rgba(37, 113, 74, 0.2);">
+                            查询
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- 在右侧学生列表下方添加错题本模块 -->
+        {% if is_student %}
+        <div class="card mb-4">
+            <div class="card-header bg-transparent border-0">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle p-2 me-2" style="background: rgba(220, 53, 69, 0.1);">
+                        <i class="fas fa-bookmark" style="color: #dc3545;"></i>
+                    </div>
+                    <h5 class="mb-0">我的错题本</h5>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if wrong_questions %}
+                <div class="accordion" id="wrongQuestionsAccordion">
+                    {% for assignment_data in wrong_questions %}
+                    <div class="card mb-3">
+                        <div class="card-header border-0 py-3"
+                            style="background: linear-gradient(135deg, #ffffff 0%, #f4f9f6 100%); box-shadow: 0 4px 12px rgba(37, 113, 74, 0.06), 0 2px 6px rgba(0, 0, 0, 0.04); border-radius: 8px 8px 0 0; position: relative; z-index: 1;">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center">
+                                    <h6 class="mb-0" style="color: #1e3a8a; font-weight: bold;">{{
+                                        assignment_data.assignment.title }}</h6>
+                                    <span class="badge rounded-pill ms-2"
+                                        style="background: rgba(220, 53, 69, 0.1); color: #dc3545; box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2);">
+                                        {{ assignment_data.questions|length }} 题
+                                    </span>
+                                </div>
+                                <button class="btn btn-link p-0 text-decoration-none" type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#collapse{{ assignment_data.assignment.id }}">
+                                    <i class="fas fa-angle-down fs-5"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="collapse" id="collapse{{ assignment_data.assignment.id }}">
+                            <div class="card-body pt-0" style="background-color: #f4f9f6; border-radius: 0 0 8px 8px;">
+                                <!-- 展开内容 -->
+                                <div class="list-group list-group-flush">
+                                    {% for question in assignment_data.questions %}
+                                    <div class="list-group-item border-0 py-3" style="background-color: transparent;">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <h6 class="mb-0">{{ question.question_name }}</h6>
+                                            <span class="badge rounded-pill"
+                                                style="background: rgba(220, 53, 69, 0.1); color: #dc3545;">
+                                                {{ question.score }}/{{ question.total_points }}
+                                            </span>
+                                        </div>
+
+                                        <!-- 展开内容 -->
+                                        <div class="mt-3 collapse" id="questionDetail{{ question.id }}">
+                                            <div class="card bg-light border-0">
+                                                <div class="card-body">
+                                                    <div class="mb-3">
+                                                        <h6 class="text-muted mb-2">题目内容:</h6>
+                                                        <p class="mb-0">{{ question.context }}</p>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <h6 class="text-muted mb-2">正确答案:</h6>
+                                                        <p class="mb-0">{{ question.answer }}</p>
+                                                    </div>
+                                                    <div>
+                                                        <h6 class="text-muted mb-2">我的答案:</h6>
+                                                        <p class="mb-0">{{ question.student_answer }}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="mt-3">
+                                            <button class="btn btn-sm btn-outline-primary" type="button"
+                                                data-bs-toggle="collapse"
+                                                data-bs-target="#questionDetail{{ question.id }}">
+                                                <i class="fas fa-eye me-1"></i>查看详情
+                                            </button>
+                                            <a href="{{ url_for('wrongbook.practice_questions', course_id=course.id, question_id=question.id) }}"
+                                                class="btn btn-sm btn-outline-success ms-2">
+                                                <i class="fas fa-dumbbell me-1"></i>再练几题
+                                            </a>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
+                        style="width: 60px; height: 60px; background: rgba(220, 53, 69, 0.1);">
+                        <i class="fas fa-bookmark fa-lg" style="color: #dc3545;"></i>
+                    </div>
+                    <p class="text-muted mb-0">暂无错题记录</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 知识图谱模态框 -->
+<div class="modal fade" id="knowledgeGraphModal" tabindex="-1" aria-labelledby="knowledgeGraphModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="knowledgeGraphModalLabel">课程《{{ course.name }}》的知识图谱</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="viz" style="width: 100%; height: 600px; border: 1px solid #ccc; border-radius: 8px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 新增知识点模态框 -->
+{% if is_teacher %}
+<div class="modal fade" id="addKnowledgePointModal" tabindex="-1" aria-labelledby="addKnowledgePointModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addKnowledgePointModalLabel">新增知识点</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <ul class="nav nav-tabs" id="addKPTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="manual-tab-modal" data-bs-toggle="tab"
+                        data-bs-target="#manual-modal" type="button" role="tab" aria-controls="manual-modal"
+                        aria-selected="true">手动输入</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="excel-tab-modal" data-bs-toggle="tab" data-bs-target="#excel-modal"
+                        type="button" role="tab" aria-controls="excel-modal" aria-selected="false">Excel 导入</button>
+                </li>
+            </ul>
+            <!-- 标签页内容 -->
+            <div class="tab-content" id="addKPTabContent">
+                <!-- 手动输入页 -->
+                <div class="tab-pane fade show active" id="manual-modal" role="tabpanel"
+                    aria-labelledby="manual-tab-modal">
+                    <form id="addKnowledgePointForm"
+                        action="{{ url_for('course.add_knowledge_point', course_id=course.id) }}" method="post">
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="kp_name" class="form-label">知识点名称</label>
+                                <input type="text" class="form-control" id="kp_name" name="name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="kp_description" class="form-label">描述</label>
+                                <textarea class="form-control" id="kp_description" name="description"
+                                    rows="3"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="kp_parent" class="form-label">父级知识点（可选）</label>
+                                <select class="form-select" id="kp_parent" name="parent_id">
+                                    <option value="">-- 无父级（顶级知识点）--</option>
+                                    {% for kp in knowledge_points %}
+                                    <option value="{{ kp.id }}">{{ kp.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                            <button type="submit" class="btn btn-primary">保存</button>
+                        </div>
+                    </form>
+                </div>
+                <!-- 新增 Excel 导入页 -->
+                <div class="tab-pane fade" id="excel-modal" role="tabpanel" aria-labelledby="excel-tab-modal">
+                    <form id="importExcelForm"
+                        action="{{ url_for('course.import_knowledge_points', course_id=course.id) }}" method="post"
+                        enctype="multipart/form-data">
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="excelFile" class="form-label">选择 Excel 文件</label>
+                                <input class="form-control" type="file" id="excelFile" name="excel_file"
+                                    accept=".xlsx, .xls" required>
+                            </div>
+                            <div class="alert alert-info">
+                                <p>Excel 文件格式要求：</p>
+                                <ul>
+                                    <li>A列至G列对应知识点的层级关系，区间内每行只能填写一个知识点</li>
+                                    <li>I列至K列填写对应知识点的前置、后置和关联知识点，多个知识点之间用英文分号";"隔开</li>
+                                    <li>任意两个知识点之间只能存在一种关系（前置、后置或关联），新导入的关系将覆盖旧关系，关系设置总数上限为2000个</li>
+                                    <li>L列写固定标签,包括：重点、难点、考点、课程思政，可根据需要自定义标签，多个标签之间用英文分号";"隔开</li>
+                                    <li>M列写认知维度,包括：记忆、理解、应用、分析、评价、创造，每个知识点只能填入一个认知维度</li>
+                                    <li>N列写知识点分类,包括：事实性、概念性、程序性、元认知，每个知识点只能填入一个分类</li>
+                                    <li>O列写知识点说明,仅支持输入文本，暂不支持图片、公式等</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                            <button type="submit" class="btn btn-primary">导入</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- 编辑知识点模态框 -->
+<div class="modal fade" id="editKnowledgePointModal" tabindex="-1" aria-labelledby="editKnowledgePointModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editKnowledgePointModalLabel">编辑知识点</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editKnowledgePointForm" action="" method="post">
+                <div class="modal-body">
+                    <input type="hidden" id="edit_kp_id" name="knowledge_point_id">
+                    <div class="mb-3">
+                        <label for="edit_kp_name" class="form-label">知识点名称</label>
+                        <input type="text" class="form-control" id="edit_kp_name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_kp_description" class="form-label">描述</label>
+                        <textarea class="form-control" id="edit_kp_description" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_kp_parent" class="form-label">父级知识点（可选）</label>
+                        <select class="form-select" id="edit_kp_parent" name="parent_id">
+                            <option value="">-- 无父级（顶级知识点）--</option>
+                            {% for kp in knowledge_points %}
+                            <option value="{{ kp.id }}">{{ kp.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">更新</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 删除知识点确认模态框 -->
+<div class="modal fade" id="deleteKnowledgePointModal" tabindex="-1" aria-labelledby="deleteKnowledgePointModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteKnowledgePointModalLabel">删除知识点</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>您确定要删除知识点 "<span id="delete_kp_name"></span>" 吗？</p>
+                <p class="text-danger">注意：这将删除与该知识点的所有关联。如果它有子知识点，将无法删除。</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <form id="deleteKnowledgePointForm" action="" method="post">
+                    <input type="hidden" id="delete_kp_id" name="knowledge_point_id">
+                    <button type="submit" class="btn btn-danger">确认删除</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- 备课资料生成进度模态框 -->
+<div class="modal fade" id="generateProgressModal" tabindex="-1" aria-labelledby="generateProgressModalLabel"
+    aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="generateProgressModalLabel">正在生成备课资料</h5>
+            </div>
+            <div class="modal-body text-center">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">生成中...</span>
+                </div>
+                <p class="mb-0">AI正在分析课程资料并生成备课资料，请稍候...</p>
+                <div class="progress mt-3">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
+                        style="width: 100%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- 添加教学大纲知识库选择模态框 -->
+<div class="modal fade" id="knowledgeSelectionModal" tabindex="-1" aria-labelledby="knowledgeSelectionModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="knowledgeSelectionModalLabel">智能备课</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    请选择要用于备课的知识条目（可多选）和生成的教学材料类型
+                </div>
+                <!-- 材料类型选择 -->
+                <div class="mb-3">
+                    <h6><i class="fas fa-tasks me-2"></i>生成类型:</h6>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="materialType" id="materialTypeSyllabus"
+                            value="syllabus" checked>
+                        <label class="form-check-label" for="materialTypeSyllabus">
+                            <i class="fas fa-file-alt me-1"></i>教学大纲
+                        </label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="materialType" id="materialTypePPT"
+                            value="ppt">
+                        <label class="form-check-label" for="materialTypePPT">
+                            <i class="fas fa-file-powerpoint me-1"></i>教学PPT
+                        </label>
+                    </div>
+                </div>
+                <h6><i class="fas fa-lightbulb me-2"></i>选择知识条目</h6>
+                <div id="knowledgeItemsContainer" class="list-group" style="max-height: 400px; overflow-y: auto;">
+                    <!-- 知识库条目将通过JavaScript动态添加 -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="startGenerationBtn">
+                    <i class="fas fa-play me-1"></i>开始备课
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- 生成结果模态框 -->
+<div class="modal fade" id="generateResultModal" tabindex="-1" aria-labelledby="generateResultModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="generateResultModalLabel">备课完成</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="generateResultContent">
+                    <!-- 生成的内容将在这里显示 -->
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-primary" id="downloadFileBtn">
+                    <i class="fas fa-download me-1"></i>下载文件
+                </button>
+                <!-- 新增保存按钮 -->
+                <button type="button" class="btn btn-info" id="saveToKnowledgeBtn">
+                    <i class="fas fa-save me-1"></i>保存至知识库
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 错误提示模态框 -->
+<div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="errorModalLabel">生成失败</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <span id="errorMessage">生成教学大纲时发生错误，请稍后重试。</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- 添加考核内容知识库选择模态框 -->
+<div class="modal fade" id="knowledgeSelectionModal2" tabindex="-1" aria-labelledby="knowledgeSelectionModalLabel2"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="knowledgeSelectionModalLabel2">生成考核内容设置</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    请选择要用于自动生成考核内容的知识条目（可多选）并设置题目类型和数量
+                </div>
+                <h6><i class="fas fa-lightbulb me-2"></i>选择知识条目</h6>
+                <div id="knowledgeItemsContainer2" class="list-group" style="max-height: 400px; overflow-y: auto;">
+                    <!-- 知识库条目将通过JavaScript动态添加 -->
+                </div>
+
+                <!-- 新增题目类型和数量设置 -->
+                <div class="mt-4">
+                    <h6><i class="fas fa-tasks me-2"></i>题目设置</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="choiceCount" class="form-label">选择题数量</label>
+                                <input type="number" min="0" class="form-control" id="choiceCount" value="3">
+                            </div>
+                            <div class="mb-3">
+                                <label for="judgmentCount" class="form-label">判断题数量</label>
+                                <input type="number" min="0" class="form-control" id="judgmentCount" value="3">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="shortAnswerCount" class="form-label">简答题数量</label>
+                                <input type="number" min="0" class="form-control" id="shortAnswerCount" value="3">
+                            </div>
+                            <div class="mb-3">
+                                <label for="programmingCount" class="form-label">编程题数量</label>
+                                <input type="number" min="0" class="form-control" id="programmingCount" value="3">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="startGenerationBtn2">
+                    <i class="fas fa-play me-1"></i>开始生成
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- 生成考核进度模态框 -->
+<div class="modal fade" id="generateAssessmentProgressModal" tabindex="-1"
+    aria-labelledby="generateAssessmentProgressModalLabel" aria-hidden="true" data-bs-backdrop="static"
+    data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="generateAssessmentProgressModalLabel">正在生成考核内容</h5>
+            </div>
+            <div class="modal-body text-center">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">生成中...</span>
+                </div>
+                <p class="mb-0">AI正在分析课程知识库并生成考核题目，请稍候...</p>
+                <div class="progress mt-3">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
+                        style="width: 100%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- 生成考核内容模态框 -->
+<div class="modal fade" id="assessmentModal" tabindex="-1" aria-labelledby="assessmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <h5 class="modal-title fw-bold" id="assessmentModalLabel">
+                        <i class="fas fa-clipboard-check me-2 text-primary"></i>AI生成考核题目
+                    </h5>
+                    <p class="text-muted small mb-0 mt-1">根据课程知识库智能生成的考核题目</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info border-0 d-flex align-items-center"
+                    style="background: rgba(13, 202, 240, 0.1);">
+                    <i class="fas fa-info-circle text-info me-3 fa-lg"></i>
+                    <div>
+                        <strong>提示：</strong>
+                        <span>以下是AI根据课程知识库生成的考核题目，请检查并保存到作业中</span>
+                    </div>
+                </div>
+                <div id="assessmentContent" class="mt-4">
+                    <!-- 题目内容将通过JavaScript动态添加 -->
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>关闭
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    :root {
+        --card-background: var(--bg-card, #ffffff);
+        --hover-background: rgba(37, 113, 74, 0.08);
+    }
+
+    .nav-tabs .nav-link {
+        color: #000 !important;
+    }
+
+    .nav-tabs .nav-link.active {
+        color: #0d6efd !important;
+    }
+
+    /* 导航栏样式 */
+    .navbar-custom {
+        background: var(--primary, #25714A);
+        box-shadow: 0 2px 15px rgba(37, 113, 74, 0.1);
+    }
+
+    .navbar-custom .nav-link {
+        color: rgba(255, 255, 255, 0.9) !important;
+        transition: all 0.3s ease;
+        padding: 0.5rem 1rem !important;
+        margin: 0 0.2rem;
+        border-radius: 8px;
+    }
+
+    .navbar-custom .nav-link:hover {
+        color: #ffffff !important;
+        background: rgba(255, 255, 255, 0.1);
+        transform: translateY(-1px);
+    }
+
+    .navbar-custom .nav-link.active {
+        color: #ffffff !important;
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .navbar-custom .navbar-brand {
+        color: #ffffff !important;
+        font-weight: 600;
+    }
+
+    .navbar-custom .dropdown-menu {
+        border: none;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .navbar-custom .dropdown-item:hover {
+        background: var(--hover-background);
+    }
+
+    /* 卡片样式 */
+    .card {
+        border: 1px solid var(--primary-soft, #D3E4DA);
+        background: var(--card-background);
+        box-shadow: var(--shadow-sm, 0 4px 12px rgba(37,113,74,0.04));
+        border-radius: var(--radius-lg, 24px);
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+
+    .card:hover {
+        box-shadow: var(--shadow-md, 0 8px 24px rgba(37,113,74,0.08));
+    }
+
+    /* 按钮样式
+    .btn-primary {
+        background: var(--primary-gradient);
+        border: none;
+        box-shadow: 0 4px 15px rgba(37, 113, 74, 0.2);
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(37, 113, 74, 0.3);
+    } */
+
+    /* 输入框样式 */
+    .form-control {
+        border: none;
+        background-color: #f8f9fa;
+        padding: 0.75rem 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+        background-color: #ffffff;
+        box-shadow: 0 0 0 2px rgba(37, 113, 74, 0.2);
+    }
+
+    .input-group-text {
+        border: none;
+        background-color: #f8f9fa;
+    }
+
+    /* 页面内容区域 */
+    .content-wrapper {
+        padding: 2rem 0;
+        min-height: calc(100vh - 60px);
+    }
+
+    /* 登录页面特殊样式 */
+    .auth-page {
+        min-height: 100vh;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .auth-page .navbar {
+        margin: 0;
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+    }
+
+    .auth-page main {
+        flex: 1;
+        display: flex;
+        padding: 0;
+        margin: 0;
+    }
+
+    /* 装饰性背景元素 */
+    .decorative-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        overflow: hidden;
+    }
+
+    .decorative-bg .circle {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(80px);
+    }
+
+    .decorative-bg .circle-1 {
+        width: 300px;
+        height: 300px;
+        background: var(--primary, #25714A);
+        opacity: 0.15;
+        top: -100px;
+        left: -100px;
+    }
+
+    .decorative-bg .circle-2 {
+        width: 250px;
+        height: 250px;
+        background: var(--accent-gold, #D97706);
+        opacity: 0.1;
+        bottom: -50px;
+        right: -50px;
+    }
+
+    /* Alert 样式 */
+    .alert {
+        border: none;
+        background: var(--card-background);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    /* 表格样式 */
+    .table {
+        background: var(--card-background);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .table thead th {
+        background: rgba(37, 113, 74, 0.04);
+        border-bottom: none;
+    }
+
+    /* 分页样式 */
+    .pagination .page-link {
+        border: none;
+        background: var(--card-background);
+        color: var(--primary, #25714A);
+        margin: 0 2px;
+        border-radius: 6px;
+    }
+
+    .pagination .page-link:hover {
+        background: var(--hover-background);
+    }
+
+    .pagination .page-item.active .page-link {
+        background: var(--primary, #25714A);
+        color: #fff;
+    }
+
+    /* 教学大纲内容样式 */
+    .teaching-outline-content {
+        font-family: "Microsoft YaHei", "SimHei", Arial, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        width: 100%;
+    }
+
+    .teaching-outline-content h1 {
+        color: #2c3e50;
+        border-bottom: 2px solid #3498db;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+        font-size: 1.8rem;
+    }
+
+    .teaching-outline-content h2 {
+        color: #34495e;
+        margin-top: 25px;
+        margin-bottom: 15px;
+        font-size: 1.5rem;
+        border-left: 4px solid #3498db;
+        padding-left: 15px;
+    }
+
+    .teaching-outline-content h3 {
+        color: #7f8c8d;
+        margin-top: 20px;
+        margin-bottom: 10px;
+        font-size: 1.2rem;
+    }
+
+    .teaching-outline-content ul,
+    .teaching-outline-content ol {
+        margin-left: 0;
+        padding-left: 20px;
+        margin-bottom: 15px;
+    }
+
+    .teaching-outline-content li {
+        margin-bottom: 8px;
+        line-height: 1.6;
+    }
+
+    .teaching-outline-content p {
+        margin-bottom: 12px;
+        text-align: justify;
+        line-height: 1.8;
+    }
+
+    .teaching-outline-content strong {
+        color: #2c3e50;
+        font-weight: 600;
+    }
+
+    .teaching-outline-content .card {
+        border: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+    }
+
+    .teaching-outline-content .card-body {
+        padding: 25px;
+    }
+
+    /* 生成结果模态框样式 */
+    #generateResultModal .modal-content {
+        border: none;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    #generateResultModal .modal-header {
+        background: var(--primary, #25714A);
+        color: white;
+        border-bottom: none;
+        padding: 20px 25px;
+    }
+
+    #generateResultModal .modal-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+
+    #generateResultModal .modal-body {
+        padding: 25px;
+        background: #f8f9fa;
+    }
+
+    #generateResultModal .alert {
+        margin-bottom: 25px;
+        border-radius: 8px;
+    }
+
+    #generateResultModal .card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    #generateResultModal .card-header {
+        background: white;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        padding: 15px 20px;
+    }
+
+    #generateResultModal .card-body {
+        padding: 20px;
+        max-height: 600px;
+        overflow-y: auto;
+    }
+
+    #generateResultModal .card-body::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    #generateResultModal .card-body::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+
+    #generateResultModal .card-body::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 4px;
+    }
+
+    #generateResultModal .card-body::-webkit-scrollbar-thumb:hover {
+        background: #a8a8a8;
+    }
+
+    #generateResultModal pre {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        border: 1px solid #e9ecef;
+        margin: 0;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+    }
+
+    #generateResultModal .modal-footer {
+        border-top: none;
+        padding: 20px 25px;
+        background: white;
+    }
+
+    #generateResultModal .btn {
+        padding: 8px 20px;
+        font-weight: 500;
+        border-radius: 8px;
+    }
+
+    #generateResultModal .btn-primary {
+        background: var(--primary, #25714A);
+        border: none;
+        box-shadow: 0 4px 15px rgba(37, 113, 74, 0.2);
+    }
+
+    #generateResultModal .btn-info {
+        background: var(--accent-gold, #D97706);
+        border: none;
+        box-shadow: 0 4px 15px rgba(217, 119, 6, 0.2);
+        color: white;
+    }
+
+    /* 进度条动画 */
+    .progress-bar-animated {
+        animation: progress-bar-stripes 1s linear infinite;
+    }
+
+    @keyframes progress-bar-stripes {
+        0% {
+            background-position: 40px 0;
+        }
+
+        100% {
+            background-position: 0 0;
+        }
+    }
+
+    /* 按钮悬停效果 */
+    #generateTeachingOutlineBtn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(37, 113, 74, 0.3);
+    }
+
+    /* 响应式设计 */
+    @media (max-width: 768px) {
+        .modal-xl {
+            max-width: 95%;
+        }
+
+        .teaching-outline-content {
+            font-size: 14px;
+        }
+    }
+
+    /* 教师操作面板样式 */
+    .teacher-action-panel {
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        min-width: 280px;
+    }
+
+    .action-group {
+        margin-bottom: 0;
+    }
+
+    .action-group-title {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 12px;
+        padding-bottom: 6px;
+        border-bottom: 2px solid #e9ecef;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .btn-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    .btn-action {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 12px 8px;
+        border-radius: 8px;
+        border: none;
+        font-size: 0.8rem;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        min-height: 70px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn-action i {
+        font-size: 1.2rem;
+        margin-bottom: 4px;
+    }
+
+    .btn-action span {
+        font-size: 0.75rem;
+        text-align: center;
+        line-height: 1.2;
+    }
+
+    .btn-action-full {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 12px 16px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        width: 100%;
+    }
+
+    /* 按钮悬停效果 */
+    .btn-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-action-full:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    /* 特定按钮颜色优化 */
+    .btn-primary.btn-action {
+        background: linear-gradient(135deg, #0d6efd, #0056b3);
+        color: white;
+    }
+
+    .btn-success.btn-action {
+        background: linear-gradient(135deg, #198754, #146c43);
+        color: white;
+    }
+
+    .btn-info.btn-action {
+        background: linear-gradient(135deg, #0dcaf0, #0aa2c0);
+        color: white;
+    }
+
+    .btn-secondary.btn-action {
+        background: linear-gradient(135deg, #6c757d, #5a6268);
+        color: white;
+    }
+
+    .btn-warning.btn-action {
+        background: linear-gradient(135deg, #ffc107, #ffb302);
+        color: #000;
+    }
+
+    .btn-outline-primary.btn-action-full:hover {
+        background: linear-gradient(135deg, #0d6efd, #0056b3);
+        border-color: #0d6efd;
+        color: white;
+    }
+
+    /* 自定义紫色按钮 */
+    .btn-purple {
+        color: #fff;
+        background-color: var(--primary, #25714A);
+        border-color: var(--primary, #25714A);
+    }
+
+    .btn-purple:hover {
+        color: #fff;
+        background-color: var(--dark, #103B24);
+        border-color: var(--dark, #103B24);
+    }
+
+    .btn-outline-purple {
+        color: var(--primary, #25714A);
+        border-color: var(--primary, #25714A);
+    }
+
+    .btn-outline-purple:hover {
+        color: #fff;
+        background-color: var(--primary, #25714A);
+        border-color: var(--primary, #25714A);
+    }
+
+    /* 响应式设计 */
+    @media (max-width: 768px) {
+        .teacher-action-panel {
+            min-width: auto;
+            padding: 15px;
+        }
+
+        .btn-grid {
+            grid-template-columns: 1fr;
+            gap: 6px;
+        }
+
+        .btn-action {
+            min-height: 60px;
+            padding: 10px 8px;
+        }
+
+        .action-group-title {
+            font-size: 0.8rem;
+        }
+    }
+
+    /* 添加微妙的动画效果 */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .action-group {
+        animation: fadeInUp 0.5s ease-out;
+    }
+
+    .action-group:nth-child(2) {
+        animation-delay: 0.1s;
+    }
+
+    .action-group:nth-child(3) {
+        animation-delay: 0.2s;
+    }
+
+    /* 暗色模式适配 */
+    @media (prefers-color-scheme: dark) {
+        .teacher-action-panel {
+            background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+            border-color: #4a5568;
+        }
+
+        .action-group-title {
+            color: #e2e8f0;
+            border-bottom-color: #4a5568;
+        }
+    }
+
+    /* 列表组样式 */
+    .list-group-flush {
+        border-radius: 12px;
+    }
+
+    .list-group-flush:first-child {
+        border-top-left-radius: 12px;
+        border-top-right-radius: 12px;
+    }
+
+    .list-group-flush:last-child {
+        border-bottom-left-radius: 12px;
+        border-bottom-right-radius: 12px;
+    }
+
+    /* 滚动容器样式 */
+    .list-group-flush[style*="overflow-y: auto"] {
+        border-radius: 12px;
+        margin: 0;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+    }
+
+    .list-group-flush[style*="overflow-y: auto"]::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .list-group-flush[style*="overflow-y: auto"]::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .list-group-flush[style*="overflow-y: auto"]::-webkit-scrollbar-thumb {
+        background-color: rgba(0, 0, 0, 0.2);
+        border-radius: 3px;
+    }
+
+    /* 考核内容模态框样式 */
+    #assessmentModal .modal-content {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    #assessmentModal .modal-header {
+        padding: 1.5rem 1.5rem 0.5rem;
+    }
+
+    #assessmentModal .modal-body {
+        padding: 1.5rem;
+    }
+
+    #assessmentModal .modal-footer {
+        padding: 1rem 1.5rem 1.5rem;
+    }
+
+    #assessmentModal .card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+    }
+
+    #assessmentModal .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    #assessmentModal .card-header {
+        background: rgba(37, 113, 74, 0.04);
+        border-bottom: none;
+        padding: 1rem 1.25rem;
+        border-radius: 12px 12px 0 0;
+    }
+
+    #assessmentModal .card-body {
+        padding: 1.25rem;
+    }
+
+    #assessmentModal .badge {
+        padding: 0.5rem 1rem;
+        font-weight: 500;
+        border-radius: 20px;
+    }
+
+    #assessmentModal .badge.bg-primary {
+        background: var(--primary, #25714A) !important;
+    }
+
+    #assessmentModal .form-select {
+        border: none;
+        background-color: #f8f9fa;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        box-shadow: none;
+        transition: all 0.3s ease;
+    }
+
+    #assessmentModal .form-select:focus {
+        background-color: #fff;
+        box-shadow: 0 0 0 2px rgba(37, 113, 74, 0.2);
+    }
+
+    #assessmentModal .btn-success {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border: none;
+        padding: 0.75rem 1.5rem;
+        font-weight: 500;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.2);
+        transition: all 0.3s ease;
+    }
+
+    #assessmentModal .btn-success:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(40, 167, 69, 0.3);
+    }
+
+    #assessmentModal .btn-light {
+        background: #f8f9fa;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        font-weight: 500;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    #assessmentModal .btn-light:hover {
+        background: #e9ecef;
+        transform: translateY(-1px);
+    }
+
+    /* 保存选项样式 */
+    #assessmentModal .mt-4 {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 12px;
+        margin-top: 2rem !important;
+    }
+
+    #assessmentModal .form-label {
+        font-weight: 500;
+        color: #495057;
+        margin-bottom: 0.5rem;
+    }
+
+    #assessmentModal .d-flex.gap-2 {
+        gap: 1rem !important;
+    }
+
+    /* 题目内容样式 */
+    #assessmentModal .card-title {
+        color: #2c3e50;
+        font-size: 1.1rem;
+        font-weight: 500;
+        line-height: 1.5;
+    }
+
+    #assessmentModal .mt-3 strong {
+        color: #495057;
+        font-weight: 600;
+    }
+
+    #assessmentModal .mt-2 {
+        color: #6c757d;
+    }
+
+    /* 滚动条样式 */
+    #assessmentModal .modal-body {
+        max-height: calc(100vh - 200px);
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+    }
+
+    #assessmentModal .modal-body::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    #assessmentModal .modal-body::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    #assessmentModal .modal-body::-webkit-scrollbar-thumb {
+        background-color: rgba(0, 0, 0, 0.2);
+        border-radius: 3px;
+    }
+</style>
+
+
+<script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+
+<script>
+    function editKnowledgePoint(id, name, description, parentId) {
+        document.getElementById('edit_kp_id').value = id;
+        document.getElementById('edit_kp_name').value = name;
+        document.getElementById('edit_kp_description').value = description;
+
+        const parentSelect = document.getElementById('edit_kp_parent');
+        if (parentId) {
+            for (let i = 0; i < parentSelect.options.length; i++) {
+                if (parentSelect.options[i].value == parentId) {
+                    parentSelect.selectedIndex = i;
+                    break;
+                }
+            }
+        } else {
+            parentSelect.selectedIndex = 0;
+        }
+
+        document.getElementById('editKnowledgePointForm').action =
+            "{{ url_for('course.edit_knowledge_point', course_id=course.id) }}";
+
+        // 禁用与当前知识点相同的选项和子知识点选项
+        for (let i = 0; i < parentSelect.options.length; i++) {
+            parentSelect.options[i].disabled = (parentSelect.options[i].value == id);
+        }
+
+        const modal = new bootstrap.Modal(document.getElementById('editKnowledgePointModal'));
+        modal.show();
+    }
+
+    function deleteKnowledgePoint(id, name) {
+        document.getElementById('delete_kp_id').value = id;
+        document.getElementById('delete_kp_name').textContent = name;
+        document.getElementById('deleteKnowledgePointForm').action =
+            "{{ url_for('course.delete_knowledge_point', course_id=course.id) }}";
+
+        const modal = new bootstrap.Modal(document.getElementById('deleteKnowledgePointModal'));
+        modal.show();
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const modal = document.getElementById("knowledgeGraphModal");
+        const courseId = "{{ course.id }}";
+
+        if (!modal) return;
+
+        modal.addEventListener("shown.bs.modal", function () {
+            const container = document.getElementById("viz");
+            if (!container) return;
+
+            // 清空旧内容，避免多次渲染叠加
+            container.innerHTML = "";
+
+            fetch(`/course/${courseId}/view_knowledge_graph`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`请求失败，状态码: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const nodes = new vis.DataSet(data.nodes);
+                    const edges = new vis.DataSet(data.edges);
+
+                    const options = {
+                        nodes: {
+                            shape: "dot",
+                            size: 15,
+                            font: { size: 14, color: "#000" }
+                        },
+                        edges: {
+                            arrows: "to",
+                            font: { align: "top" }
+                        },
+                        physics: {
+                            stabilization: false,
+                            barnesHut: { springLength: 150 }
+                        }
+                    };
+
+                    new vis.Network(container, { nodes, edges }, options);
+                })
+                .catch(error => {
+                    console.error("知识图谱加载失败:", error);
+                    container.innerHTML = "<p class='text-danger'>加载图谱失败，请稍后再试。</p>";
+                });
+        });
+    });
+    document.addEventListener('DOMContentLoaded', function () {
+        const generateBtn = document.getElementById('generateTeachingOutlineBtn');
+        const progressModal = new bootstrap.Modal(document.getElementById('generateProgressModal'));
+        const resultModal = new bootstrap.Modal(document.getElementById('generateResultModal'));
+        const errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+        const downloadBtn = document.getElementById('downloadFileBtn');
+
+        let generatedData = null;
+        const courseId = "{{ course.id }}";
+
+        // 检查按钮是否存在
+        if (!generateBtn) {
+            console.error('生成按钮未找到');
+            return;
+        }
+
+        // 全局变量存储选中的知识库ID
+        let selectedKnowledgeIds = [];
+
+        // 生成教学大纲按钮点击事件
+        document.getElementById('generateTeachingOutlineBtn').addEventListener('click', function () {
+            const courseId = "{{ course.id }}";
+            const container = document.getElementById('knowledgeItemsContainer');
+            container.innerHTML = '<div class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x"></i><p>加载知识库内容中...</p></div>';
+
+            // 显示知识库选择模态框
+            const selectionModal = new bootstrap.Modal(document.getElementById('knowledgeSelectionModal'));
+            selectionModal.show();
+
+            // 获取课程知识库内容
+            fetch(`/course/${courseId}/knowledge_entries`)
+                .then(response => response.json())
+                .then(data => {
+                    container.innerHTML = '';
+
+                    if (data.length === 0) {
+                        container.innerHTML = '<div class="alert alert-warning">该课程暂无知识库内容</div>';
+                        return;
+                    }
+
+                    // 渲染知识库条目
+                    data.forEach(item => {
+                        const listItem = document.createElement('div');
+                        listItem.className = 'list-group-item';
+                        listItem.innerHTML = `
+                        <div class="form-check">
+                            <input class="form-check-input knowledge-checkbox" 
+                                   type="checkbox" 
+                                   value="${item.id}"
+                                   id="knowledge-${item.id}">
+                            <label class="form-check-label w-100" for="knowledge-${item.id}">
+                                <h6 class="mb-1">${item.title}</h6>
+                                <div class="text-muted small">
+                                    ${item.content_preview}
+                                </div>
+                                <div class="mt-1">
+                                    <span class="badge bg-secondary">${item.category || '未分类'}</span>
+                                    <span class="badge bg-info">${item.type}</span>
+                                    <span class="badge bg-light text-dark">${item.created_at}</span>
+                                </div>
+                            </label>
+                        </div>
+                    `;
+                        container.appendChild(listItem);
+                    });
+                })
+                .catch(error => {
+                    console.error('获取知识库失败:', error);
+                    container.innerHTML = '<div class="alert alert-danger">加载知识库内容失败</div>';
+                });
+        });
+
+        // 开始生成按钮事件
+        document.getElementById('startGenerationBtn').addEventListener('click', function () {
+            // 获取选中的知识库ID
+            selectedKnowledgeIds = Array.from(
+                document.querySelectorAll('.knowledge-checkbox:checked')
+            ).map(checkbox => parseInt(checkbox.value));
+
+            // 获取材料类型
+            const materialType = document.querySelector('input[name="materialType"]:checked').value;
+
+            // 关闭选择模态框
+            const selectionModal = bootstrap.Modal.getInstance(document.getElementById('knowledgeSelectionModal'));
+            selectionModal.hide();
+
+            // 显示生成进度模态框
+            const progressModal = new bootstrap.Modal(document.getElementById('generateProgressModal'));
+            progressModal.show();
+
+            // 开始生成教学材料
+            generateTeachingMaterial(selectedKnowledgeIds, materialType);
+
+        });
+        // 生成教学大纲函数
+        function generateTeachingMaterial(selectedIds, materialType) {
+            const courseId = "{{ course.id }}";
+            const btn = document.getElementById('generateTeachingOutlineBtn');
+
+            // 发送生成请求
+            fetch('/course/api/generate_teaching_outline', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    course_id: parseInt(courseId),
+                    selected_knowledge_ids: selectedIds,
+                    material_type: materialType
+                }),
+                credentials: 'same-origin'
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(data => {
+                            throw new Error(data.error || `HTTP Error: ${response.status}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // 隐藏进度模态框
+                    const progressModal = bootstrap.Modal.getInstance(document.getElementById('generateProgressModal'));
+                    progressModal.hide();
+
+                    if (data.error) {
+                        showError(data.error);
+                    } else if (data.success) {
+                        generatedData = data;
+                        showResult(data);
+                    } else {
+                        showError('响应数据格式错误');
+                    }
+                })
+                .catch(error => {
+                    console.error('生成失败:', error);
+
+                    // 隐藏进度模态框
+                    const progressModal = bootstrap.Modal.getInstance(document.getElementById('generateProgressModal'));
+                    progressModal.hide();
+
+                    // 错误处理
+                    let errorMessage = '生成失败，请重试。';
+                    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                        errorMessage = '网络连接失败，请检查网络后重试。';
+                    } else if (error.message.includes('HTTP Error: 401')) {
+                        errorMessage = '登录已过期，请重新登录。';
+                        setTimeout(() => {
+                            window.location.href = '/login';
+                        }, 2000);
+                    } else if (error.message.includes('HTTP Error: 403')) {
+                        errorMessage = '没有权限执行此操作。';
+                    } else if (error.message.includes('HTTP Error: 404')) {
+                        errorMessage = '课程不存在或已被删除。';
+                    } else if (error.message.includes('HTTP Error: 500')) {
+                        errorMessage = '服务器内部错误，请稍后重试。';
+                    } else if (error.message) {
+                        errorMessage = error.message;
+                    }
+
+                    showError(errorMessage);
+                });
+        }
+        // 保存至知识库按钮事件
+        document.getElementById('saveToKnowledgeBtn').addEventListener('click', function () {
+            if (!generatedData) {
+                showError('没有可保存的数据');
+                return;
+            }
+
+            const btn = this;
+            const originalText = btn.innerHTML;
+            let nameext = (generatedData.material_type === 'syllabus' ? '-教学大纲PDF' : '-教学PPT');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>保存中...';
+
+            fetch("{{ url_for('course.save_teaching_material') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    course_id: "{{ course.id }}",
+                    title: generatedData.title + nameext,
+                    material_type: generatedData.material_type,
+                    file_base64: generatedData.file_base64,
+                    filename: generatedData.filename
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showSuccessToast('已保存至知识库');
+                    } else {
+                        showError(data.error || '保存失败');
+                    }
+                })
+                .catch(error => {
+                    showError('请求失败: ' + error.message);
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                });
+        });
+        // 下载PDF或PPT
+        downloadBtn.addEventListener('click', function () {
+            if (!generatedData || !generatedData.file_base64) {
+                showError('文件不存在，请重新生成。');
+                return;
+            }
+
+            // 根据文件类型处理
+            const fileExtension = generatedData.file_type || 'pdf';
+            const mimeType = fileExtension === 'pptx' ?
+                'application/vnd.openxmlformats-officedocument.presentationml.presentation' :
+                'application/pdf';
+
+            try {
+                // 创建下载链接
+                const byteCharacters = atob(generatedData.file_base64);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], { type: mimeType });
+
+                // 创建下载链接
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = generatedData.filename || `教学材料.${fileExtension}`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+
+                // 显示下载成功提示
+                showSuccessToast('文件已开始下载');
+            } catch (error) {
+                console.error('下载失败:', error);
+                showError('文件下载失败，请重新生成后再试。');
+            }
+        });
+
+        // 显示生成结果
+        function showResult(data) {
+            const contentDiv = document.getElementById('generateResultContent');
+            // 格式化内容显示
+            let formattedContent = data.content;
+
+            if (data.material_type === 'syllabus') {
+                // 简单的markdown到HTML转换
+                formattedContent = formattedContent
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                    .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+                    .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+                    .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+                    .replace(/^#### (.*$)/gm, '<h4>$1</h4>')
+                    .replace(/^\* (.*$)/gm, '<li>$1</li>')
+                    .replace(/^(\d+\.) (.*$)/gm, '<li>$2</li>')
+                    .replace(/\n\n/g, '</p><p>')
+                    .replace(/\n/g, '<br>');
+
+                // 处理列表
+                formattedContent = formattedContent.replace(/(<li>.*<\/li>)/g, function (match) {
+                    return '<ul>' + match.replace(/<\/li><li>/g, '</li><li>') + '</ul>';
+                });
+
+                // 包装段落
+                if (!formattedContent.includes('<p>')) {
+                    formattedContent = '<p>' + formattedContent + '</p>';
+                }
+
+                contentDiv.innerHTML = `
+            <div class="teaching-outline-content">
+                <div class="alert alert-success" role="alert">
+                    <i class="fas fa-check-circle me-2"></i>
+                    教学大纲已成功生成！标题：<strong>${data.title}</strong>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        ${formattedContent}
+                    </div>
+                </div>
+            </div>
+        `;
+            }
+            else {
+                contentDiv.innerHTML = `
+                <div class="teaching-outline-content">
+                    <div class="alert alert-success" role="alert">
+                        <i class="fas fa-check-circle me-2"></i>
+                        教学PPT已成功生成！标题：<strong>${data.title}</strong>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <i class="fas fa-file-powerpoint me-2"></i>PPT内容大纲
+                        </div>
+                        <div class="card-body">
+                            <pre>${data.content}</pre>
+                        </div>
+                    </div>
+                </div>
+            `;
+            }
+
+            // 更新下载按钮
+            downloadBtn.innerHTML = `<i class="fas fa-download me-1"></i>下载${data.material_type === 'syllabus' ? 'PDF' : 'PPT'}`;
+
+            // 保存生成的数据
+            generatedData = data;
+
+            // 显示结果模态框
+            resultModal.show();
+        }
+
+
+        // 显示错误信息
+        function showError(message) {
+            const errorMessageElement = document.getElementById('errorMessage');
+            if (errorMessageElement) {
+                errorMessageElement.textContent = message;
+                errorModal.show();
+            } else {
+                alert(message); // 备用方案
+            }
+        }
+
+
+        function showSuccessToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'alert alert-success position-fixed';
+            toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            toast.innerHTML = `
+        <i class="fas fa-check-circle me-2"></i>
+        ${message}
+    `;
+
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 3000);
+        }
+
+        // 处理模态框关闭事件
+        document.getElementById('generateProgressModal').addEventListener('hidden.bs.modal', function () {
+            // 进度模态框关闭时的处理
+        });
+
+        document.getElementById('generateResultModal').addEventListener('hidden.bs.modal', function () {
+            // 结果模态框关闭时的处理
+        });
+
+        // 添加调试信息
+        console.log('页面加载完成，课程ID:', courseId);
+    });
+    // 全局变量存储生成的题目数据
+    let currentQuestions = [];
+    // 全局变量存储选中的知识库ID（用于考核）
+    let selectedAssessmentKnowledgeIds = [];
+
+    // 生成考核内容按钮点击事件
+    document.getElementById('generateAssessmentBtn').addEventListener('click', function () {
+        const courseId = "{{ course.id }}";
+        const container = document.getElementById('knowledgeItemsContainer2');
+        container.innerHTML = '<div class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x"></i><p>加载知识库内容中...</p></div>';
+
+        // 显示知识库选择模态框
+        const selectionModal = new bootstrap.Modal(document.getElementById('knowledgeSelectionModal2'));
+        selectionModal.show();
+
+        // 获取课程知识库内容
+        fetch(`/course/${courseId}/knowledge_entries`)
+            .then(response => response.json())
+            .then(data => {
+                container.innerHTML = '';
+
+                if (data.length === 0) {
+                    container.innerHTML = '<div class="alert alert-warning">该课程暂无知识库内容</div>';
+                    return;
+                }
+
+                // 渲染知识库条目
+                data.forEach(item => {
+                    const listItem = document.createElement('div');
+                    listItem.className = 'list-group-item';
+                    listItem.innerHTML = `
+                        <div class="form-check">
+                            <input class="form-check-input knowledge-checkbox" 
+                                   type="checkbox" 
+                                   value="${item.id}"
+                                   id="knowledge-${item.id}">
+                            <label class="form-check-label w-100" for="knowledge-${item.id}">
+                                <h6 class="mb-1">${item.title}</h6>
+                                <div class="text-muted small">
+                                    ${item.content_preview}
+                                </div>
+                                <div class="mt-1">
+                                    <span class="badge bg-secondary">${item.category || '未分类'}</span>
+                                    <span class="badge bg-info">${item.type}</span>
+                                    <span class="badge bg-light text-dark">${item.created_at}</span>
+                                </div>
+                            </label>
+                        </div>
+                    `;
+                    container.appendChild(listItem);
+                });
+            })
+            .catch(error => {
+                console.error('获取知识库失败:', error);
+                container.innerHTML = '<div class="alert alert-danger">加载知识库内容失败</div>';
+            });
+    });
+
+    // 开始生成按钮事件（考核内容）
+    document.getElementById('startGenerationBtn2').addEventListener('click', function () {
+        // 获取选中的知识库ID
+        selectedAssessmentKnowledgeIds = Array.from(
+            document.querySelectorAll('.knowledge-checkbox:checked')
+        ).map(checkbox => parseInt(checkbox.value));
+
+        // 检查是否选择了知识条目
+        if (selectedAssessmentKnowledgeIds.length === 0) {
+            showError('请至少选择一个知识条目');
+            // 关闭选择模态框
+            const selectionModal = bootstrap.Modal.getInstance(document.getElementById('knowledgeSelectionModal2'));
+            selectionModal.hide();
+            return;
+        }
+
+        // 获取题目类型和数量设置
+        const questionSettings = {
+            "选择题": parseInt(document.getElementById('choiceCount').value) || 0,
+            "判断题": parseInt(document.getElementById('judgmentCount').value) || 0,
+            "简答题": parseInt(document.getElementById('shortAnswerCount').value) || 0,
+            "编程题": parseInt(document.getElementById('programmingCount').value) || 0
+        };
+
+        // 计算总题目数
+        const totalQuestions = Object.values(questionSettings).reduce((sum, count) => sum + count, 0);
+
+        if (totalQuestions === 0) {
+            showError('请至少设置一种题目类型并设置数量');
+            // 关闭选择模态框
+            const selectionModal = bootstrap.Modal.getInstance(document.getElementById('knowledgeSelectionModal2'));
+            selectionModal.hide();
+            return;
+        }
+
+        // 关闭选择模态框
+        const selectionModal = bootstrap.Modal.getInstance(document.getElementById('knowledgeSelectionModal2'));
+        selectionModal.hide();
+
+        // 显示生成进度模态框
+        const progressModal = new bootstrap.Modal(document.getElementById('generateAssessmentProgressModal'));
+        progressModal.show();
+
+        // 开始生成考核内容
+        generateAssessmentQuestions(selectedAssessmentKnowledgeIds, questionSettings);
+    });
+    // 生成考核内容函数
+    function generateAssessmentQuestions(selectedIds, questionSettings) {
+        const courseId = "{{ course.id }}";
+        const btn = document.getElementById('generateAssessmentBtn');
+        // 发送生成请求
+        fetch(`/course/${courseId}/generate_assessment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+                question_settings: questionSettings,  // 传递题目设置
+                selected_knowledge_ids: selectedIds
+            }),
+            credentials: 'same-origin'
+        })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.error || `HTTP Error: ${response.status}`);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                // 隐藏进度模态框
+                const progressModal = bootstrap.Modal.getInstance(document.getElementById('generateAssessmentProgressModal'));
+                progressModal.hide();
+
+                if (data.error) {
+                    showError(data.error);
+                } else if (data.success) {
+                    // 保存题目数据到全局变量
+                    currentQuestions = data.questions;
+                    showAssessmentQuestions(data.questions);
+                } else {
+                    showError('响应数据格式错误');
+                }
+            })
+            .catch(error => {
+                console.error('生成考核题目失败:', error);
+
+                // 隐藏进度模态框
+                const progressModal = bootstrap.Modal.getInstance(document.getElementById('generateAssessmentProgressModal'));
+                progressModal.hide();
+
+                // 错误处理
+                let errorMessage = '生成考核题目失败，请重试。';
+                if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                    errorMessage = '网络连接失败，请检查网络后重试。';
+                } else if (error.message.includes('HTTP Error: 401')) {
+                    errorMessage = '登录已过期，请重新登录。';
+                    setTimeout(() => {
+                        window.location.href = '/login';
+                    }, 2000);
+                } else if (error.message.includes('HTTP Error: 403')) {
+                    errorMessage = '没有权限执行此操作。';
+                } else if (error.message.includes('HTTP Error: 404')) {
+                    errorMessage = '课程不存在或已被删除。';
+                } else if (error.message.includes('HTTP Error: 500')) {
+                    errorMessage = '服务器内部错误，请稍后重试。';
+                } else if (error.message) {
+                    errorMessage = error.message;
+                }
+
+                showError(errorMessage);
+            });
+    }
+
+    // 显示生成的题目
+    function showAssessmentQuestions(questions) {
+        const container = document.getElementById('assessmentContent');
+        container.innerHTML = '';
+
+        if (questions.length === 0) {
+            container.innerHTML = '<div class="alert alert-warning">未生成题目</div>';
+            return;
+        }
+
+        // 创建题目卡片
+        questions.forEach((question, index) => {
+            const card = document.createElement('div');
+            card.className = 'card mb-3';
+            card.innerHTML = `
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>题目 ${index + 1}</span>
+                <span class="badge bg-primary">${question.type}</span>
+            </div>
+            <div class="card-body">
+                <h6 class="card-title">${question.content}</h6>
+                <div class="mt-3">
+                    <strong>答案：</strong> ${question.answer}
+                </div>
+                <div class="mt-2">
+                    <strong>解析：</strong> ${question.analysis}
+                </div>
+            </div>
+        `;
+            container.appendChild(card);
+        });
+
+        // 添加保存选项
+        const saveOptions = document.createElement('div');
+        saveOptions.className = 'mt-4';
+        saveOptions.innerHTML = `
+        <div class="mb-3">
+            <label class="form-label">保存到：</label>
+            <div class="d-flex gap-2">
+                <select class="form-select" id="saveToAssignment">
+                    <option value="new">创建新作业</option>
+                    <!-- 现有作业选项将通过JS动态添加 -->
+                </select>
+                <button class="btn btn-success" id="confirmSaveBtn">
+                    <i class="fas fa-save me-1"></i>确认保存
+                </button>
+            </div>
+        </div>
+    `;
+        container.appendChild(saveOptions);
+
+        // 填充现有作业选项
+        populateAssignmentOptions();
+
+        // 显示模态框
+        const modal = new bootstrap.Modal(document.getElementById('assessmentModal'));
+        modal.show();
+    }
+
+    // 填充作业选项
+    function populateAssignmentOptions() {
+        const courseId = "{{ course.id }}";
+        const select = document.getElementById('saveToAssignment');
+
+        // 清空现有选项（保留"创建新作业"）
+        while (select.options.length > 1) {
+            select.remove(1);
+        }
+
+        // 从服务器获取作业列表
+        fetch(`/course/${courseId}/assignments`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.assignments) {
+                    data.assignments.forEach(assignment => {
+                        const option = document.createElement('option');
+                        option.value = assignment.id;
+                        option.textContent = assignment.title;
+                        select.appendChild(option);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('获取作业列表失败:', error);
+                // 不影响主要功能，只是没有现有作业选项
+            });
+    }
+
+    // 确认保存按钮事件 - 修复版本
+    document.addEventListener('click', function (e) {
+        if (e.target.id === 'confirmSaveBtn') {
+            const assignmentSelect = document.getElementById('saveToAssignment');
+            const assignmentId = assignmentSelect.value;
+            const courseId = "{{ course.id }}";
+            const btn = e.target;
+
+            // 检查是否有题目数据
+            if (!currentQuestions || currentQuestions.length === 0) {
+                showError('没有题目数据，请先生成题目');
+                return;
+            }
+
+            // 显示保存状态
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>保存中...';
+
+            // 准备发送的数据
+            const requestData = {
+                assignment_id: assignmentId,
+                questions: currentQuestions
+            };
+
+            console.log('发送数据:', requestData); // 调试信息
+
+            fetch(`/course/${courseId}/save_assessment`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(requestData)
+            })
+                .then(response => {
+                    console.log('响应状态:', response.status); // 调试信息
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('响应数据:', data); // 调试信息
+
+                    if (data.success) {
+                        // 显示成功消息
+                        showSuccessMessage(`题目保存成功！创建了 ${data.questions_created} 道题目，总分 ${data.total_points} 分`);
+
+                        // 关闭模态框
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('assessmentModal'));
+                        if (modal) {
+                            modal.hide();
+                        }
+
+                        // 清空题目数据
+                        currentQuestions = [];
+
+                        // 刷新页面以显示新作业
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1500);
+                    } else {
+                        showError(data.error || '保存失败');
+                    }
+                })
+                .catch(error => {
+                    console.error('保存题目失败:', error);
+                    showError('保存题目失败，请重试');
+                })
+                .finally(() => {
+                    // 恢复按钮状态
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-save me-1"></i>确认保存';
+                });
+        }
+    });
+
+    // 显示成功消息
+    function showSuccessMessage(message) {
+        // 创建成功提示框
+        const successDiv = document.createElement('div');
+        successDiv.className = 'alert alert-success alert-dismissible fade show position-fixed';
+        successDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        successDiv.innerHTML = `
+        <i class="fas fa-check-circle me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+        document.body.appendChild(successDiv);
+
+        // 5秒后自动移除
+        setTimeout(() => {
+            if (successDiv.parentNode) {
+                successDiv.parentNode.removeChild(successDiv);
+            }
+        }, 5000);
+    }
+
+    // 显示错误信息的函数（如果不存在）
+    function showError(message) {
+        const errorModal = document.getElementById('errorModal');
+        const errorMessage = document.getElementById('errorMessage');
+
+        if (errorModal && errorMessage) {
+            errorMessage.textContent = message;
+            const modal = new bootstrap.Modal(errorModal);
+            modal.show();
+        } else {
+            // 备用方案：创建临时错误提示
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'alert alert-danger alert-dismissible fade show position-fixed';
+            errorDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            errorDiv.innerHTML = `
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+
+            document.body.appendChild(errorDiv);
+
+            // 5秒后自动移除
+            setTimeout(() => {
+                if (errorDiv.parentNode) {
+                    errorDiv.parentNode.removeChild(errorDiv);
+                }
+            }, 5000);
+        }
+    }
+
+</script>
+{% endif %}
+{% endblock %}
