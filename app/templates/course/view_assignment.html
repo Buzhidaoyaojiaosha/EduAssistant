@@ -285,154 +285,117 @@
 
     <div class="col-md-4">
         {% if not is_teacher and not is_admin %}
-        <div class="card mb-4 shadow-lg border-0 tips-card">
-            <div class="card-header position-relative overflow-hidden"
-                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-                <div class="position-absolute top-0 end-0 opacity-10">
-                    <i class="fas fa-star fa-4x"></i>
-                </div>
-                <div class="d-flex align-items-center position-relative">
-                    <div class="tips-icon-wrapper me-3">
-                        <i class="fas fa-lightbulb fa-lg"></i>
+        <div class="card mb-4 border-0 tips-card">
+            <!-- Header with organic leaf pattern -->
+            <div class="tips-header">
+                <div class="tips-header-bg"></div>
+                <div class="tips-header-content">
+                    <div class="tips-leaf-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c1.5 0 3-.3 4.3-.9"/>
+                            <path d="M12 2c3 3.5 4.5 7 4.5 10s-1.5 6.5-4.5 10"/>
+                            <path d="M2 12h10"/>
+                            <path d="M17 8l3-3 3 3"/>
+                            <path d="M20 5v12"/>
+                        </svg>
                     </div>
                     <div>
-                        <h5 class="mb-1 fw-600">💡 温馨提示</h5>
-                        <small class="opacity-90" style="font-size: 13px;">助您顺利完成作业</small>
+                        <h5 class="tips-title">温馨提示</h5>
+                        <p class="tips-subtitle">助您顺利完成作业</p>
                     </div>
+                </div>
+                <div class="tips-header-decoration">
+                    <div class="deco-leaf deco-leaf-1"></div>
+                    <div class="deco-leaf deco-leaf-2"></div>
+                    <div class="deco-leaf deco-leaf-3"></div>
                 </div>
             </div>
 
-            <div class="card-body p-4" style="background: #fafbfc;">
-                <!-- 主要提示 -->
-                <div class="row g-3 mb-4">
-                    <div class="col-md-6">
-                        <div class="tip-item h-100">
-                            <div class="tip-content">
-                                <div class="tip-number">1</div>
-                                <div class="tip-icon">📋</div>
-                                <div class="tip-text">
-                                    <h6 class="tip-title">仔细审题</h6>
-                                    <p class="tip-desc">仔细阅读题目要求，确保理解每个问题的意图和评分标准</p>
-                                </div>
+            <div class="tips-body">
+                <!-- 4 tips as vertical list -->
+                <div class="tips-list">
+                    <div class="tip-row" style="--delay: 0.05s;">
+                        <div class="tip-dot" style="--dot-color: var(--primary, #25714A);">01</div>
+                        <div class="tip-body">
+                            <div class="tip-head">
+                                <span class="tip-emoji">📋</span>
+                                <span class="tip-label">仔细审题</span>
                             </div>
+                            <p class="tip-text">仔细阅读题目要求，确保理解每个问题的意图和评分标准</p>
                         </div>
                     </div>
 
-                    <div class="col-md-6">
-                        <div class="tip-item h-100">
-                            <div class="tip-content tip-green">
-                                <div class="tip-number">2</div>
-                                <div class="tip-icon">💻</div>
-                                <div class="tip-text">
-                                    <h6 class="tip-title">算法设计</h6>
-                                    <p class="tip-desc">编程题请先设计算法思路，画出流程图再编写代码</p>
-                                </div>
+                    <div class="tip-row" style="--delay: 0.1s;">
+                        <div class="tip-dot" style="--dot-color: #0EA47A;">02</div>
+                        <div class="tip-body">
+                            <div class="tip-head">
+                                <span class="tip-emoji">💻</span>
+                                <span class="tip-label">算法设计</span>
                             </div>
+                            <p class="tip-text">编程题请先设计算法思路，画出流程图再编写代码</p>
                         </div>
                     </div>
 
-                    <div class="col-md-6">
-                        <div class="tip-item h-100">
-                            <div class="tip-content tip-orange">
-                                <div class="tip-number">3</div>
-                                <div class="tip-icon">🎯</div>
-                                <div class="tip-text">
-                                    <h6 class="tip-title">概念辨析</h6>
-                                    <p class="tip-desc">选择题注意区分相似概念，仔细分析选项差异</p>
-                                </div>
+                    <div class="tip-row" style="--delay: 0.15s;">
+                        <div class="tip-dot" style="--dot-color: var(--accent-gold, #D97706);">03</div>
+                        <div class="tip-body">
+                            <div class="tip-head">
+                                <span class="tip-emoji">🎯</span>
+                                <span class="tip-label">概念辨析</span>
                             </div>
+                            <p class="tip-text">选择题注意区分相似概念，仔细分析选项差异</p>
                         </div>
                     </div>
 
-                    <div class="col-md-6">
-                        <div class="tip-item h-100">
-                            <div class="tip-content tip-purple">
-                                <div class="tip-number">4</div>
-                                <div class="tip-icon">⏰</div>
-                                <div class="tip-text">
-                                    <h6 class="tip-title">时间管理</h6>
-                                    <p class="tip-desc">合理分配时间，预留检查时间</p>
-                                </div>
+                    <div class="tip-row" style="--delay: 0.2s;">
+                        <div class="tip-dot" style="--dot-color: #6B8F71;">04</div>
+                        <div class="tip-body">
+                            <div class="tip-head">
+                                <span class="tip-emoji">⏰</span>
+                                <span class="tip-label">时间管理</span>
                             </div>
+                            <p class="tip-text">合理分配时间，预留检查时间</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- 快捷提醒 -->
-                <div class="row g-2 mb-4">
-                    <div class="col-md-4">
-                        <div class="quick-reminder-item">
-                            <i class="fas fa-save"></i>
-                            <span>定期保存答案</span>
-                        </div>
-                    </div>
+                <!-- Quick reminders as tag cloud -->
+                <div class="reminder-tags">
+                    <span class="reminder-tag"><i class="fas fa-save"></i> 定期保存</span>
+                    <span class="reminder-tag"><i class="fas fa-code"></i> 规范书写</span>
+                    <span class="reminder-tag"><i class="fas fa-spell-check"></i> 检查拼写</span>
+                    <span class="reminder-tag"><i class="fas fa-check-circle"></i> 验算结果</span>
+                    <span class="reminder-tag"><i class="fas fa-comment-alt"></i> 添加注释</span>
+                    <span class="reminder-tag"><i class="fas fa-tasks"></i> 逐题检查</span>
+                </div>
 
-                    <div class="col-md-4">
-                        <div class="quick-reminder-item">
-                            <i class="fas fa-code"></i>
-                            <span>代码规范书写</span>
-                        </div>
+                <!-- Deadline -->
+                <div class="deadline-strip">
+                    <div class="deadline-clock">
+                        <i class="far fa-clock"></i>
                     </div>
-
-                    <div class="col-md-4">
-                        <div class="quick-reminder-item">
-                            <i class="fas fa-spell-check"></i>
-                            <span>检查拼写错误</span>
-                        </div>
-                    </div>
-
-                    <div class="col-md-4">
-                        <div class="quick-reminder-item">
-                            <i class="fas fa-check-circle"></i>
-                            <span>验算计算结果</span>
-                        </div>
-                    </div>
-
-                    <div class="col-md-4">
-                        <div class="quick-reminder-item">
-                            <i class="fas fa-comment-alt"></i>
-                            <span>添加必要注释</span>
-                        </div>
-                    </div>
-
-                    <div class="col-md-4">
-                        <div class="quick-reminder-item">
-                            <i class="fas fa-tasks"></i>
-                            <span>逐题完成检查</span>
-                        </div>
+                    <div>
+                        <div class="deadline-label">截止时间</div>
+                        <div class="deadline-date">{{ assignment.due_date.strftime('%Y年%m月%d日 %H:%M') }}</div>
                     </div>
                 </div>
-                <!-- 截止时间提醒 -->
-                <div class="deadline-alert mb-3">
-                    <div class="deadline-content">
-                        <div class="deadline-icon">
-                            <i class="fas fa-clock"></i>
-                        </div>
-                        <div class="deadline-text">
-                            <h6 class="deadline-title">截止时间提醒</h6>
-                            <p class="deadline-date">📅 {{ assignment.due_date.strftime('%Y年%m月%d日 %H:%M') }}</p>
-                        </div>
+
+                <!-- Checklist -->
+                <div class="check-strip">
+                    <div class="check-strip-title">
+                        <i class="fas fa-shield-alt"></i> 提交前检查
+                    </div>
+                    <div class="check-items">
+                        <span class="check-chip"><i class="fas fa-check"></i> 所有题目已完成</span>
+                        <span class="check-chip"><i class="fas fa-check"></i> 答案格式正确</span>
+                        <span class="check-chip"><i class="fas fa-check"></i> 计算结果准确</span>
                     </div>
                 </div>
-                <!-- 最终检查提醒 -->
-                <div class="final-reminder">
-                    <div class="reminder-header">
-                        <i class="fas fa-shield-alt me-2"></i>
-                        <strong>提交前务必检查</strong>
-                    </div>
-                    <div class="checklist">
-                        <div class="check-item">✅ 所有题目已完成</div>
-                        <div class="check-item">✅ 答案格式正确</div>
-                        <div class="check-item">✅ 计算结果准确</div>
-                    </div>
-                </div>
-                <!-- 祝福语 -->
-                <div class="blessing-section">
-                    <div class="blessing-content">
-                        <span class="blessing-emoji">🌟</span>
-                        <span class="blessing-text">祝您答题顺利，取得优异成绩！</span>
-                        <span class="blessing-emoji">🎯</span>
-                    </div>
+
+                <!-- Blessing -->
+                <div class="blessing-row">
+                    <span>祝您答题顺利，取得优异成绩</span>
+                    <span class="blessing-accent">✦</span>
                 </div>
             </div>
         </div>
@@ -1003,276 +966,352 @@
         animation-delay: 0.2s;
     }
 
-    /* 字体优化 */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
-
+    /* ===== 温馨提示卡片 (Botanical Stationery) ===== */
     .tips-card {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        border-radius: 16px;
+        border-radius: 20px;
         overflow: hidden;
-        transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        background: #fff;
+        box-shadow: 0 2px 20px rgba(37, 113, 74, 0.06);
+        transition: box-shadow 0.4s ease, transform 0.4s ease;
     }
 
     .tips-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 20px 40px rgba(102, 126, 234, 0.15) !important;
+        transform: translateY(-3px);
+        box-shadow: 0 8px 32px rgba(37, 113, 74, 0.1);
     }
 
-    /* 头部样式 */
-    .tips-icon-wrapper {
-        background: rgba(255, 255, 255, 0.2);
-        border-radius: 12px;
-        padding: 12px;
-        backdrop-filter: blur(10px);
-    }
-
-    .fw-600 {
-        font-weight: 600;
-    }
-
-    /* 主要提示卡片 */
-    .tip-item {
-        height: 100%;
-    }
-
-    .tip-content {
-        background: white;
-        border-radius: 12px;
-        padding: 20px;
-        height: 100%;
+    /* --- Header --- */
+    .tips-header {
         position: relative;
-        border: 1px solid #e8ecef;
-        transition: all 0.3s ease;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .tip-content:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.1);
-        border-color: #667eea;
-    }
-
-    .tip-content.tip-green:hover {
-        border-color: #10b981;
-    }
-
-    .tip-content.tip-orange:hover {
-        border-color: #f59e0b;
-    }
-
-    .tip-content.tip-purple:hover {
-        border-color: #8b5cf6;
-    }
-
-    .tip-number {
-        position: absolute;
-        top: -8px;
-        left: -8px;
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        color: white;
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 12px;
-        font-weight: 600;
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-    }
-
-    .tip-green .tip-number {
-        background: linear-gradient(135deg, #10b981, #059669);
-    }
-
-    .tip-orange .tip-number {
-        background: linear-gradient(135deg, #f59e0b, #d97706);
-    }
-
-    .tip-purple .tip-number {
-        background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-    }
-
-    .tip-icon {
-        font-size: 24px;
-        margin-bottom: 12px;
-        text-align: center;
-    }
-
-    .tip-title {
-        font-size: 15px;
-        font-weight: 600;
-        color: #1f2937;
-        margin-bottom: 8px;
-    }
-
-    .tip-desc {
-        font-size: 13px;
-        color: #6b7280;
-        line-height: 1.5;
-        margin: 0;
-    }
-
-    /* 快捷提醒样式 */
-    .quick-reminder-item {
-        display: flex;
-        align-items: center;
-        padding: 12px 16px;
-        background: white;
-        border: 1px solid #e8ecef;
-        border-radius: 10px;
-        transition: all 0.2s ease;
-        font-size: 13px;
-        font-weight: 500;
-    }
-
-    .quick-reminder-item:hover {
-        background: #f8fafc;
-        border-color: #667eea;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
-    }
-
-    .quick-reminder-item i {
-        color: #667eea;
-        margin-right: 8px;
-        font-size: 14px;
-        width: 16px;
-        text-align: center;
-    }
-
-    /* 截止时间提醒 */
-    .deadline-alert {
-        background: linear-gradient(135deg, #fef3c7, #fde68a);
-        border-radius: 12px;
-        padding: 16px;
-        border: 1px solid #f59e0b;
-        position: relative;
+        padding: 22px 24px;
         overflow: hidden;
     }
 
-    .deadline-alert::before {
-        content: '';
+    .tips-header-bg {
         position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-        animation: shimmer 3s infinite;
+        inset: 0;
+        background: linear-gradient(135deg, #25714A 0%, #3B7A57 50%, #4A8C64 100%);
+        z-index: 0;
     }
 
-    @keyframes shimmer {
-        0% {
-            left: -100%;
-        }
-
-        100% {
-            left: 100%;
-        }
-    }
-
-    .deadline-content {
+    .tips-header-content {
+        position: relative;
+        z-index: 2;
         display: flex;
         align-items: center;
+        gap: 14px;
     }
 
-    .deadline-icon {
-        background: #f59e0b;
-        color: white;
-        width: 40px;
-        height: 40px;
+    .tips-leaf-icon {
+        width: 44px;
+        height: 44px;
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        backdrop-filter: blur(8px);
+        flex-shrink: 0;
+    }
+
+    .tips-title {
+        color: #fff;
+        font-size: 1.05rem;
+        font-weight: 700;
+        margin: 0 0 2px;
+        letter-spacing: 0.02em;
+    }
+
+    .tips-subtitle {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.75rem;
+        margin: 0;
+        font-weight: 400;
+    }
+
+    /* Decorative floating leaves */
+    .tips-header-decoration {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        overflow: hidden;
+        pointer-events: none;
+    }
+
+    .deco-leaf {
+        position: absolute;
+        border-radius: 50% 0 50% 0;
+        background: rgba(255, 255, 255, 0.06);
+    }
+
+    .deco-leaf-1 {
+        width: 80px;
+        height: 80px;
+        top: -20px;
+        right: -10px;
+        transform: rotate(15deg);
+    }
+
+    .deco-leaf-2 {
+        width: 50px;
+        height: 50px;
+        bottom: -15px;
+        right: 60px;
+        transform: rotate(-30deg);
+    }
+
+    .deco-leaf-3 {
+        width: 35px;
+        height: 35px;
+        top: 8px;
+        right: 100px;
+        transform: rotate(45deg);
+    }
+
+    /* --- Body --- */
+    .tips-body {
+        padding: 20px 22px 24px;
+        background: #FAFCF8;
+    }
+
+    /* --- Tips list (vertical numbered) --- */
+    .tips-list {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        margin-bottom: 20px;
+    }
+
+    .tip-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        animation: tipSlideIn 0.4s ease both;
+        animation-delay: var(--delay, 0s);
+    }
+
+    @keyframes tipSlideIn {
+        from {
+            opacity: 0;
+            transform: translateX(-8px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    .tip-dot {
+        flex-shrink: 0;
+        width: 32px;
+        height: 32px;
+        border-radius: 10px;
+        background: var(--dot-color, var(--primary, #25714A));
+        color: #fff;
+        font-size: 0.65rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        letter-spacing: -0.02em;
+        opacity: 0.9;
+    }
+
+    .tip-body {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .tip-head {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 4px;
+    }
+
+    .tip-emoji {
+        font-size: 0.95rem;
+        line-height: 1;
+    }
+
+    .tip-label {
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--dark, #103B24);
+    }
+
+    .tip-text {
+        font-size: 0.75rem;
+        color: var(--text-secondary, #5B7064);
+        line-height: 1.55;
+        margin: 0;
+    }
+
+    /* --- Reminder tags --- */
+    .reminder-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 18px;
+    }
+
+    .reminder-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 5px 11px;
+        background: #fff;
+        border: 1px solid var(--primary-soft, #D3E4DA);
+        border-radius: 999px;
+        font-size: 0.7rem;
+        font-weight: 500;
+        color: var(--text-secondary, #5B7064);
+        transition: all 0.2s ease;
+        cursor: default;
+    }
+
+    .reminder-tag i {
+        font-size: 0.65rem;
+        color: var(--primary, #25714A);
+        opacity: 0.7;
+    }
+
+    .reminder-tag:hover {
+        border-color: var(--primary, #25714A);
+        background: var(--primary-light, #E3EFE8);
+        color: var(--dark, #103B24);
+    }
+
+    .reminder-tag:hover i {
+        opacity: 1;
+    }
+
+    /* --- Deadline strip --- */
+    .deadline-strip {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 14px 16px;
+        background: linear-gradient(135deg, #FFF8EB, #FEF3C7);
+        border-radius: 14px;
+        border: 1px solid rgba(217, 119, 6, 0.15);
+        margin-bottom: 14px;
+    }
+
+    .deadline-clock {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        background: var(--accent-gold, #D97706);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        flex-shrink: 0;
+        box-shadow: 0 4px 12px rgba(217, 119, 6, 0.2);
+    }
+
+    .deadline-label {
+        font-size: 0.68rem;
+        font-weight: 600;
+        color: #92400E;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-bottom: 2px;
+    }
+
+    .deadline-date {
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #78350F;
+        margin: 0;
+    }
+
+    /* --- Checklist strip --- */
+    .check-strip {
+        background: linear-gradient(135deg, #EDFCF2, #E3EFE8);
+        border-radius: 14px;
+        padding: 14px 16px;
+        border: 1px solid rgba(37, 113, 74, 0.12);
+        margin-bottom: 16px;
+    }
+
+    .check-strip-title {
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: var(--primary, #25714A);
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        letter-spacing: 0.03em;
+    }
+
+    .check-strip-title i {
+        font-size: 0.7rem;
+    }
+
+    .check-items {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .check-chip {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.75rem;
+        color: var(--text-primary, #2C3E35);
+        font-weight: 500;
+    }
+
+    .check-chip i {
+        color: var(--primary, #25714A);
+        font-size: 0.6rem;
+        width: 16px;
+        height: 16px;
+        background: rgba(37, 113, 74, 0.1);
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        margin-right: 16px;
-        font-size: 16px;
+        flex-shrink: 0;
     }
 
-    .deadline-title {
-        font-size: 14px;
-        font-weight: 600;
-        color: #92400e;
-        margin-bottom: 4px;
-    }
-
-    .deadline-date {
-        font-size: 13px;
-        color: #b45309;
-        margin: 0;
-    }
-
-    /* 最终检查提醒 */
-    .final-reminder {
-        background: linear-gradient(135deg, #ddd6fe, #c4b5fd);
-        border-radius: 12px;
-        padding: 20px;
-        margin-bottom: 16px;
-        border: 1px solid #8b5cf6;
-    }
-
-    .reminder-header {
-        font-size: 15px;
-        font-weight: 600;
-        color: #5b21b6;
-        margin-bottom: 12px;
+    /* --- Blessing --- */
+    .blessing-row {
         text-align: center;
-    }
-
-    .checklist {
+        padding: 8px 0 0;
+        font-size: 0.78rem;
+        color: var(--text-secondary, #5B7064);
         display: flex;
-        justify-content: space-around;
-        flex-wrap: wrap;
-        gap: 8px;
-    }
-
-    .check-item {
-        font-size: 12px;
-        color: #6d28d9;
-        font-weight: 500;
-    }
-
-    /* 祝福语 */
-    .blessing-section {
-        text-align: center;
-        padding: 12px;
-    }
-
-    .blessing-content {
-        background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
-        padding: 12px 20px;
-        border-radius: 50px;
-        border: 1px solid #0ea5e9;
-        display: inline-flex;
         align-items: center;
+        justify-content: center;
         gap: 8px;
     }
 
-    .blessing-emoji {
-        font-size: 16px;
+    .blessing-accent {
+        color: var(--accent-gold, #D97706);
+        font-size: 1rem;
+        animation: sparkle 2s ease-in-out infinite;
     }
 
-    .blessing-text {
-        font-size: 13px;
-        font-weight: 500;
-        color: #0c4a6e;
+    @keyframes sparkle {
+        0%, 100% { opacity: 0.5; transform: scale(1) rotate(0deg); }
+        50% { opacity: 1; transform: scale(1.2) rotate(15deg); }
     }
 
-    /* 响应式优化 */
+    /* --- Responsive --- */
     @media (max-width: 768px) {
-        .quick-tips-grid {
-            grid-template-columns: repeat(2, 1fr);
-        }
-
-        .checklist {
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .tip-content {
+        .tips-body {
             padding: 16px;
+        }
+
+        .check-items {
+            gap: 8px;
         }
     }
 </style>

@@ -100,58 +100,60 @@
                             </button>
                         </td>
                     </tr>
-
-                    <!-- 删除确认弹窗 -->
-                    <div class="modal fade" id="deleteModal-{{ user.id }}" tabindex="-1" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-centered">
-                            <div class="modal-content">
-                                <div class="modal-header border-0">
-                                    <div class="d-flex align-items-center">
-                                        <div class="rounded-circle p-2 me-2"
-                                            style="background: rgba(220, 53, 69, 0.1);">
-                                            <i class="fas fa-exclamation-triangle" style="color: #dc3545;"></i>
-                                        </div>
-                                        <h5 class="modal-title mb-0">确认删除</h5>
-                                    </div>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                        aria-label="关闭"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <p>确定要删除用户 "{{ user.username }}" 吗？此操作不可撤销。</p>
-                                    <div class="alert" style="background: rgba(255, 193, 7, 0.1); border: none;">
-                                        <div class="d-flex">
-                                            <i class="fas fa-exclamation-triangle me-3" style="color: #ffc107;"></i>
-                                            <div>
-                                                {% if 'admin' in user.roles|map(attribute='role.name') %}
-                                                这是管理员账户，将仅删除账户本身。
-                                                {% elif 'teacher' in user.roles|map(attribute='role.name') %}
-                                                这是教师账户，将删除该教师及其教授的所有课程。
-                                                {% else %}
-                                                这是学生账户，将删除该学生的所有学习数据。
-                                                {% endif %}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="modal-footer border-0">
-                                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">
-                                        <i class="fas fa-times me-2"></i>取消
-                                    </button>
-                                    <form action="{{ url_for('admin.delete_user', user_id=user.id) }}" method="POST">
-                                        <button type="submit" class="btn btn-danger">
-                                            <i class="fas fa-trash-alt me-2"></i>确认删除
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
 </div>
+
+<!-- 删除确认弹窗（必须在 card 外面，否则 transform 创建的层叠上下文会遮挡 modal） -->
+{% for user in users %}
+<div class="modal fade" id="deleteModal-{{ user.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle p-2 me-2"
+                        style="background: rgba(220, 53, 69, 0.1);">
+                        <i class="fas fa-exclamation-triangle" style="color: #dc3545;"></i>
+                    </div>
+                    <h5 class="modal-title mb-0">确认删除</h5>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                    aria-label="关闭"></button>
+            </div>
+            <div class="modal-body">
+                <p>确定要删除用户 "{{ user.username }}" 吗？此操作不可撤销。</p>
+                <div class="alert" style="background: rgba(255, 193, 7, 0.1); border: none;">
+                    <div class="d-flex">
+                        <i class="fas fa-exclamation-triangle me-3" style="color: #ffc107;"></i>
+                        <div>
+                            {% if 'admin' in user.roles|map(attribute='role.name') %}
+                            这是管理员账户，将仅删除账户本身。
+                            {% elif 'teacher' in user.roles|map(attribute='role.name') %}
+                            这是教师账户，将删除该教师及其教授的所有课程。
+                            {% else %}
+                            这是学生账户，将删除该学生的所有学习数据。
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>取消
+                </button>
+                <form action="{{ url_for('admin.delete_user', user_id=user.id) }}" method="POST">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash-alt me-2"></i>确认删除
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
 
 <!-- 添加用户模态框 -->
 <div class="modal fade" id="addUserModal" tabindex="-1" aria-hidden="true">
@@ -266,6 +268,7 @@
         </div>
     </div>
 </div>
+{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -434,5 +437,4 @@
     });
 
 </script>
-{% endblock %}
 {% endblock %}

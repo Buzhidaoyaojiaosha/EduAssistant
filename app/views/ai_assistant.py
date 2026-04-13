@@ -156,3 +156,25 @@ def send_message(chat_id):
     except Exception as e:
         print(f'处理消息时发生错误: {str(e)}')
         return jsonify({'error': f'处理消息时发生错误: {str(e)}'}), 500
+
+@ai_assistant_bp.route('/chats/<int:chat_id>', methods=['DELETE'])
+def delete_chat(chat_id):
+    """删除指定聊天会话及其所有消息"""
+    if 'user_id' not in session:
+        return jsonify({'error': '未登录'}), 401
+
+    user_id = session['user_id']
+    user = User.get_by_id(user_id)
+
+    try:
+        chat = Chat.get_or_none(Chat.id == chat_id, Chat.user == user)
+        if not chat:
+            return jsonify({'error': '聊天不存在或无权访问'}), 404
+
+        with db.atomic():
+            ChatMessage.delete().where(ChatMessage.chat == chat).execute()
+            chat.delete_instance()
+
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': f'删除聊天时出错: {str(e)}'}), 500

@@ -40,6 +40,7 @@
                 <div class="history-item" data-chat-id="{{ chat.id }}">
                     <i class="fas fa-comment-dots"></i>
                     <span class="h-title">{{ chat.title }}</span>
+                    <button type="button" class="delete-chat-btn" title="删除会话"><i class="fas fa-trash-alt"></i></button>
                 </div>
                 {% endfor %}
             </div>
@@ -51,7 +52,7 @@
         <div class="chat-top">
             <span class="chat-top-title">当前会话</span>
             <div class="chat-top-badges">
-                <span class="badge-pill badge-amber"><i class="fas fa-bolt"></i> 智能分析</span>
+                <span class="badge-pill custom-light-blue"><i class="fas fa-bolt"></i> 智能分析</span>
                 <span class="badge-pill badge-violet"><i class="fas fa-brain"></i> 深度学习</span>
             </div>
         </div>
@@ -243,6 +244,37 @@
         white-space: nowrap;
     }
 
+    .delete-chat-btn {
+        opacity: 0;
+        background: none;
+        border: none;
+        color: #EF4444;
+        cursor: pointer;
+        padding: 4px 6px;
+        border-radius: 6px;
+        font-size: 0.7rem;
+        flex-shrink: 0;
+        transition: all 0.2s;
+    }
+
+    .history-item:hover .delete-chat-btn {
+        opacity: 1;
+    }
+
+    .delete-chat-btn:hover {
+        color: #DC2626;
+        background: rgba(239, 68, 68, 0.1);
+    }
+
+    .history-item.active .delete-chat-btn {
+        color: rgba(255, 255, 255, 0.85);
+    }
+
+    .history-item.active .delete-chat-btn:hover {
+        color: #fff;
+        background: rgba(255, 255, 255, 0.2);
+    }
+
     /* ===== 聊天主区 ===== */
     .chat-main {
         flex: 1;
@@ -327,7 +359,7 @@
     .empty-icon {
         width: 72px;
         height: 72px;
-        background: linear-gradient(135deg, #FACC15, #EAB308);
+        background: #FEF9C3;
         border-radius: 20px;
         display: flex;
         align-items: center;
@@ -377,9 +409,17 @@
         font-size: 0.85rem;
     }
 
-    .suggest-btn i.icon-amber { color: #F59E0B; }
-    .suggest-btn i.icon-blue { color: #3B82F6; }
-    .suggest-btn i.icon-rose { color: #E11D48; }
+    .suggest-btn i.icon-amber {
+        color: #F59E0B;
+    }
+
+    .suggest-btn i.icon-blue {
+        color: #3B82F6;
+    }
+
+    .suggest-btn i.icon-rose {
+        color: #E11D48;
+    }
 
     .suggest-btn:hover {
         border-color: var(--primary, #25714A);
@@ -543,6 +583,17 @@
             display: none;
         }
     }
+
+    .custom-light-blue {
+        background-color: #E3F2FD;
+        /* 极浅蓝背景 */
+        color: #1976D2;
+        /* 深蓝色文字，保证清晰度 */
+        padding: 4px 12px;
+        border-radius: 50px;
+        /* 胶囊形状 */
+        display: inline-block;
+    }
 </style>
 {% endblock %}
 
@@ -638,7 +689,7 @@
                     var item = document.createElement('div');
                     item.className = 'history-item active';
                     item.setAttribute('data-chat-id', data.id);
-                    item.innerHTML = '<i class="fas fa-comment-dots"></i><span class="h-title">' + escapeHtml(data.title) + '</span>';
+                    item.innerHTML = '<i class="fas fa-comment-dots"></i><span class="h-title">' + escapeHtml(data.title) + '</span><button type="button" class="delete-chat-btn" title="删除会话"><i class="fas fa-trash-alt"></i></button>';
                     $('chat-history').prepend(item);
 
                     currentChatId = data.id;
@@ -741,8 +792,34 @@
             doSend();
         });
 
+        // 删除历史会话（委托）
+        document.addEventListener('click', function (e) {
+            var btn = e.target.closest('.delete-chat-btn');
+            if (!btn) return;
+            e.preventDefault();
+            e.stopPropagation();
+            var item = btn.closest('.history-item');
+            if (!item) return;
+            var id = item.getAttribute('data-chat-id');
+            if (!id) return;
+
+            fetch('/ai-assistant/chats/' + id, { method: 'DELETE' })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data.success) {
+                        if (currentChatId == id) {
+                            currentChatId = null;
+                            resetMessages();
+                        }
+                        item.remove();
+                    }
+                })
+                .catch(function (err) { console.error('deleteChat:', err); });
+        });
+
         // 历史会话（委托）
         document.addEventListener('click', function (e) {
+            if (e.target.closest('.delete-chat-btn')) return;
             var item = e.target.closest('.history-item');
             if (!item) return;
             e.preventDefault();
