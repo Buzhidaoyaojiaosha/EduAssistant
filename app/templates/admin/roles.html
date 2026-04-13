@@ -6,8 +6,8 @@
 <div class="row mb-4">
     <div class="col">
         <div class="d-flex align-items-center">
-            <div class="rounded-circle p-3 me-3" style="background: rgba(111, 66, 193, 0.1);">
-                <i class="fas fa-user-tag" style="color: #6f42c1;"></i>
+            <div class="rounded-circle p-3 me-3" style="background: var(--primary-light);">
+                <i class="fas fa-user-tag" style="color: var(--primary);"></i>
             </div>
             <div>
                 <h2 class="text-primary mb-1">角色管理</h2>
@@ -17,7 +17,7 @@
     </div>
     <div class="col-auto">
         <a href="{{ url_for('admin.add_role') }}" class="btn btn-primary"
-            style="background: linear-gradient(135deg, #6f42c1 0%, #8f94fb 100%); border: none;">
+            style="background: linear-gradient(135deg, var(--primary) 0%, #154D31 100%); border: none;">
             <i class="fas fa-plus me-2"></i>添加角色
         </a>
     </div>
@@ -26,8 +26,8 @@
 <div class="card">
     <div class="card-header bg-transparent border-0">
         <div class="d-flex align-items-center">
-            <div class="rounded-circle p-2 me-2" style="background: rgba(111, 66, 193, 0.1);">
-                <i class="fas fa-list" style="color: #6f42c1;"></i>
+            <div class="rounded-circle p-2 me-2" style="background: var(--primary-light);">
+                <i class="fas fa-list" style="color: var(--primary);"></i>
             </div>
             <h5 class="mb-0">角色列表</h5>
         </div>
@@ -49,14 +49,14 @@
                     {% for role in roles %}
                     <tr>
                         <td>
-                            <span class="badge" style="background: rgba(111, 66, 193, 0.1); color: #6f42c1;">
+                            <span class="badge" style="background: var(--primary-light); color: var(--primary);">
                                 {{ role.id }}
                             </span>
                         </td>
                         <td>
                             <div class="d-flex align-items-center">
-                                <div class="rounded-circle p-2 me-2" style="background: rgba(111, 66, 193, 0.1);">
-                                    <i class="fas fa-user-shield" style="color: #6f42c1;"></i>
+                                <div class="rounded-circle p-2 me-2" style="background: var(--primary-light);">
+                                    <i class="fas fa-user-shield" style="color: var(--primary);"></i>
                                 </div>
                                 {{ role.name }}
                             </div>
@@ -85,9 +85,8 @@
                             <div class="modal-content">
                                 <div class="modal-header border-0">
                                     <div class="d-flex align-items-center">
-                                        <div class="rounded-circle p-2 me-2"
-                                            style="background: rgba(111, 66, 193, 0.1);">
-                                            <i class="fas fa-edit" style="color: #6f42c1;"></i>
+                                        <div class="rounded-circle p-2 me-2" style="background: var(--primary-light);">
+                                            <i class="fas fa-edit" style="color: var(--primary);"></i>
                                         </div>
                                         <h5 class="modal-title mb-0">编辑角色</h5>
                                     </div>
@@ -100,7 +99,7 @@
                                             <label for="name-{{ role.id }}" class="form-label">角色名称</label>
                                             <div class="input-group">
                                                 <span class="input-group-text bg-light border-0">
-                                                    <i class="fas fa-tag" style="color: #6f42c1;"></i>
+                                                    <i class="fas fa-tag" style="color: var(--primary);"></i>
                                                 </span>
                                                 <input type="text" class="form-control bg-light border-0"
                                                     id="name-{{ role.id }}" name="name" value="{{ role.name }}"
@@ -111,7 +110,7 @@
                                             <label for="description-{{ role.id }}" class="form-label">描述</label>
                                             <div class="input-group">
                                                 <span class="input-group-text bg-light border-0">
-                                                    <i class="fas fa-align-left" style="color: #6f42c1;"></i>
+                                                    <i class="fas fa-align-left" style="color: var(--primary);"></i>
                                                 </span>
                                                 <textarea class="form-control bg-light border-0"
                                                     id="description-{{ role.id }}" name="description" rows="3"
@@ -125,7 +124,7 @@
                                         <i class="fas fa-times me-2"></i>取消
                                     </button>
                                     <button type="button" class="btn btn-primary"
-                                        style="background: linear-gradient(135deg, #6f42c1 0%, #8f94fb 100%); border: none;">
+                                        style="background: linear-gradient(135deg, var(--primary) 0%, #154D31 100%); border: none;">
                                         <i class="fas fa-save me-2"></i>保存更改
                                     </button>
                                 </div>
@@ -142,31 +141,17 @@
 
 {% block extra_css %}
 <style>
-    :root {
-        --primary-gradient: linear-gradient(135deg, #4e54c8 0%, #8f94fb 100%);
-        --secondary-gradient: linear-gradient(135deg, #00cdac 0%, #8ddad5 100%);
-        --background-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        --card-background: rgba(255, 255, 255, 0.9);
-        --hover-background: rgba(78, 84, 200, 0.1);
-    }
-
-    body {
-        background: var(--background-gradient);
-        min-height: 100vh;
-    }
-
     .card {
         border: none;
-        background: var(--card-background);
-        backdrop-filter: blur(10px);
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
-        border-radius: 12px;
-        transition: all 0.3s ease;
+        background: var(--bg-card);
+        box-shadow: var(--shadow-sm);
+        border-radius: var(--radius-lg);
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .card:hover {
         transform: translateY(-2px);
-        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+        box-shadow: var(--shadow-md);
     }
 
     .table {
@@ -175,8 +160,8 @@
 
     .table th {
         border-top: none;
-        border-bottom: 2px solid rgba(111, 66, 193, 0.1);
-        color: #6c757d;
+        border-bottom: 2px solid var(--primary-soft);
+        color: var(--text-secondary);
         font-weight: 600;
         padding: 1rem;
     }
@@ -185,13 +170,6 @@
         padding: 1rem;
         vertical-align: middle;
         border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-    }
-
-    .btn {
-        padding: 0.75rem 1.5rem;
-        font-weight: 500;
-        border-radius: 8px;
-        transition: all 0.3s ease;
     }
 
     .btn-sm {
@@ -208,38 +186,14 @@
         transform: translateY(-1px);
     }
 
-    .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(111, 66, 193, 0.2);
-    }
-
     .modal-content {
         border: none;
-        border-radius: 12px;
-        background: var(--card-background);
-        backdrop-filter: blur(10px);
-    }
-
-    .form-control,
-    .input-group-text {
-        padding: 0.75rem 1rem;
-        font-size: 1rem;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-    }
-
-    .input-group .form-control {
-        border-top-left-radius: 0;
-        border-bottom-left-radius: 0;
-    }
-
-    .input-group-text {
-        border-top-right-radius: 0;
-        border-bottom-right-radius: 0;
+        border-radius: var(--radius-md);
+        background: var(--bg-card);
     }
 
     .form-control:focus {
-        box-shadow: 0 0 0 3px rgba(111, 66, 193, 0.1);
+        box-shadow: 0 0 0 3px var(--primary-light);
         border: none;
     }
 
@@ -264,7 +218,7 @@
     }
 
     tr:hover {
-        background: rgba(111, 66, 193, 0.02);
+        background: var(--primary-light);
     }
 </style>
 {% endblock %}

@@ -75,8 +75,8 @@
                     <i class="fas fa-chevron-right quick-arrow"></i>
                 </a>
                 <a href="{{ url_for('search.manage_knowledge') }}" class="quick-action-item">
-                    <div class="quick-icon icon-yellow">
-                        <i class="fas fa-database"></i>
+                    <div class="quick-icon" style="background: rgba(13, 110, 253, 0.1); color: #0d6efd;">
+                        <i class="fas fa-database" style="color: #0d6efd;"></i>
                     </div>
                     <div class="quick-info">
                         <h6 class="quick-title">知识库管理</h6>
@@ -120,11 +120,22 @@
             </div>
 
             <!-- 图表容器 -->
-            <div class="chart-area">
+            <div class="chart-area" id="chartArea"
+                data-student-names='{{ student_names|tojson }}'
+                data-student-daily='{{ student_daily_data|tojson }}'
+                data-student-weekly='{{ student_weekly_data|tojson }}'
+                data-teacher-names='{{ teacher_names|tojson }}'
+                data-teacher-daily='{{ teacher_daily_data|tojson }}'
+                data-teacher-weekly='{{ teacher_weekly_data|tojson }}'>
                 <canvas id="student-daily-chart"></canvas>
                 <canvas id="student-weekly-chart" style="display: none;"></canvas>
                 <canvas id="teacher-daily-chart" style="display: none;"></canvas>
                 <canvas id="teacher-weekly-chart" style="display: none;"></canvas>
+                <div id="chartEmpty" class="chart-empty" style="display: none;">
+                    <i class="fas fa-chart-bar"></i>
+                    <p>暂无活跃度数据</p>
+                    <span>用户产生学习行为后将在此处展示</span>
+                </div>
             </div>
         </div>
     </div>
@@ -249,8 +260,15 @@
     }
 
     @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.4; }
+
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.4;
+        }
     }
 
     .welcome-stats {
@@ -272,9 +290,19 @@
         font-size: 0.82rem;
     }
 
-    .stat-pill i { font-size: 0.75rem; }
-    .stat-num { font-weight: 800; font-size: 1rem; }
-    .stat-label { color: var(--text-secondary); font-size: 0.78rem; }
+    .stat-pill i {
+        font-size: 0.75rem;
+    }
+
+    .stat-num {
+        font-weight: 800;
+        font-size: 1rem;
+    }
+
+    .stat-label {
+        color: var(--text-secondary);
+        font-size: 0.78rem;
+    }
 
     /* ===== Card ===== */
     .dash-card {
@@ -497,7 +525,7 @@
     .chart-type-btn.active {
         background: var(--bg-card);
         color: var(--primary);
-        box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
     }
 
     .chart-type-btn i {
@@ -511,6 +539,35 @@
         padding: 1.25rem;
         height: 400px;
         position: relative;
+    }
+
+    .chart-empty {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        color: var(--text-secondary);
+    }
+
+    .chart-empty i {
+        font-size: 2.5rem;
+        color: var(--border);
+        margin-bottom: 0.25rem;
+    }
+
+    .chart-empty p {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0;
+    }
+
+    .chart-empty span {
+        font-size: 0.78rem;
+        color: var(--text-secondary);
     }
 
     /* ===== Responsive ===== */
@@ -544,136 +601,152 @@
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
 <script>
-    let studentDailyChart, studentWeeklyChart;
-    let teacherDailyChart, teacherWeeklyChart;
-    let currentRole = 'student';
-    let currentType = 'daily';
+(function() {
+    var studentDailyChart, studentWeeklyChart;
+    var teacherDailyChart, teacherWeeklyChart;
+    var currentRole = 'student';
+    var currentType = 'daily';
 
-    // 初始化图表数据
-    const chartData = {
-        student: {
-            names: JSON.parse('{{ student_names|tojson|safe }}'),
-            daily: JSON.parse('{{ student_daily_data|tojson|safe }}'),
-            weekly: JSON.parse('{{ student_weekly_data|tojson|safe }}')
-        },
-        teacher: {
-            names: JSON.parse('{{ teacher_names|tojson|safe }}'),
-            daily: JSON.parse('{{ teacher_daily_data|tojson|safe }}'),
-            weekly: JSON.parse('{{ teacher_weekly_data|tojson|safe }}')
-        }
-    };
-
-    const studentNames = chartData.student.names;
-    const studentDailyData = chartData.student.daily;
-    const studentWeeklyData = chartData.student.weekly;
-    const teacherNames = chartData.teacher.names;
-    const teacherDailyData = chartData.teacher.daily;
-    const teacherWeeklyData = chartData.teacher.weekly;
+    // 从 data 属性读取数据
+    var area = document.getElementById('chartArea');
+    var studentNames = JSON.parse(area.dataset.studentNames || '[]');
+    var studentDailyData = JSON.parse(area.dataset.studentDaily || '[]');
+    var studentWeeklyData = JSON.parse(area.dataset.studentWeekly || '[]');
+    var teacherNames = JSON.parse(area.dataset.teacherNames || '[]');
+    var teacherDailyData = JSON.parse(area.dataset.teacherDaily || '[]');
+    var teacherWeeklyData = JSON.parse(area.dataset.teacherWeekly || '[]');
 
     // 颜色方案
-    const colors = {
+    var colors = {
         studentDaily: { bg: 'rgba(52, 103, 57, 0.55)', border: 'rgba(52, 103, 57, 0.9)' },
         studentWeekly: { bg: 'rgba(121, 174, 111, 0.55)', border: 'rgba(121, 174, 111, 0.9)' },
         teacherDaily: { bg: 'rgba(232, 136, 75, 0.55)', border: 'rgba(232, 136, 75, 0.9)' },
         teacherWeekly: { bg: 'rgba(245, 200, 66, 0.55)', border: 'rgba(245, 200, 66, 0.9)' }
     };
 
-    document.addEventListener('DOMContentLoaded', function () {
-        renderStudentChart('daily');
+    function initCharts() {
+        var noStudent = !studentNames || studentNames.length === 0;
+        var noTeacher = !teacherNames || teacherNames.length === 0;
+        var emptyEl = document.getElementById('chartEmpty');
+
+        if (noStudent && noTeacher) {
+            // 无数据：隐藏所有 canvas，显示空状态
+            emptyEl.style.display = 'flex';
+            document.querySelectorAll('#chartArea canvas').forEach(function(c) {
+                c.style.display = 'none';
+            });
+            return;
+        }
+
+        emptyEl.style.display = 'none';
+
+        // 默认渲染学生日活跃
+        if (!noStudent) {
+            renderChart('student', 'daily');
+        } else if (!noTeacher) {
+            // 学生无数据但教师有数据，切到教师
+            currentRole = 'teacher';
+            document.getElementById('student-tab').classList.remove('active');
+            document.getElementById('teacher-tab').classList.add('active');
+            renderChart('teacher', 'daily');
+        }
         updateChartVisibility();
-    });
-
-    function renderStudentChart(type) {
-        const el = document.getElementById('student-' + type + '-chart');
-        if (!el) return;
-        const ctx = el.getContext('2d');
-        const data = (type === 'daily') ? studentDailyData : studentWeeklyData;
-        const c = (type === 'daily') ? colors.studentDaily : colors.studentWeekly;
-        const label = (type === 'daily') ? '学生日活跃度' : '学生周活跃度';
-
-        if (type === 'daily' && studentDailyChart) studentDailyChart.destroy();
-        if (type === 'weekly' && studentWeeklyChart) studentWeeklyChart.destroy();
-
-        const chart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: studentNames,
-                datasets: [{
-                    label: label,
-                    data: data,
-                    backgroundColor: c.bg,
-                    borderColor: c.border,
-                    borderWidth: 1,
-                    borderRadius: 6
-                }]
-            },
-            options: commonOptions('学生')
-        });
-
-        if (type === 'daily') studentDailyChart = chart;
-        if (type === 'weekly') studentWeeklyChart = chart;
     }
 
-    function renderTeacherChart(type) {
-        const el = document.getElementById('teacher-' + type + '-chart');
+    function renderChart(role, type) {
+        var names, data, colorSet, label;
+        if (role === 'student') {
+            if (!studentNames || studentNames.length === 0) return;
+            names = studentNames;
+            data = (type === 'daily') ? studentDailyData : studentWeeklyData;
+            colorSet = (type === 'daily') ? colors.studentDaily : colors.studentWeekly;
+            label = (type === 'daily') ? '学生日活跃度' : '学生周活跃度';
+        } else {
+            if (!teacherNames || teacherNames.length === 0) return;
+            names = teacherNames;
+            data = (type === 'daily') ? teacherDailyData : teacherWeeklyData;
+            colorSet = (type === 'daily') ? colors.teacherDaily : colors.teacherWeekly;
+            label = (type === 'daily') ? '教师日活跃度' : '教师周活跃度';
+        }
+
+        var canvasId = role + '-' + type + '-chart';
+        var el = document.getElementById(canvasId);
         if (!el) return;
-        const ctx = el.getContext('2d');
-        const data = (type === 'daily') ? teacherDailyData : teacherWeeklyData;
-        const c = (type === 'daily') ? colors.teacherDaily : colors.teacherWeekly;
-        const label = (type === 'daily') ? '教师日活跃度' : '教师周活跃度';
 
-        if (type === 'daily' && teacherDailyChart) teacherDailyChart.destroy();
-        if (type === 'weekly' && teacherWeeklyChart) teacherWeeklyChart.destroy();
+        // 销毁已有图表
+        var key = role + type;
+        if (key === 'studentdaily' && studentDailyChart) { studentDailyChart.destroy(); studentDailyChart = null; }
+        if (key === 'studentweekly' && studentWeeklyChart) { studentWeeklyChart.destroy(); studentWeeklyChart = null; }
+        if (key === 'teacherdaily' && teacherDailyChart) { teacherDailyChart.destroy(); teacherDailyChart = null; }
+        if (key === 'teacherweekly' && teacherWeeklyChart) { teacherWeeklyChart.destroy(); teacherWeeklyChart = null; }
 
-        const chart = new Chart(ctx, {
+        var ctx = el.getContext('2d');
+        var chart = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: teacherNames,
+                labels: names,
                 datasets: [{
                     label: label,
                     data: data,
-                    backgroundColor: c.bg,
-                    borderColor: c.border,
+                    backgroundColor: colorSet.bg,
+                    borderColor: colorSet.border,
                     borderWidth: 1,
                     borderRadius: 6
                 }]
             },
-            options: commonOptions('教师')
+            options: commonOptions(role === 'student' ? '学生' : '教师')
         });
 
-        if (type === 'daily') teacherDailyChart = chart;
-        if (type === 'weekly') teacherWeeklyChart = chart;
+        if (key === 'studentdaily') studentDailyChart = chart;
+        if (key === 'studentweekly') studentWeeklyChart = chart;
+        if (key === 'teacherdaily') teacherDailyChart = chart;
+        if (key === 'teacherweekly') teacherWeeklyChart = chart;
     }
 
     function switchRole(role) {
         currentRole = role;
-        if (role === 'student') {
-            renderStudentChart(currentType);
-        } else {
-            renderTeacherChart(currentType);
-        }
-        updateChartVisibility();
+        var hasData = (role === 'student')
+            ? (studentNames && studentNames.length > 0)
+            : (teacherNames && teacherNames.length > 0);
+
         document.getElementById('student-tab').classList.toggle('active', role === 'student');
         document.getElementById('teacher-tab').classList.toggle('active', role === 'teacher');
+
+        if (hasData) {
+            document.getElementById('chartEmpty').style.display = 'none';
+            renderChart(role, currentType);
+        } else {
+            document.getElementById('chartEmpty').style.display = 'flex';
+        }
+        updateChartVisibility();
     }
 
     function switchType(type) {
         currentType = type;
-        if (currentRole === 'student') {
-            renderStudentChart(type);
-        } else {
-            renderTeacherChart(type);
-        }
-        updateChartVisibility();
+        var hasData = (currentRole === 'student')
+            ? (studentNames && studentNames.length > 0)
+            : (teacherNames && teacherNames.length > 0);
+
         document.getElementById('daily-btn').classList.toggle('active', type === 'daily');
         document.getElementById('weekly-btn').classList.toggle('active', type === 'weekly');
+
+        if (hasData) {
+            renderChart(currentRole, type);
+        }
+        updateChartVisibility();
     }
 
     function updateChartVisibility() {
         var charts = ['student-daily', 'student-weekly', 'teacher-daily', 'teacher-weekly'];
-        charts.forEach(function(id) {
+        var hasData = (currentRole === 'student')
+            ? (studentNames && studentNames.length > 0)
+            : (teacherNames && teacherNames.length > 0);
+
+        charts.forEach(function (id) {
             var el = document.getElementById(id + '-chart');
-            if (el) el.style.display = (id === currentRole + '-' + currentType) ? 'block' : 'none';
+            if (el) {
+                el.style.display = (hasData && id === currentRole + '-' + currentType) ? 'block' : 'none';
+            }
         });
     }
 
@@ -694,7 +767,10 @@
                 y: {
                     beginAtZero: true,
                     grid: { color: 'rgba(52, 103, 57, 0.06)', drawBorder: false },
-                    ticks: { font: { family: "'Inter', 'Noto Sans SC', sans-serif", size: 11 } },
+                    ticks: {
+                        font: { family: "'Inter', 'Noto Sans SC', sans-serif", size: 11 },
+                        precision: 0
+                    },
                     title: {
                         display: true,
                         text: '活动次数',
@@ -713,5 +789,13 @@
             }
         };
     }
+
+    // 暴露到全局供 onclick 使用
+    window.switchRole = switchRole;
+    window.switchType = switchType;
+
+    // 启动
+    initCharts();
+})();
 </script>
 {% endblock %}

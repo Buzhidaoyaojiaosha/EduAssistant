@@ -6,8 +6,8 @@
 <div class="row mb-4">
     <div class="col">
         <div class="d-flex align-items-center">
-            <div class="rounded-circle p-3 me-3" style="background: rgba(25, 135, 84, 0.1);">
-                <i class="fas fa-users" style="color: #198754;"></i>
+            <div class="rounded-circle p-3 me-3" style="background: var(--primary-light);">
+                <i class="fas fa-users" style="color: var(--primary);"></i>
             </div>
             <div>
                 <h2 class="text-primary mb-1">用户管理</h2>
@@ -17,7 +17,7 @@
     </div>
     <div class="col-auto">
         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal"
-            style="background: linear-gradient(135deg, #198754 0%, #20c997 100%); border: none;">
+            style="background: linear-gradient(135deg, var(--primary) 0%, #154D31 100%); border: none;">
             <i class="fas fa-user-plus me-2"></i>添加用户
         </button>
     </div>
@@ -26,8 +26,8 @@
 <div class="card">
     <div class="card-header bg-transparent border-0">
         <div class="d-flex align-items-center">
-            <div class="rounded-circle p-2 me-2" style="background: rgba(25, 135, 84, 0.1);">
-                <i class="fas fa-list" style="color: #198754;"></i>
+            <div class="rounded-circle p-2 me-2" style="background: var(--primary-light);">
+                <i class="fas fa-list" style="color: var(--primary);"></i>
             </div>
             <h5 class="mb-0">用户列表</h5>
         </div>
@@ -51,14 +51,14 @@
                     {% for user in users %}
                     <tr>
                         <td>
-                            <span class="badge" style="background: rgba(25, 135, 84, 0.1); color: #198754;">
+                            <span class="badge" style="background: var(--primary-light); color: var(--primary);">
                                 {{ user.id }}
                             </span>
                         </td>
                         <td>
                             <div class="d-flex align-items-center">
-                                <div class="rounded-circle p-2 me-2" style="background: rgba(25, 135, 84, 0.1);">
-                                    <i class="fas fa-user" style="color: #198754;"></i>
+                                <div class="rounded-circle p-2 me-2" style="background: var(--primary-light);">
+                                    <i class="fas fa-user" style="color: var(--primary);"></i>
                                 </div>
                                 {{ user.username }}
                             </div>
@@ -77,7 +77,7 @@
                         </td>
                         <td>
                             {% if user.is_active %}
-                            <span class="badge" style="background: rgba(25, 135, 84, 0.1); color: #198754;">
+                            <span class="badge" style="background: var(--primary-light); color: var(--primary);">
                                 <i class="fas fa-check-circle me-1"></i>激活
                             </span>
                             {% else %}
@@ -161,8 +161,8 @@
         <div class="modal-content">
             <div class="modal-header border-0">
                 <div class="d-flex align-items-center">
-                    <div class="rounded-circle p-2 me-2" style="background: rgba(25, 135, 84, 0.1);">
-                        <i class="fas fa-user-plus" style="color: #198754;"></i>
+                    <div class="rounded-circle p-2 me-2" style="background: var(--primary-light);">
+                        <i class="fas fa-user-plus" style="color: var(--primary);"></i>
                     </div>
                     <h5 class="modal-title mb-0">添加新用户</h5>
                 </div>
@@ -176,7 +176,7 @@
                             <label for="username" class="form-label">用户名 *</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-0">
-                                    <i class="fas fa-user" style="color: #198754;"></i>
+                                    <i class="fas fa-user" style="color: var(--primary);"></i>
                                 </span>
                                 <input type="text" class="form-control bg-light border-0" id="username" name="username"
                                     required>
@@ -187,7 +187,7 @@
                             <label for="email" class="form-label">电子邮箱 *</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-0">
-                                    <i class="fas fa-envelope" style="color: #198754;"></i>
+                                    <i class="fas fa-envelope" style="color: var(--primary);"></i>
                                 </span>
                                 <input type="email" class="form-control bg-light border-0" id="email" name="email"
                                     required>
@@ -200,7 +200,7 @@
                             <label for="name" class="form-label">姓名 *</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-0">
-                                    <i class="fas fa-id-card" style="color: #198754;"></i>
+                                    <i class="fas fa-id-card" style="color: var(--primary);"></i>
                                 </span>
                                 <input type="text" class="form-control bg-light border-0" id="name" name="name"
                                     required>
@@ -211,7 +211,7 @@
                             <label for="password" class="form-label">密码 *</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-0">
-                                    <i class="fas fa-lock" style="color: #198754;"></i>
+                                    <i class="fas fa-lock" style="color: var(--primary);"></i>
                                 </span>
                                 <input type="password" class="form-control bg-light border-0" id="password"
                                     name="password" required minlength="6">
@@ -226,7 +226,7 @@
                                 <input class="form-check-input" type="checkbox" id="roleStudent" name="roles"
                                     value="student" checked>
                                 <label class="form-check-label" for="roleStudent">
-                                    <i class="fas fa-user-graduate me-1" style="color: #198754;"></i>学生
+                                    <i class="fas fa-user-graduate me-1" style="color: var(--primary);"></i>学生
                                 </label>
                             </div>
                             <div class="form-check">
@@ -250,7 +250,7 @@
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="isActive" name="is_active" checked>
                             <label class="form-check-label" for="isActive">
-                                <i class="fas fa-toggle-on me-1" style="color: #198754;"></i>账户激活
+                                <i class="fas fa-toggle-on me-1" style="color: var(--primary);"></i>账户激活
                             </label>
                         </div>
                     </div>
@@ -260,7 +260,7 @@
                         <i class="fas fa-times me-2"></i>取消
                     </button>
                     <button type="submit" class="btn btn-primary"
-                        style="background: linear-gradient(135deg, #198754 0%, #20c997 100%); border: none;">
+                        style="background: linear-gradient(135deg, var(--primary) 0%, #154D31 100%); border: none;">
                         <i class="fas fa-user-plus me-2"></i>添加用户
                     </button>
                 </div>
@@ -272,31 +272,17 @@
 
 {% block extra_css %}
 <style>
-    :root {
-        --primary-gradient: linear-gradient(135deg, #4e54c8 0%, #8f94fb 100%);
-        --secondary-gradient: linear-gradient(135deg, #00cdac 0%, #8ddad5 100%);
-        --background-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        --card-background: rgba(255, 255, 255, 0.9);
-        --hover-background: rgba(78, 84, 200, 0.1);
-    }
-
-    body {
-        background: var(--background-gradient);
-        min-height: 100vh;
-    }
-
     .card {
         border: none;
-        background: var(--card-background);
-        backdrop-filter: blur(10px);
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
-        border-radius: 12px;
-        transition: all 0.3s ease;
+        background: var(--bg-card);
+        box-shadow: var(--shadow-sm);
+        border-radius: var(--radius-lg);
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .card:hover {
         transform: translateY(-2px);
-        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+        box-shadow: var(--shadow-md);
     }
 
     .table {
@@ -305,8 +291,8 @@
 
     .table th {
         border-top: none;
-        border-bottom: 2px solid rgba(25, 135, 84, 0.1);
-        color: #6c757d;
+        border-bottom: 2px solid var(--primary-soft);
+        color: var(--text-secondary);
         font-weight: 600;
         padding: 1rem;
     }
@@ -315,13 +301,6 @@
         padding: 1rem;
         vertical-align: middle;
         border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-    }
-
-    .btn {
-        padding: 0.75rem 1.5rem;
-        font-weight: 500;
-        border-radius: 8px;
-        transition: all 0.3s ease;
     }
 
     .btn-sm {
@@ -338,49 +317,20 @@
         transform: translateY(-1px);
     }
 
-    .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(25, 135, 84, 0.2);
-    }
-
     .modal-content {
         border: none;
-        border-radius: 12px;
-        background: var(--card-background);
-        backdrop-filter: blur(10px);
-    }
-
-    .form-control,
-    .input-group-text {
-        padding: 0.75rem 1rem;
-        font-size: 1rem;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-    }
-
-    .input-group .form-control {
-        border-top-left-radius: 0;
-        border-bottom-left-radius: 0;
-    }
-
-    .input-group-text {
-        border-top-right-radius: 0;
-        border-bottom-right-radius: 0;
-    }
-
-    .form-control:focus {
-        box-shadow: 0 0 0 3px rgba(25, 135, 84, 0.1);
-        border: none;
+        border-radius: var(--radius-md);
+        background: var(--bg-card);
     }
 
     .form-check-input:checked {
-        background-color: #198754;
-        border-color: #198754;
+        background-color: var(--primary);
+        border-color: var(--primary);
     }
 
     .form-switch .form-check-input:checked {
-        background-color: #198754;
-        border-color: #198754;
+        background-color: var(--primary);
+        border-color: var(--primary);
     }
 
     @keyframes fadeIn {
@@ -404,7 +354,7 @@
     }
 
     tr:hover {
-        background: rgba(25, 135, 84, 0.02);
+        background: var(--primary-light);
     }
 </style>
 {% endblock %}
