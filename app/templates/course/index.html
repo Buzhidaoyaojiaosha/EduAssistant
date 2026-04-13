@@ -4,344 +4,799 @@
 
 {% block extra_css %}
 <style>
-    .course-card {
+    /* ===== Design Tokens（与仪表盘统一） ===== */
+    :root {
+        --primary: #346739;
+        --primary-light: #79AE6F;
+        --primary-pale: #f0f7ee;
+        --primary-mid: rgba(121, 174, 111, 0.18);
+        --accent: #E8884B;
+        --accent-pale: rgba(232, 136, 75, 0.12);
+        --teal: #0ea5a0;
+        --teal-pale: rgba(14, 165, 160, 0.12);
+        --danger: #ef4444;
+        --danger-pale: rgba(239, 68, 68, 0.10);
+        --yellow: #d4a017;
+        --yellow-pale: rgba(212, 160, 23, 0.12);
+        --text-primary: #1a1e1b;
+        --text-secondary: #6b7280;
+        --bg-main: #f6f8f4;
+        --bg-card: #ffffff;
+        --border: rgba(52, 103, 57, 0.10);
+        --border-light: rgba(52, 103, 57, 0.06);
+        --shadow-sm: 0 2px 12px rgba(52, 103, 57, 0.07);
+        --shadow-md: 0 8px 32px rgba(52, 103, 57, 0.10);
+        --shadow-lg: 0 16px 48px rgba(52, 103, 57, 0.13);
+        --radius-lg: 16px;
+        --radius-md: 12px;
+        --radius-sm: 8px;
+    }
+
+    /* ===== 页面顶栏 ===== */
+    .page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1.75rem;
+        flex-wrap: wrap;
+    }
+
+    .page-title-wrap {
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+    }
+
+    .page-label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--primary-light);
+    }
+
+    .page-title {
+        font-size: 1.65rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        letter-spacing: -0.4px;
+        margin: 0;
+    }
+
+    .page-title .highlight {
+        color: var(--primary);
+    }
+
+    .page-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    /* ===== 搜索框 ===== */
+    .search-wrap {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        background: var(--bg-card);
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: 0.35rem 0.5rem 0.35rem 0.9rem;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        min-width: 220px;
+    }
+
+    .search-wrap:focus-within {
+        border-color: var(--primary-light);
+        box-shadow: 0 0 0 3px rgba(121, 174, 111, 0.15);
+    }
+
+    .search-wrap .search-icon {
+        color: var(--text-secondary);
+        font-size: 0.8rem;
+        flex-shrink: 0;
+        margin-right: 0.5rem;
+    }
+
+    .search-wrap input {
+        flex: 1;
         border: none;
-        border-radius: 20px;
-        background: rgba(255, 255, 255, 0.9);
-        backdrop-filter: blur(10px);
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-        transition: all 0.3s ease;
-        overflow: hidden;
+        outline: none;
+        background: transparent;
+        font-size: 0.85rem;
+        color: var(--text-primary);
+        padding: 0.2rem 0;
     }
 
-    .course-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+    .search-wrap input::placeholder {
+        color: #b0b8b3;
     }
 
-    .course-icon {
-        width: 60px;
-        height: 60px;
-        border-radius: 16px;
+    .search-clear {
+        width: 26px;
+        height: 26px;
+        border-radius: 6px;
+        border: none;
+        background: transparent;
+        color: var(--text-secondary);
         display: flex;
         align-items: center;
         justify-content: center;
-        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-        color: white;
-        font-size: 1.5rem;
-        transform: rotate(-5deg);
-        transition: all 0.3s ease;
+        font-size: 0.75rem;
+        cursor: pointer;
+        text-decoration: none;
+        transition: background 0.15s;
+    }
+
+    .search-clear:hover {
+        background: var(--bg-main);
+        color: var(--text-primary);
+    }
+
+    /* ===== 创建按钮 ===== */
+    .btn-create {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.6rem 1.2rem;
+        background: var(--primary);
+        color: #fff;
+        border: none;
+        border-radius: var(--radius-md);
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn-create::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.14), transparent);
+        transition: left 0.4s;
+    }
+
+    .btn-create:hover {
+        background: #2a5430;
+        color: #fff;
+        box-shadow: 0 4px 14px rgba(52, 103, 57, 0.28);
+        transform: translateY(-1px);
+    }
+
+    .btn-create:hover::after {
+        left: 100%;
+    }
+
+    /* ===== 搜索提示条 ===== */
+    .search-alert {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.85rem 1.1rem;
+        background: var(--primary-pale);
+        border: 1px solid var(--primary-mid);
+        border-radius: var(--radius-md);
+        margin-bottom: 1.5rem;
+        font-size: 0.85rem;
+        color: var(--text-primary);
+    }
+
+    .search-alert i {
+        color: var(--primary-light);
+    }
+
+    .search-alert a {
+        color: var(--primary);
+        font-weight: 600;
+        text-decoration: none;
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        white-space: nowrap;
+    }
+
+    .search-alert a:hover {
+        text-decoration: underline;
+    }
+
+    /* ===== 统计徽章行 ===== */
+    .stats-row {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        margin-bottom: 1.25rem;
+        flex-wrap: wrap;
+    }
+
+    .stat-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.3rem 0.75rem;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        color: var(--text-secondary);
+    }
+
+    .stat-chip .chip-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--primary-light);
+    }
+
+    .stat-chip strong {
+        color: var(--text-primary);
+    }
+
+    /* ===== 课程网格 ===== */
+    .course-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.25rem;
+    }
+
+    /* ===== 课程卡片 ===== */
+    .course-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        transition: all 0.25s ease;
+        animation: card-in 0.35s ease both;
+        position: relative;
+    }
+
+    @keyframes card-in {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* 给每张卡片错开动画延迟 */
+    .course-card:nth-child(1) {
+        animation-delay: 0.04s;
+    }
+
+    .course-card:nth-child(2) {
+        animation-delay: 0.08s;
+    }
+
+    .course-card:nth-child(3) {
+        animation-delay: 0.12s;
+    }
+
+    .course-card:nth-child(4) {
+        animation-delay: 0.16s;
+    }
+
+    .course-card:nth-child(5) {
+        animation-delay: 0.20s;
+    }
+
+    .course-card:nth-child(6) {
+        animation-delay: 0.24s;
+    }
+
+    .course-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-lg);
+        border-color: var(--primary-light);
+    }
+
+    /* 卡片右上角装饰光晕 */
+    .course-card::before {
+        content: '';
+        position: absolute;
+        top: -40px;
+        right: -40px;
+        width: 120px;
+        height: 120px;
+        background: radial-gradient(circle, var(--primary-mid) 0%, transparent 70%);
+        border-radius: 50%;
+        pointer-events: none;
+        transition: opacity 0.3s;
+    }
+
+    .course-card:hover::before {
+        opacity: 1.5;
+    }
+
+    .course-card-body {
+        padding: 1.4rem 1.4rem 1rem;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    /* 顶部图标 + 信息 */
+    .course-head {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.9rem;
+    }
+
+    .course-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        background: linear-gradient(135deg, var(--primary-light), var(--primary));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 1.15rem;
+        flex-shrink: 0;
+        box-shadow: 0 4px 12px rgba(52, 103, 57, 0.22);
+        transition: transform 0.3s ease;
     }
 
     .course-card:hover .course-icon {
-        transform: rotate(0deg) scale(1.1);
+        transform: rotate(-5deg) scale(1.08);
     }
 
-    .course-title {
-        font-size: 1.35rem;
+    .course-meta {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .course-name {
+        font-size: 1rem;
         font-weight: 700;
-        /* 加粗一点让渐变更明显 */
-        margin-bottom: 0.3rem;
-        /* 使用新的有效色彩变量替换失效的 secondary */
-        background: linear-gradient(135deg, var(--primary) 0%, #154D31 100%);
+        color: var(--text-primary);
+        margin: 0 0 0.2rem;
+        line-height: 1.3;
+        /* 渐变文字 */
+        background: linear-gradient(135deg, var(--primary) 0%, #1e4d22 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
+        background-clip: text;
     }
 
     .course-code {
-        font-size: 0.9rem;
-        color: #94a3b8;
-        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        padding: 0.1rem 0.55rem;
+        background: var(--primary-pale);
+        border-radius: 999px;
+        font-size: 0.71rem;
+        font-weight: 700;
+        color: var(--primary-light);
+        letter-spacing: 0.04em;
     }
 
-    .course-description {
-        color: #64748b;
-        font-size: 0.95rem;
-        line-height: 1.6;
-        margin: 1rem 0;
-        height: 4.8em;
-        overflow: hidden;
+    /* 描述 */
+    .course-desc {
+        font-size: 0.82rem;
+        color: var(--text-secondary);
+        line-height: 1.65;
+        margin: 0;
         display: -webkit-box;
         -webkit-line-clamp: 3;
         -webkit-box-orient: vertical;
+        overflow: hidden;
+        flex: 1;
     }
 
+    /* 教师信息 */
     .course-teacher {
         display: flex;
         align-items: center;
         gap: 0.5rem;
         padding: 0.5rem 0.75rem;
-        background: rgba(0, 0, 0, 0.02);
-        border-radius: 10px;
-        font-size: 0.9rem;
-        color: #64748b;
+        background: var(--bg-main);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-sm);
+        font-size: 0.8rem;
+        color: var(--text-secondary);
     }
 
     .course-teacher i {
-        color: var(--primary);
-        font-size: 1rem;
+        color: var(--primary-light);
+        font-size: 0.78rem;
     }
 
-    .course-actions {
-        padding: 1.25rem;
-        background: rgba(0, 0, 0, 0.01);
-        border-top: 1px solid rgba(0, 0, 0, 0.03);
+    .course-teacher span {
+        font-weight: 500;
     }
 
-    .btn-enter-course {
-        /* 1. 修复背景：使用现有的 --primary 和 --dark 变量 */
-        background: linear-gradient(135deg, var(--primary) 0%, var(--dark) 100%);
-        border: none;
-        color: white !important;
-        /* 强制白色文字 */
-        padding: 0.75rem 1.5rem;
-        border-radius: 12px;
-        font-weight: 600;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        text-decoration: none;
+    /* ===== 卡片底部操作区 ===== */
+    .course-footer {
+        padding: 0.9rem 1.4rem;
+        border-top: 1px solid var(--border-light);
+        background: rgba(246, 248, 244, 0.5);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-enter {
+        flex: 1;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        /* 添加一个基础阴影，让它更有质感 */
-        box-shadow: 0 4px 12px rgba(37, 113, 74, 0.2);
+        gap: 0.45rem;
+        padding: 0.6rem 1rem;
+        background: var(--primary);
+        color: #fff;
+        border: none;
+        border-radius: var(--radius-sm);
+        font-size: 0.83rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        cursor: pointer;
     }
 
-    .btn-enter-course:hover {
-        transform: translateY(-3px);
-        /* 2. 修复阴影：改用墨绿色的投影 */
-        box-shadow: 0 8px 20px rgba(16, 59, 36, 0.3);
-        color: white !important;
-        filter: brightness(1.1);
-        /* 悬浮时稍微变亮，增加反馈感 */
+    .btn-enter i {
+        font-size: 0.72rem;
+        transition: transform 0.2s;
     }
 
-    .btn-enter-course i {
-        transition: transform 0.3s ease;
+    .btn-enter:hover {
+        background: #2a5430;
+        color: #fff;
+        box-shadow: 0 4px 14px rgba(52, 103, 57, 0.28);
     }
 
-    .btn-enter-course:hover i {
-        transform: translateX(4px);
-        /* 悬浮时小箭头动一下，很高级 */
+    .btn-enter:hover i {
+        transform: translateX(3px);
     }
 
-    .btn-course-action {
-        width: 40px;
-        height: 40px;
-        border-radius: 10px;
+    .btn-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: var(--radius-sm);
+        border: 1.5px solid var(--border);
+        background: var(--bg-card);
         display: flex;
         align-items: center;
         justify-content: center;
-        background: rgba(0, 0, 0, 0.03);
-        border: none;
-        transition: all 0.3s ease;
+        font-size: 0.82rem;
+        cursor: pointer;
         text-decoration: none;
+        transition: all 0.2s ease;
+        flex-shrink: 0;
     }
 
-    .btn-course-action.analytics {
-        color: #fbbf24;
+    .btn-icon.analytics {
+        color: var(--yellow);
     }
 
-    .btn-course-action.analytics:hover {
-        background: rgba(251, 191, 36, 0.1);
-        color: #f59e0b;
+    .btn-icon.analytics:hover {
+        background: var(--yellow-pale);
+        border-color: rgba(212, 160, 23, 0.25);
+        transform: translateY(-1px);
     }
 
-    .btn-course-action.danger {
-        color: #ef4444;
+    .btn-icon.danger {
+        color: var(--danger);
     }
 
-    .btn-course-action.danger:hover {
-        background: rgba(239, 68, 68, 0.1);
-        color: #dc2626;
+    .btn-icon.danger:hover {
+        background: var(--danger-pale);
+        border-color: rgba(239, 68, 68, 0.25);
+        transform: translateY(-1px);
     }
 
-    .search-box {
-        background: rgba(255, 255, 255, 0.9);
-        border-radius: 15px;
-        padding: 0.5rem;
-        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
-    }
-
-    .search-box .input-group-text {
-        background: transparent;
-        color: var(--primary);
-    }
-
-    .search-box .form-control {
-        border: none;
-        padding: 0.75rem 1rem;
-        font-size: 0.95rem;
-    }
-
-    .search-box .form-control:focus {
-        box-shadow: none;
-    }
-
-    .btn-create-course {
-        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-        border: none;
-        padding: 0.75rem 1.5rem;
-        border-radius: 12px;
-        font-weight: 500;
-        color: white;
-        transition: all 0.3s ease;
-        text-decoration: none;
-    }
-
-    .btn-create-course:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(78, 84, 200, 0.3);
-        color: white;
-    }
-
+    /* ===== 空状态 ===== */
     .empty-state {
+        grid-column: 1 / -1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
         text-align: center;
-        padding: 3rem;
-        background: rgba(255, 255, 255, 0.9);
-        border-radius: 20px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        padding: 4rem 2rem;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-sm);
+        gap: 1rem;
     }
 
-    .empty-state-icon {
-        width: 100px;
-        height: 100px;
-        border-radius: 30px;
-        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    .empty-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 24px;
+        background: linear-gradient(135deg, var(--primary-light), var(--primary));
         display: flex;
         align-items: center;
         justify-content: center;
-        margin: 0 auto 2rem;
-        transform: rotate(-5deg);
+        color: #fff;
+        font-size: 2rem;
+        box-shadow: 0 8px 24px rgba(52, 103, 57, 0.22);
+        margin-bottom: 0.5rem;
     }
 
-    .empty-state-icon i {
-        font-size: 2.5rem;
-        color: white;
+    .empty-title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0;
     }
 
+    .empty-sub {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        margin: 0;
+        max-width: 340px;
+        line-height: 1.6;
+    }
+
+    /* ===== 删除模态框 ===== */
     .modal-content {
-        border-radius: 20px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
         overflow: hidden;
+        box-shadow: var(--shadow-lg);
     }
 
     .modal-header {
         background: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
-        color: white;
+        color: #fff;
+        border: none;
+        padding: 1.25rem 1.5rem;
     }
 
     .modal-header .btn-close {
-        color: white;
+        filter: brightness(10);
         opacity: 0.8;
+    }
+
+    .modal-header .modal-title {
+        font-weight: 700;
+        font-size: 0.95rem;
+    }
+
+    .modal-body {
+        padding: 1.5rem;
+    }
+
+    .modal-footer {
+        padding: 1rem 1.5rem;
+        border-top: 1px solid var(--border-light);
+        gap: 0.5rem;
+    }
+
+    .modal-danger-box {
+        background: var(--danger-pale);
+        border: 1px solid rgba(239, 68, 68, 0.18);
+        border-radius: var(--radius-md);
+        padding: 1rem 1.1rem;
+        margin: 0.75rem 0;
+    }
+
+    .modal-danger-box p {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--danger);
+        margin: 0 0 0.6rem;
     }
 
     .delete-warning-list {
         list-style: none;
         padding: 0;
         margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
     }
 
     .delete-warning-list li {
-        padding: 0.5rem 0;
-        padding-left: 1.5rem;
+        font-size: 0.82rem;
+        color: var(--text-primary);
+        padding-left: 1.2rem;
         position: relative;
     }
 
-    .delete-warning-list li:before {
-        content: '•';
-        color: #ef4444;
+    .delete-warning-list li::before {
+        content: '·';
         position: absolute;
-        left: 0;
+        left: 0.2rem;
+        color: var(--danger);
+        font-weight: 700;
+        font-size: 1.1rem;
+        line-height: 1;
+        top: 0.05rem;
+    }
+
+    .modal-danger-text {
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--danger);
+        margin: 0.5rem 0 0;
+    }
+
+    .btn-modal-cancel {
+        padding: 0.55rem 1.1rem;
+        background: var(--bg-main);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+
+    .btn-modal-cancel:hover {
+        background: var(--bg-card);
+        color: var(--text-primary);
+    }
+
+    .btn-modal-delete {
+        padding: 0.55rem 1.2rem;
+        background: var(--danger);
+        border: none;
+        border-radius: var(--radius-sm);
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #fff;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        transition: all 0.2s;
+    }
+
+    .btn-modal-delete:hover {
+        background: #dc2626;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.28);
+    }
+
+    /* ===== 响应式 ===== */
+    @media (max-width: 768px) {
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .page-actions {
+            width: 100%;
+        }
+
+        .search-wrap {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .course-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .btn-create span {
+            display: none;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="row mb-4 align-items-center">
-    <div class="col">
-        <h2 class="text-primary fw-bold mb-0">课程列表</h2>
+
+<!-- 页面顶栏 -->
+<div class="page-header">
+    <div class="page-title-wrap">
+        <span class="page-label">课程中心</span>
+        <h2 class="page-title">全部<span class="highlight">课程</span></h2>
     </div>
-    <div class="col-auto">
-        <!-- 搜索表单 -->
-        <form class="d-flex" action="{{ url_for('course.index') }}" method="GET">
-            <div class="search-box input-group me-2">
-                <span class="input-group-text border-0">
-                    <i class="fas fa-search"></i>
-                </span>
-                <input type="text" class="form-control" name="q" placeholder="搜索课程..."
-                    value="{{ request.args.get('q', '') }}">
+    <div class="page-actions">
+        <!-- 搜索 -->
+        <form action="{{ url_for('course.index') }}" method="GET">
+            <div class="search-wrap">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" name="q" placeholder="搜索课程…" value="{{ request.args.get('q', '') }}" />
                 {% if request.args.get('q') %}
-                <a href="{{ url_for('course.index') }}" class="btn btn-light border-0" title="清除搜索">
+                <a href="{{ url_for('course.index') }}" class="search-clear" title="清除搜索">
                     <i class="fas fa-times"></i>
                 </a>
                 {% endif %}
             </div>
         </form>
-    </div>
-    <div class="col-auto">
-        <a href="{{ url_for('course.create') }}" class="btn-create-course">
-            <i class="fas fa-plus me-2"></i>创建课程
+        <!-- 创建 -->
+        <a href="{{ url_for('course.create') }}" class="btn-create">
+            <i class="fas fa-plus"></i>
+            <span>创建课程</span>
         </a>
     </div>
 </div>
 
+<!-- 搜索提示 -->
 {% if request.args.get('q') %}
-<div class="alert alert-info mb-4">
-    <div class="d-flex align-items-center">
-        <i class="fas fa-search me-2"></i>
-        <div>
-            <p class="mb-0">
-                搜索关键词: <strong>"{{ request.args.get('q') }}"</strong>
-                <a href="{{ url_for('course.index') }}" class="text-primary text-decoration-none ms-2">
-                    <i class="fas fa-times me-1"></i>清除搜索
-                </a>
-            </p>
-        </div>
-    </div>
+<div class="search-alert">
+    <i class="fas fa-search"></i>
+    <span>搜索关键词：<strong>"{{ request.args.get('q') }}"</strong></span>
+    <a href="{{ url_for('course.index') }}">
+        <i class="fas fa-times"></i>清除搜索
+    </a>
 </div>
 {% endif %}
 
-<div class="row g-4">
+<!-- 统计行 -->
+{% if courses %}
+<div class="stats-row">
+    <div class="stat-chip">
+        <span class="chip-dot"></span>
+        共 <strong>{{ courses|length }}</strong> 门课程
+    </div>
+    {% if request.args.get('q') %}
+    <div class="stat-chip">
+        <i class="fas fa-filter" style="font-size:0.65rem;color:var(--primary-light)"></i>
+        筛选中
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- 课程网格 -->
+<div class="course-grid">
     {% if courses %}
     {% for course in courses %}
-    <div class="col-md-6 col-lg-4">
-        <div class="card course-card h-100">
-            <div class="card-body p-4">
-                <div class="d-flex align-items-center mb-3">
-                    <div class="course-icon">
-                        <i class="fas fa-graduation-cap"></i>
-                    </div>
-                    <div class="ms-3">
-                        <h5 class="course-title">{{ course.name }}</h5>
-                        <div class="course-code">{{ course.code }}</div>
-                    </div>
+    <div class="course-card">
+        <div class="course-card-body">
+            <!-- 头部 -->
+            <div class="course-head">
+                <div class="course-icon">
+                    <i class="fas fa-graduation-cap"></i>
                 </div>
-                <p class="course-description">{{ course.description }}</p>
-                <div class="course-teacher">
-                    <i class="fas fa-user-tie"></i>
-                    <span>{{ course.teacher.name }}</span>
+                <div class="course-meta">
+                    <h5 class="course-name">{{ course.name }}</h5>
+                    <span class="course-code">{{ course.code }}</span>
                 </div>
             </div>
-            <div class="course-actions">
-                <div class="d-flex gap-2">
-                    <a href="{{ url_for('course.view', course_id=course.id) }}" class="btn-enter-course flex-grow-1">
-                        <i class="fas fa-arrow-right me-2"></i>进入课程
-                    </a>
-                    {% if is_admin or session.get('user_id') == course.teacher.id %}
-                    <a href="{{ url_for('analytics.course_analytics', course_id=course.id) }}"
-                        class="btn-course-action analytics" title="查看分析">
-                        <i class="fas fa-chart-line"></i>
-                    </a>
-                    <button type="button" class="btn-course-action danger" data-bs-toggle="modal"
-                        data-bs-target="#deleteCourseModal{{ course.id }}" title="删除课程">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
-                    {% endif %}
-                </div>
+            <!-- 描述 -->
+            <p class="course-desc">{{ course.description }}</p>
+            <!-- 教师 -->
+            <div class="course-teacher">
+                <i class="fas fa-user-tie"></i>
+                <span>{{ course.teacher.name }}</span>
             </div>
+        </div>
+        <!-- 底部操作 -->
+        <div class="course-footer">
+            <a href="{{ url_for('course.view', course_id=course.id) }}" class="btn-enter">
+                <i class="fas fa-arrow-right"></i>进入课程
+            </a>
+            {% if is_admin or session.get('user_id') == course.teacher.id %}
+            <a href="{{ url_for('analytics.course_analytics', course_id=course.id) }}" class="btn-icon analytics"
+                title="查看分析">
+                <i class="fas fa-chart-line"></i>
+            </a>
+            <button type="button" class="btn-icon danger" data-bs-toggle="modal"
+                data-bs-target="#deleteCourseModal{{ course.id }}" title="删除课程">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+            {% endif %}
         </div>
     </div>
 
-    <!-- 删除课程确认模态框 -->
+    <!-- 删除确认模态框 -->
     <div class="modal fade" id="deleteCourseModal{{ course.id }}" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -349,12 +804,14 @@
                     <h5 class="modal-title">
                         <i class="fas fa-exclamation-triangle me-2"></i>确认删除课程
                     </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p>确定要删除课程 "<strong>{{ course.name }}</strong>" 吗？</p>
-                    <div class="alert alert-danger">
-                        <p class="mb-2">⚠️ 此操作将删除：</p>
+                    <p style="font-size:0.9rem;color:var(--text-primary);margin:0 0 0.75rem">
+                        确定要删除课程 "<strong>{{ course.name }}</strong>" 吗？
+                    </p>
+                    <div class="modal-danger-box">
+                        <p>⚠️ 此操作将删除：</p>
                         <ul class="delete-warning-list">
                             <li>课程下的所有作业和题目</li>
                             <li>学生的答题记录和成绩</li>
@@ -362,14 +819,14 @@
                             <li>所有相关的知识点</li>
                         </ul>
                     </div>
-                    <p class="text-danger"><strong>此操作不可恢复！</strong></p>
+                    <p class="modal-danger-text">此操作不可恢复！</p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn-modal-cancel" data-bs-dismiss="modal">取消</button>
                     <form method="POST" action="{{ url_for('course.delete', course_id=course.id) }}"
-                        style="display: inline;">
-                        <button type="submit" class="btn btn-danger">
-                            <i class="fas fa-trash-alt me-2"></i>确认删除
+                        style="display:inline">
+                        <button type="submit" class="btn-modal-delete">
+                            <i class="fas fa-trash-alt"></i>确认删除
                         </button>
                     </form>
                 </div>
@@ -377,28 +834,31 @@
         </div>
     </div>
     {% endfor %}
+
     {% else %}
-    <div class="col-12">
-        <div class="empty-state">
-            <div class="empty-state-icon">
-                <i class="fas fa-book"></i>
-            </div>
-            <h4 class="text-primary mb-3">
-                {% if request.args.get('q') %}
-                没有找到匹配的课程
-                {% else %}
-                暂无课程
-                {% endif %}
-            </h4>
-            <p class="text-muted mb-0">
-                {% if request.args.get('q') %}
-                没有找到包含 "{{ request.args.get('q') }}" 的课程
-                {% else %}
-                还没有任何课程，请创建新课程或稍后再来查看。
-                {% endif %}
-            </p>
+    <!-- 空状态 -->
+    <div class="empty-state">
+        <div class="empty-icon">
+            <i class="fas fa-book"></i>
         </div>
+        <h4 class="empty-title">
+            {% if request.args.get('q') %}没有找到匹配的课程{% else %}暂无课程{% endif %}
+        </h4>
+        <p class="empty-sub">
+            {% if request.args.get('q') %}
+            没有找到包含 "{{ request.args.get('q') }}" 的课程，请尝试其他关键词。
+            {% else %}
+            还没有任何课程，创建第一门课程开始教学之旅吧。
+            {% endif %}
+        </p>
+        {% if not request.args.get('q') %}
+        <a href="{{ url_for('course.create') }}" class="btn-create" style="margin-top:0.5rem">
+            <i class="fas fa-plus"></i>
+            <span>创建第一门课程</span>
+        </a>
+        {% endif %}
     </div>
     {% endif %}
 </div>
+
 {% endblock %}

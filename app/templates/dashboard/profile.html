@@ -101,7 +101,7 @@
     .profile-avatar {
         width: 88px;
         height: 88px;
-        background: linear-gradient(135deg, var(--primary, #346739) 0%, var(--primary-light, #79AE6F) 100%);
+        background: #346739;
         border-radius: 50%;
         display: flex;
         align-items: center;
@@ -232,6 +232,42 @@
         .profile-body {
             padding: 0 1rem 1.5rem;
         }
+    }
+
+    /* 用户名 - 蓝色系 */
+    .info-row:nth-child(1) .info-icon {
+        background: rgba(33, 150, 243, 0.1);
+        color: #2196F3;
+    }
+
+    /* 姓名 - 橙色系 */
+    .info-row:nth-child(2) .info-icon {
+        background: rgba(255, 152, 0, 0.1);
+        color: #FF9800;
+    }
+
+    /* 电子邮箱 - 红色/粉色系 */
+    .info-row:nth-child(3) .info-icon {
+        background: rgba(233, 30, 99, 0.1);
+        color: #E91E63;
+    }
+
+    /* 角色 - 紫色系 */
+    .info-row:nth-child(4) .info-icon {
+        background: rgba(156, 39, 176, 0.1);
+        color: #9C27B0;
+    }
+
+    /* 加入时间 - 青色/淡蓝色系 */
+    .info-row:nth-child(5) .info-icon {
+        background: rgba(0, 188, 212, 0.1);
+        color: #00BCD4;
+    }
+
+    /* 统一微调：移除原有的 background 渐变，确保上面的颜色生效 */
+    .info-icon {
+        background: none;
+        border-radius: 10px;
     }
 </style>
 {% endblock %}

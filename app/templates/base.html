@@ -464,6 +464,12 @@
                     <span class="nav-icon"><i class="fas fa-database"></i></span> <span>知识引擎</span>
                 </a>
             </li>
+            <li class="top-nav-item">
+                <a class="top-nav-link {{ 'active' if request.endpoint == 'recommend.index' }}"
+                    href="{{ url_for('recommend.index') }}">
+                    <span class="nav-icon"><i class="fas fa-compass"></i></span> <span>资源推荐</span>
+                </a>
+            </li>
         </ul>
 
         <div class="navbar-right">
@@ -475,7 +481,6 @@
                 <ul class="dropdown-menu dropdown-menu-end">
                     <li><a class="dropdown-item" href="{{ url_for('dashboard.profile') }}"><i
                                 class="fas fa-id-badge"></i> 个人资料</a></li>
-                    <li><a class="dropdown-item" href="#"><i class="fas fa-cog"></i> 偏好设置</a></li>
                     <li>
                         <hr class="dropdown-divider">
                     </li>

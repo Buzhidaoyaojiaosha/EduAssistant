@@ -99,12 +99,11 @@
                 if (!response.ok) {
                     throw new Error(`HTTP error: ${response.status}`);
                 }
-                return response.text();
+                return response.json();
             })
-            .then(res => {
-                window.localStorage.setItem("recommend-content", res);
-                const recommendations = JSON.parse(res.replaceAll("'", '"'));
-                renderRecommendations(recommendations);
+            .then(data => {
+                window.localStorage.setItem("recommend-content", JSON.stringify(data));
+                renderRecommendations(data);
             })
             .catch(error => {
                 console.error('Error loading recommendations:', error);
@@ -143,7 +142,7 @@
         const recommendContent = window.localStorage.getItem("recommend-content");
         if (recommendContent) {
             try {
-                renderRecommendations(JSON.parse(recommendContent.replaceAll("'", '"'))["recommendations"]);
+                renderRecommendations(JSON.parse(recommendContent));
             } catch (error) {
                 console.error('Error parsing local storage data:', error);
             }
