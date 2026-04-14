@@ -13,6 +13,7 @@ from reportlab.lib.units import inch
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfbase.cidfonts import UnicodeCIDFont
 from reportlab.lib.enums import TA_LEFT, TA_CENTER
 from flask import current_app, jsonify
 from app.react.tools_register import register_as_tool
@@ -520,6 +521,15 @@ def _clean_text(text: str) -> str:
     text = text.replace('—', '-')
     text = text.replace('–', '-')
     text = text.replace('―', '-')
+    # 修复HTML标签：reportlab Paragraph 要求自闭合标签
+    text = text.replace('<br>', '<br/>')
+    text = text.replace('<br />', '<br/>')
+    # 将 <br/> 转为空格（reportlab Paragraph 内联换行会导致布局问题）
+    text = text.replace('<br/>', ' ')
+    # 移除Markdown表格管道符
+    text = text.replace('|', ' ')
+    # 移除可能残留的HTML标签
+    text = re.sub(r'<[^>]+>', '', text)
     # 清理多余的空白字符
     text = ' '.join(text.split())
     return text
@@ -529,9 +539,9 @@ def _process_markdown_content(content: str) -> List[Dict]:
     sections = []
     current_section = None
     current_list = []
-    
+
     lines = content.split('\n')
-    
+
     for line in lines:
         line = line.strip()
         if not line:
@@ -542,7 +552,11 @@ def _process_markdown_content(content: str) -> List[Dict]:
                     current_section['content'].extend(current_list)
                 current_list = []
             continue
-        
+
+        # 跳过Markdown表格分隔行（如 |---|---|）
+        if re.match(r'^\|[\s\-:|]+\|$', line):
+            continue
+
         # 处理标题
         if line.startswith('# '):
             if current_section and current_list:
@@ -550,10 +564,10 @@ def _process_markdown_content(content: str) -> List[Dict]:
                     current_section['content'] = []
                 current_section['content'].extend(current_list)
                 current_list = []
-            
+
             if current_section:
                 sections.append(current_section)
-            
+
             current_section = {
                 'type': 'h1',
                 'text': _clean_text(line[2:]),
@@ -565,10 +579,10 @@ def _process_markdown_content(content: str) -> List[Dict]:
                     current_section['content'] = []
                 current_section['content'].extend(current_list)
                 current_list = []
-            
+
             if current_section:
                 sections.append(current_section)
-            
+
             current_section = {
                 'type': 'h2',
                 'text': _clean_text(line[3:]),
@@ -589,7 +603,7 @@ def _process_markdown_content(content: str) -> List[Dict]:
                 'number': number,
                 'text': _clean_text(text)
             })
-        # 处理普通段落
+        # 处理普通段落（包括Markdown表格行）
         else:
             if current_list:
                 if current_section:
@@ -597,22 +611,31 @@ def _process_markdown_content(content: str) -> List[Dict]:
                         current_section['content'] = []
                     current_section['content'].extend(current_list)
                 current_list = []
-            
-            if current_section:
+
+            # 如果还没有任何section，创建一个默认的
+            if not current_section:
+                current_section = {
+                    'type': 'h1',
+                    'text': '',
+                    'content': []
+                }
+
+            cleaned = _clean_text(line)
+            if cleaned:
                 current_section['content'].append({
                     'type': 'paragraph',
-                    'text': _clean_text(line)
+                    'text': cleaned
                 })
-    
+
     # 处理最后的部分
     if current_list and current_section:
         if 'content' not in current_section:
             current_section['content'] = []
         current_section['content'].extend(current_list)
-    
+
     if current_section:
         sections.append(current_section)
-    
+
     return sections
 
 def _generate_simple_ppt_content(title: str, content: str, course: Course) -> tuple:
@@ -646,17 +669,17 @@ def _generate_simple_ppt_content(title: str, content: str, course: Course) -> tu
             
             # 设置标题
             title_shape = slide.shapes.title
-            title_shape.text = slide_data.get('title', '无标题')
-            
+            title_shape.text = _strip_markdown_syntax(slide_data.get('title', '无标题'))
+
             # 设置内容
             if 'content' in slide_data and slide_data['content']:
                 content_shape = slide.placeholders[1]
                 tf = content_shape.text_frame
                 tf.clear()
-                
+
                 for item in slide_data['content']:
                     p = tf.add_paragraph()
-                    p.text = item
+                    p.text = _strip_markdown_syntax(item)
                     p.level = 0
                     p.font.size = Pt(18)
         
@@ -685,56 +708,99 @@ def _generate_simple_ppt_content(title: str, content: str, course: Course) -> tu
         # 最终回退：生成文本文件
         return _generate_text_fallback(title, content, course)
 
+def _strip_markdown_syntax(text: str) -> str:
+    """移除文本中的Markdown格式标记，返回纯文本。"""
+    # 移除加粗 **text** 或 __text__
+    text = re.sub(r'\*\*(.+?)\*\*', r'\1', text)
+    text = re.sub(r'__(.+?)__', r'\1', text)
+    # 移除斜体 *text* 或 _text_
+    text = re.sub(r'\*(.+?)\*', r'\1', text)
+    text = re.sub(r'_(.+?)_', r'\1', text)
+    # 移除行内代码 `text`
+    text = re.sub(r'`(.+?)`', r'\1', text)
+    # 移除删除线 ~~text~~
+    text = re.sub(r'~~(.+?)~~', r'\1', text)
+    # 移除链接 [text](url)
+    text = re.sub(r'\[(.+?)\]\(.+?\)', r'\1', text)
+    # 移除图片 ![alt](url)
+    text = re.sub(r'!\[(.+?)\]\(.+?\)', r'\1', text)
+    # 移除标题标记 # 已在调用处处理，此处清理残留
+    text = re.sub(r'^#{1,6}\s+', '', text)
+    # 移除列表标记
+    text = re.sub(r'^[\-\*\+]\s+', '', text)
+    text = re.sub(r'^\d+\.\s+', '', text)
+    # 移除引用标记 >
+    text = re.sub(r'^>\s*', '', text)
+    # 移除水平线 --- 或 ***
+    text = re.sub(r'^[-*]{3,}$', '', text)
+    # 移除HTML标签
+    text = re.sub(r'<[^>]+>', '', text)
+    # 清理多余空白
+    text = ' '.join(text.split())
+    return text.strip()
+
+
 def _parse_markdown_to_slides(content: str) -> List[Dict]:
     """解析Markdown内容为幻灯片数据"""
     slides = []
     current_slide = None
-    
+
     lines = content.split('\n')
-    
+
     for line in lines:
         line = line.strip()
-        
+
         if not line:
             continue
-            
+
         # 检测幻灯片分隔符
         if line == '---':
             if current_slide:
                 slides.append(current_slide)
             current_slide = {'title': '', 'content': []}
             continue
-            
+
+        # 跳过 Marp 元数据行
+        if line.startswith('marp:') or line.startswith('theme:') or line.startswith('class:') or line.startswith('paginate:'):
+            continue
+        # 跳过 Marp 配置块
+        if line.startswith('style:') or line.startswith('background'):
+            continue
+
         # 检测标题
         if line.startswith('# '):
             if current_slide is None:
                 current_slide = {'title': '', 'content': []}
+            clean_title = _strip_markdown_syntax(line[2:].strip())
             if not current_slide['title']:
-                current_slide['title'] = line[2:].strip()
+                current_slide['title'] = clean_title
             else:
-                current_slide['content'].append(line[2:].strip())
+                current_slide['content'].append(clean_title)
         elif line.startswith('## '):
             if current_slide is None:
                 current_slide = {'title': '', 'content': []}
-            current_slide['content'].append(line[3:].strip())
+            current_slide['content'].append(_strip_markdown_syntax(line[3:].strip()))
         # 检测列表项
         elif line.startswith('- ') or line.startswith('* '):
             if current_slide is None:
                 current_slide = {'title': '内容', 'content': []}
-            current_slide['content'].append(line[2:].strip())
+            current_slide['content'].append('• ' + _strip_markdown_syntax(line[2:].strip()))
         # 普通文本
-        elif line and not line.startswith('marp:') and not line.startswith('theme:') and not line.startswith('class:'):
+        elif line:
             if current_slide is None:
                 current_slide = {'title': '内容', 'content': []}
+            clean = _strip_markdown_syntax(line)
+            if not clean:
+                continue
             if not current_slide['title']:
-                current_slide['title'] = line
+                current_slide['title'] = clean
             else:
-                current_slide['content'].append(line)
-    
+                current_slide['content'].append(clean)
+
     # 添加最后一张幻灯片
     if current_slide:
         slides.append(current_slide)
-    
+
     return slides
 
 def _generate_text_fallback(title: str, content: str, course: Course) -> tuple:
@@ -900,10 +966,10 @@ def _generate_pdf_content(title: str, content: str, course: Course) -> tuple:
         
         # 处理Markdown内容
         sections = _process_markdown_content(content)
-        
+
         # 构建文档内容
         story = []
-        
+
         # 添加主标题
         story.append(Spacer(1, 30))
         story.append(Paragraph(title, title_style))
@@ -989,16 +1055,15 @@ def _generate_pdf_content(title: str, content: str, course: Course) -> tuple:
             page_width = doc.pagesize[0]
             canvas.drawCentredString(page_width/2.0, 30, footer_text)
             canvas.restoreState()
-        
+
         # 构建PDF
         doc.build(story, onFirstPage=add_footer, onLaterPages=add_footer)
-        
+
         # 获取PDF内容并转换为base64
         pdf_content = buffer.getvalue()
         buffer.close()
-        
         pdf_base64 = base64.b64encode(pdf_content).decode('utf-8')
-        
+
         return pdf_base64, filename
         
     except Exception as e:

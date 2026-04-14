@@ -187,3 +187,5 @@ logs/
 node_modules/
 
 .txt
+
+uploads/

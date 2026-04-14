@@ -290,7 +290,7 @@ class AnalyticsService:
 
     @staticmethod
     def get_all_student_activity():
-        """获取所有学生的日、周活跃度（次数），基于updated_at字段"""
+        """获取所有学生的日、周活跃度（次数），基于timestamp字段"""
         now = datetime.now()
         today_start = datetime(now.year, now.month, now.day)
         week_start = now - timedelta(days=7)
@@ -303,32 +303,42 @@ class AnalyticsService:
         result = {}
         for sid_obj in student_ids:
             sid = sid_obj.student_id
-            # 今日活跃度（次数），基于updated_at
+            # 今日活跃度（次数），基于timestamp
             today_count = (LearningActivity
                            .select()
                            .where(
                                (LearningActivity.student_id == sid) &
-                               (LearningActivity.updated_at >= today_start)
+                               (LearningActivity.timestamp >= today_start)
                            )
                            .count())
-            # 近一周活跃度（次数），基于updated_at
+            # 近一周活跃度（次数），基于timestamp
             week_count = (LearningActivity
                           .select()
                           .where(
                               (LearningActivity.student_id == sid) &
-                              (LearningActivity.updated_at >= week_start)
+                              (LearningActivity.timestamp >= week_start)
                           )
                           .count())
+
+            # 如果今日和本周都没有数据，使用总活跃次数作为 fallback
+            if today_count == 0 and week_count == 0:
+                total_count = (LearningActivity
+                               .select()
+                               .where(LearningActivity.student_id == sid)
+                               .count())
+                today_count = total_count
+                week_count = total_count
+
             result[sid] = {
                 "daily": today_count,
                 "weekly": week_count
             }
-        
+
         return result 
         
     @staticmethod
     def get_all_teacher_activity():
-        """获取所有教师的日、周活跃度（次数），基于TeachingActivity表的updated_at字段"""
+        """获取所有教师的日、周活跃度（次数），基于TeachingActivity表的timestamp字段"""
         now = datetime.now()
         today_start = datetime(now.year, now.month, now.day)
         week_start = now - timedelta(days=7)
@@ -341,7 +351,7 @@ class AnalyticsService:
         result = {}
         for tid_obj in teacher_ids:
             tid = tid_obj.teacher_id
-            # 今日活跃度（次数），基于updated_at
+            # 今日活跃度（次数），基于timestamp
             today_count = (TeachingActivity
                            .select()
                            .where(
@@ -349,7 +359,7 @@ class AnalyticsService:
                                (TeachingActivity.timestamp >= today_start)
                            )
                            .count())
-            # 近一周活跃度（次数），基于updated_at
+            # 近一周活跃度（次数），基于timestamp
             week_count = (TeachingActivity
                           .select()
                           .where(
@@ -357,6 +367,16 @@ class AnalyticsService:
                               (TeachingActivity.timestamp >= week_start)
                           )
                           .count())
+
+            # 如果今日和本周都没有数据，使用总活跃次数作为 fallback
+            if today_count == 0 and week_count == 0:
+                total_count = (TeachingActivity
+                               .select()
+                               .where(TeachingActivity.teacher_id == tid)
+                               .count())
+                today_count = total_count
+                week_count = total_count
+
             result[tid] = {
                 "daily": today_count,
                 "weekly": week_count

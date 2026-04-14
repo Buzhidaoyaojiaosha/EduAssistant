@@ -1703,6 +1703,7 @@ def edit_assignment(assignment_id):
             # 获取表单数据
             new_title = request.form.get('title')
             new_due_date_str = request.form.get('new_due_date')
+            total_points = request.form.get('total_points', type=float)
             # 将字符串转换为datetime对象
             new_due_date = datetime.fromisoformat(new_due_date_str)
 
@@ -1710,11 +1711,14 @@ def edit_assignment(assignment_id):
             if not new_title or not new_due_date_str:
                 flash('作业名称和截止时间不能为空', 'danger')
                 return redirect(url_for('course.edit_assignment', assignment_id=assignment_id))
-            
-            # 更新作业的截止时间
+
+            # 更新作业信息
             AssignmentService.update_title(assignment_id,new_title)
-            # 更新作业的截止时间
             AssignmentService.update_due_date(assignment_id,new_due_date)
+            if total_points is not None:
+                assignment = Assignment.get_by_id(assignment_id)
+                assignment.total_points = total_points
+                assignment.save()
             
             flash('作业信息已更新', 'success')
             return redirect(url_for('course.view_assignment', assignment_id=assignment_id))

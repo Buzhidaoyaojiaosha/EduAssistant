@@ -202,6 +202,31 @@
     .card-header .rounded-circle {
         background: rgba(13, 110, 253, 0.1) !important;
     }
+
+    .loading-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(4px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    }
+
+    .loading-overlay .loading-box {
+        background: #fff;
+        border-radius: 16px;
+        padding: 32px 48px;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+        text-align: center;
+    }
+
+    .loading-overlay .spinner-border {
+        width: 2.5rem;
+        height: 2.5rem;
+        color: var(--primary, #25714A);
+    }
 </style>
 
 <!-- JavaScript处理动态切换和必选逻辑 -->
@@ -336,8 +361,15 @@
                     e.preventDefault();
                     alert(`文件类型不符合要求，${fileTypeMap[entryType.value].hint}`);
                     fileInput.focus();
+                    return;
                 }
             }
+
+            // 验证通过，显示加载提示
+            var overlay = document.createElement('div');
+            overlay.className = 'loading-overlay';
+            overlay.innerHTML = '<div class="loading-box"><div class="spinner-border mb-3" role="status"><span class="visually-hidden">加载中...</span></div><p class="mb-0 text-muted">正在保存，请稍候...</p></div>';
+            document.body.appendChild(overlay);
         });
     });
 </script>

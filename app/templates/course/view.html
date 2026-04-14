@@ -868,10 +868,12 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
-                <button type="button" class="btn btn-primary" id="downloadFileBtn">
-                    <i class="fas fa-download me-1"></i>下载文件
+                <button type="button" class="btn btn-primary" id="downloadPdfBtn">
+                    <i class="fas fa-file-pdf me-1"></i>导出 PDF
                 </button>
-                <!-- 新增保存按钮 -->
+                <button type="button" class="btn btn-outline-primary" id="downloadMdBtn">
+                    <i class="fas fa-file-alt me-1"></i>导出 Markdown
+                </button>
                 <button type="button" class="btn btn-info" id="saveToKnowledgeBtn">
                     <i class="fas fa-save me-1"></i>保存至知识库
                 </button>
@@ -1895,7 +1897,8 @@
         const progressModal = new bootstrap.Modal(document.getElementById('generateProgressModal'));
         const resultModal = new bootstrap.Modal(document.getElementById('generateResultModal'));
         const errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
-        const downloadBtn = document.getElementById('downloadFileBtn');
+        const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+        const downloadMdBtn = document.getElementById('downloadMdBtn');
 
         let generatedData = null;
         const courseId = "{{ course.id }}";
@@ -2098,7 +2101,7 @@
                 });
         });
         // 下载PDF或PPT
-        downloadBtn.addEventListener('click', function () {
+        downloadPdfBtn.addEventListener('click', function () {
             if (!generatedData || !generatedData.file_base64) {
                 showError('文件不存在，请重新生成。');
                 return;
@@ -2111,7 +2114,6 @@
                 'application/pdf';
 
             try {
-                // 创建下载链接
                 const byteCharacters = atob(generatedData.file_base64);
                 const byteNumbers = new Array(byteCharacters.length);
                 for (let i = 0; i < byteCharacters.length; i++) {
@@ -2120,7 +2122,6 @@
                 const byteArray = new Uint8Array(byteNumbers);
                 const blob = new Blob([byteArray], { type: mimeType });
 
-                // 创建下载链接
                 const url = window.URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = url;
@@ -2130,11 +2131,37 @@
                 document.body.removeChild(link);
                 window.URL.revokeObjectURL(url);
 
-                // 显示下载成功提示
                 showSuccessToast('文件已开始下载');
             } catch (error) {
                 console.error('下载失败:', error);
                 showError('文件下载失败，请重新生成后再试。');
+            }
+        });
+
+        // 导出Markdown
+        downloadMdBtn.addEventListener('click', function () {
+            if (!generatedData || !generatedData.content) {
+                showError('内容不存在，请重新生成。');
+                return;
+            }
+
+            try {
+                const blob = new Blob([generatedData.content], { type: 'text/markdown;charset=utf-8' });
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                // 从filename推导md文件名，如 "《课程》备课提纲_20260414.pdf" -> "《课程》备课提纲_20260414.md"
+                const baseName = (generatedData.filename || '教学材料').replace(/\.[^.]+$/, '');
+                link.download = baseName + '.md';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+
+                showSuccessToast('Markdown 文件已开始下载');
+            } catch (error) {
+                console.error('下载失败:', error);
+                showError('Markdown 下载失败，请重试。');
             }
         });
 
@@ -2202,7 +2229,7 @@
             }
 
             // 更新下载按钮
-            downloadBtn.innerHTML = `<i class="fas fa-download me-1"></i>下载${data.material_type === 'syllabus' ? 'PDF' : 'PPT'}`;
+            downloadPdfBtn.innerHTML = `<i class="fas fa-file-pdf me-1"></i>导出 ${data.material_type === 'syllabus' ? 'PDF' : 'PPT'}`;
 
             // 保存生成的数据
             generatedData = data;

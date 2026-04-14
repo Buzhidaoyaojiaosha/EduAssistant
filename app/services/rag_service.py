@@ -68,7 +68,8 @@ class RAGService:
             # 使用 moviepy 提取音频
             video = VideoFileClip(file_path)
             audio = video.audio
-            audio_file_path = file_path.replace('.mp4', '.wav')  # 保存音频为 WAV 格式
+            base, _ = os.path.splitext(file_path)
+            audio_file_path = base + '.wav'  # 保存音频为 WAV 格式
             audio.write_audiofile(audio_file_path, fps=16000, nbytes=2, codec='pcm_s16le', ffmpeg_params=['-ac', '1'])
 
             # 使用音频转文本工具
@@ -165,12 +166,12 @@ class RAGService:
             }
             metadatas.append(metadata)
 
-            # 将切分片段添加到向量数据库
+        # 批量添加到向量数据库（chromadb 根据 collection 的 embedding_function 自动生成 embeddings）
+        if documents:
             rag_chunk_collection.add(
                 ids=ids,
                 documents=documents,
-                metadatas=metadatas,
-                embeddings=embedding_fn(documents)
+                metadatas=metadatas
             )
 
         # # 保存切分片段

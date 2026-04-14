@@ -783,6 +783,13 @@
                         <input type="datetime-local" class="form-control" id="new_due_date" name="new_due_date"
                             value="{{ assignment.due_date.strftime('%Y-%m-%dT%H:%M') }}" required>
                     </div>
+
+                    <!-- 总分输入框 -->
+                    <div class="mb-3">
+                        <label for="total_points" class="form-label">总分</label>
+                        <input type="number" class="form-control" id="total_points" name="total_points"
+                            value="{{ assignment.total_points }}" min="0" step="1" required>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>

@@ -61,14 +61,14 @@
                         </div>
                     </div>
                     <p class="course-desc">{{ course.description|truncate(100) }}</p>
-                    <div class="course-footer">
+                    <!-- <div class="course-footer">
                         <div class="course-progress">
                             <div class="progress-bar">
                                 <div class="progress-fill" style="width: 65%"></div>
                             </div>
                             <span class="progress-label">65% 完成</span>
                         </div>
-                    </div>
+                    </div> -->
                     <div class="course-actions">
                         <a href="{{ url_for('course.view', course_id=course.id) }}" class="dash-btn-primary">
                             <i class="fas fa-cog"></i>课程管理
