@@ -1,4 +1,6 @@
 import os
+import json
+import asyncio
 from typing import List, Dict
 from PyPDF2 import PdfReader
 from flask import current_app
@@ -9,13 +11,15 @@ from app.ext import embedding_fn
 from app.react.tools_register import register_as_tool
 from docx import Document
 from moviepy import VideoFileClip
+import dashscope
+from dashscope import MultiModalConversation
 
 
 
 class RAGService:
     @staticmethod
     def extract_text_from_file(file_path: str) -> str:
-        """从文件中提取文本内容。支持 PDF 和 PPTX 格式。"""
+        """从文件中提取文本内容。支持 PDF、PPTX、DOCX 格式。视频文件请走 Qwen 多模态路径。"""
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"文件未找到: {file_path}")
 
@@ -25,8 +29,6 @@ class RAGService:
             return RAGService._extract_text_from_pptx(file_path)
         elif file_path.endswith('.docx'):
             return RAGService._extract_text_from_docx(file_path)
-        elif file_path.endswith(('.mp4', '.avi', '.mov', '.mkv')):
-            return RAGService._extract_audio_from_video(file_path)
         else:
             raise ValueError("不支持的文件格式")
 
@@ -62,53 +64,119 @@ class RAGService:
         print(text)
         return text
     
-    def _extract_audio_from_video(file_path: str) -> str:
-        """从视频文件中提取音频内容并转为文本。"""
-        try:
-            # 使用 moviepy 提取音频
-            video = VideoFileClip(file_path)
-            audio = video.audio
-            base, _ = os.path.splitext(file_path)
-            audio_file_path = base + '.wav'  # 保存音频为 WAV 格式
-            audio.write_audiofile(audio_file_path, fps=16000, nbytes=2, codec='pcm_s16le', ffmpeg_params=['-ac', '1'])
+    # 已废弃：改用千问多模态API直接分析视频，不再需要提取音频+语音识别
+    # @staticmethod
+    # def _extract_audio_from_video(file_path: str) -> str:
+    #     """从视频文件中提取音频内容并转为文本。"""
+    #     try:
+    #         video = VideoFileClip(file_path)
+    #         audio = video.audio
+    #         base, _ = os.path.splitext(file_path)
+    #         audio_file_path = base + '.wav'
+    #         audio.write_audiofile(audio_file_path, fps=16000, nbytes=2, codec='pcm_s16le', ffmpeg_params=['-ac', '1'])
+    #         text = RAGService._convert_audio_to_text(audio_file_path)
+    #         return text
+    #     except Exception as e:
+    #         raise ValueError(f"处理视频文件失败: {str(e)}")
 
-            # 使用音频转文本工具
-            text = RAGService._convert_audio_to_text(audio_file_path)
-            return text
-        except Exception as e:
-            raise ValueError(f"处理视频文件失败: {str(e)}")
-
+    # 已废弃：改用千问多模态API直接分析视频
     # @staticmethod
     # def _convert_audio_to_text(audio_file_path: str) -> str:
-    #     """将音频文件转为文本（可以使用 SpeechRecognition 或其他工具）。"""
+    #     """将音频文件转为文本，使用 Google Web Speech API。"""
     #     import speech_recognition as sr
     #     recognizer = sr.Recognizer()
-
     #     try:
     #         with sr.AudioFile(audio_file_path) as source:
     #             audio_data = recognizer.record(source)
-    #             text = recognizer.recognize_google(audio_data)  # 使用 Google Speech API
-    #             return text
+    #             text = recognizer.recognize_google(audio_data, language="zh-CN")
+    #         return text
+    #     except sr.UnknownValueError:
+    #         raise ValueError("无法识别音频内容。")
+    #     except sr.RequestError as e:
+    #         raise ValueError(f"Google API 请求失败: {e}")
     #     except Exception as e:
     #         raise ValueError(f"音频转文本失败: {str(e)}")
 
     @staticmethod
-    def _convert_audio_to_text(audio_file_path: str) -> str:
-        """将音频文件转为文本，使用 Google Web Speech API。"""
-        import speech_recognition as sr
-        recognizer = sr.Recognizer()
+    def _extract_knowledge_from_video_via_qwen(file_path: str, title: str):
+        """使用 DashScope 千问多模态API直接分析视频，提取结构化知识步骤。
 
-        try:
-            with sr.AudioFile(audio_file_path) as source:
-                audio_data = recognizer.record(source)
-                text = recognizer.recognize_google(audio_data, language="zh-CN")  # 指定中文
-            return text
-        except sr.UnknownValueError:
-            raise ValueError("无法识别音频内容。")
-        except sr.RequestError as e:
-            raise ValueError(f"Google API 请求失败: {e}")
-        except Exception as e:
-            raise ValueError(f"音频转文本失败: {str(e)}")
+        Args:
+            file_path: 视频文件本地路径
+            title: 视频标题
+
+        Returns:
+            tuple: (plain_text: str, word_doc: Document) 纯文本用于向量库存储，Word文档用于用户下载
+        """
+        dashscope.api_key = os.environ.get("DASHSCOPE_API_KEY")
+        if not dashscope.api_key:
+            raise ValueError("DASHSCOPE_API_KEY 未配置")
+
+        abs_path = os.path.abspath(file_path)
+        local_file_url = f"file://{abs_path}"
+
+        prompt_text = (
+            f"你是一个教学视频分析专家。请仔细观看这段名为《{title}》的教学视频。\n"
+            "请将视频中的教学内容拆解为连续的、结构化的知识步骤。\n"
+            "每个步骤包含：步骤编号(step_number)、步骤名称(action_name)、详细说明(details)。\n"
+            "警告：绝对不要在 details 中生成或编造任何图片链接、Markdown图片语法。只输出纯文本说明。\n"
+            "要求严格按照JSON数组格式返回，不带```json标记。\n"
+            '格式示例：[{"step_number": 1, "action_name": "动作名称", "details": "详细说明"}]'
+        )
+
+        messages = [
+            {
+                "role": "user",
+                "content": [
+                    {"video": local_file_url},
+                    {"text": prompt_text}
+                ]
+            }
+        ]
+
+        response = asyncio.run(
+            asyncio.to_thread(
+                MultiModalConversation.call,
+                model='qwen-vl-plus',
+                messages=messages
+            )
+        )
+
+        if response.status_code != 200:
+            raise ValueError(f"千问API调用失败: {response.message}")
+
+        content = response.output.choices[0].message.content[0].get('text', '')
+        content = content.strip()
+        # 清理可能的 Markdown 代码块标记
+        if content.startswith("```json"):
+            content = content[7:]
+        if content.startswith("```"):
+            content = content[3:]
+        if content.endswith("```"):
+            content = content[:-3]
+        content = content.strip()
+
+        steps = json.loads(content)
+
+        # 构建纯文本（用于 ChromaDB 向量库存储）
+        plain_text_parts = []
+        for step in steps:
+            plain_text_parts.append(
+                f"步骤{step['step_number']}: {step['action_name']}\n{step['details']}"
+            )
+        plain_text = "\n\n".join(plain_text_parts)
+
+        # 构建 Word 文档（用于用户下载）
+        doc = Document()
+        doc.add_heading(f"《{title}》视频分析报告", level=1)
+        doc.add_paragraph(f"本文档由智能教学系统根据视频自动分析生成。")
+        doc.add_paragraph("")
+        for step in steps:
+            doc.add_heading(f"步骤{step['step_number']}: {step['action_name']}", level=2)
+            doc.add_paragraph(step['details'])
+            doc.add_paragraph("")
+
+        return plain_text, doc
 
     @staticmethod
     def split_text(text: str, chunk_size: int = 500, chunk_overlap: int = 50) -> List[str]:
@@ -123,10 +191,9 @@ class RAGService:
 
     @staticmethod
     def process_and_store_file(file_path: str, file_url: str, title: str, course_id: int = None,
-
-                               category: str = None, tags: List[str] = None) :
+                               category: str = None, tags: List[str] = None):
         """
-        处理文件，提取文本，切分内容，并存储到向量数据库和关系数据库。
+        处理文件，提取文本，切分内容，并存储到向量数据库。
 
         Args:
             file_path: 文件本地路径
@@ -137,10 +204,22 @@ class RAGService:
             tags: 标签列表
 
         Returns:
-            包含原始记录和切分片段信息的字典
+            str or None: 视频文件返回生成的Word文档路径，其他文件返回None
         """
-        # 提取文本并切分
-        text = RAGService.extract_text_from_file(file_path)
+        word_file_path = None
+
+        # 视频文件走千问多模态路径
+        if file_path.endswith(('.mp4', '.avi', '.mov', '.mkv')):
+            text, word_doc = RAGService._extract_knowledge_from_video_via_qwen(file_path, title)
+            # 保存 Word 文档
+            word_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'generated_docs')
+            os.makedirs(word_dir, exist_ok=True)
+            safe_title = "".join(c for c in title if c.isalnum() or c in (' ', '-', '_')).strip()
+            word_filename = f"{safe_title}_analysis.docx"
+            word_file_path = os.path.join(word_dir, word_filename)
+            word_doc.save(word_file_path)
+        else:
+            text = RAGService.extract_text_from_file(file_path)
         print(text)
         if not isinstance(text, str):
             raise ValueError(f"提取的文本不是字符串类型，文件路径: {file_path}")
@@ -173,6 +252,8 @@ class RAGService:
                 documents=documents,
                 metadatas=metadatas
             )
+
+        return word_file_path
 
         # # 保存切分片段
         # for index, chunk in enumerate(chunks):

@@ -126,6 +126,11 @@
                     <a href="{{ result.content }}" class="btn btn-light">
                         <i class="fas fa-download me-2"></i>下载文件
                     </a>
+                    {% if result.word_doc_url %}
+                    <a href="{{ result.word_doc_url }}" class="btn btn-light ms-2">
+                        <i class="fas fa-file-word me-2"></i>下载解析文档
+                    </a>
+                    {% endif %}
                 </div>
                 {% endif %}
 
@@ -192,6 +197,11 @@
                     <a href="{{ entry.content }}" class="btn btn-light">
                         <i class="fas fa-download me-2"></i>下载文件
                     </a>
+                    {% if entry.word_doc_url %}
+                    <a href="{{ entry.word_doc_url }}" class="btn btn-light ms-2">
+                        <i class="fas fa-file-word me-2"></i>下载解析文档
+                    </a>
+                    {% endif %}
                 </div>
                 {% endif %}
 
@@ -256,6 +266,11 @@
                     <a href="{{ entry.content }}" class="btn btn-light">
                         <i class="fas fa-download me-2"></i>下载文件
                     </a>
+                    {% if entry.word_doc_url %}
+                    <a href="{{ entry.word_doc_url }}" class="btn btn-light ms-2">
+                        <i class="fas fa-file-word me-2"></i>下载解析文档
+                    </a>
+                    {% endif %}
                 </div>
                 {% endif %}
 

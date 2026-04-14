@@ -190,6 +190,7 @@ def add_knowledge():
         tags = [tag.strip() for tag in tags if tag.strip()]
 
         try:
+            word_file_path = None
             # 处理非纯文字类型
             if entry_type != 'text':
                 if not file or file.filename == '':
@@ -200,7 +201,7 @@ def add_knowledge():
                     'pdf': ['.pdf'],
                     'pptx': ['.ppt', '.pptx'],
                     'other': ['.doc', '.docx', '.xls', '.xlsx', '.jpg', '.jpeg', '.png', '.txt',
-                              'mp3', '.mp4']
+                              '.mp3', '.mp4', '.avi', '.mov', '.mkv']
                 }
                 ext = os.path.splitext(file.filename)[1].lower()
                 if ext not in allowed_extensions.get(entry_type, []):
@@ -225,7 +226,7 @@ def add_knowledge():
                     content = file_url  # 将文件URL作为内容存储
 
                     # 处理文件并存储到向量数据库
-                    RAGService.process_and_store_file(
+                    word_file_path = RAGService.process_and_store_file(
                         temp_path,
                         file_url,
                         title,
@@ -246,19 +247,32 @@ def add_knowledge():
                             current_app.logger.warning(f"临时文件删除失败: {temp_path}")
 
             # 保存到数据库
-            KnowledgeBaseService.add_knowledge(
+            knowledge = KnowledgeBaseService.add_knowledge(
                 title=title,
                 type=entry_type,
                 content=content,
                 course_id=course_id,
                 category=category,
                 tags=tags,
-             
+
                 is_chunk=False,
                 chunk_index=0,
             )
 
+            # 如果生成了Word文档（视频文件），上传到OSS并保存URL
+            word_doc_url = None
+            if word_file_path and os.path.exists(word_file_path):
+                word_doc_url = KnowledgeBaseService.upload_file_to_oss(word_file_path)
+                knowledge.word_doc_url = word_doc_url
+                knowledge.save()
+                # 清理本地临时文件
+                try:
+                    os.remove(word_file_path)
+                except:
+                    pass
+
             flash('知识条目已添加', 'success')
+
             # 检查是否有返回地址
             return_to = request.form.get('return_to')
             if return_to:

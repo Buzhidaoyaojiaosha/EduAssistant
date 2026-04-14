@@ -1745,24 +1745,29 @@ def generate_similar_questions(question_id):
     """为指定题目生成相似题目"""
     if 'user_id' not in session:
         return jsonify({'success': False, 'error': '用户未登录'}), 401
-    
+
     try:
         # 获取题目和用户信息
         question = Question.get_by_id(question_id)
         user_id = session['user_id']
-        
+
         # 验证权限
         if question.assignment.course.teacher_id != user_id:
             return jsonify({
                 'success': False,
                 'error': '只有课程教师可以生成相似题目'
             }), 403
-        
+
+        # 从请求体获取生成数量，默认3，限制1-10
+        data = request.get_json(silent=True) or {}
+        num_questions = int(data.get('num_questions', 3))
+        num_questions = max(1, min(10, num_questions))
+
         # 调用生成函数
         generated_questions = AssignmentService.generate_similar_questions_with_ai(
             original_question=question,
             assignment=question.assignment,
-            num_questions=3
+            num_questions=num_questions
         )
         
         if generated_questions:

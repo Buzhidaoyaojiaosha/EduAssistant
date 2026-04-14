@@ -709,6 +709,36 @@
 
 
 </div>
+<!-- 添加AI生成数量选择模态框 -->
+<div class="modal fade" id="generateCountModal" tabindex="-1" aria-labelledby="generateCountModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 12px;">
+            <div class="modal-header border-0">
+                <h5 class="modal-title" id="generateCountModalLabel">
+                    <i class="fas fa-robot me-2 text-primary"></i>AI生成相似题目
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted mb-3">请选择要生成的相似题目数量：</p>
+                <div class="d-flex align-items-center gap-3">
+                    <label for="generateCount" class="form-label mb-0 fw-semibold">生成数量</label>
+                    <input type="number" class="form-control" id="generateCount" value="3" min="1" max="10"
+                        style="width: 100px; border-radius: 8px;">
+                    <span class="text-muted small">（1-10 题）</span>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="confirmGenerateBtn">
+                    <i class="fas fa-magic me-1"></i>开始生成
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- 添加AI生成进度模态框 -->
 <div class="modal fade" id="generateProgressModal" tabindex="-1" aria-labelledby="generateProgressModalLabel"
     aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
@@ -1356,42 +1386,45 @@
             // 页面加载完成后立即滚动到顶部
             window.scrollTo(0, 0);
         }
-        // 获取所有生成按钮
-        const generateButtons = document.querySelectorAll('.generate-similar-btn');
 
-        // 为每个按钮添加点击事件
-        generateButtons.forEach(button => {
+        let currentQuestionId = null;
+        const countModal = new bootstrap.Modal(document.getElementById('generateCountModal'));
+        const progressModal = new bootstrap.Modal(document.getElementById('generateProgressModal'));
+
+        // 点击"AI生成相似题目"按钮 → 打开数量选择模态框
+        document.querySelectorAll('.generate-similar-btn').forEach(button => {
             button.addEventListener('click', function () {
-                const questionId = this.getAttribute('data-question-id');
-
-                // 显示模态框
-                const modal = new bootstrap.Modal(document.getElementById('generateProgressModal'));
-                modal.show();
-
-                // 发送AJAX请求
-                fetch(`/course/question/${questionId}/generate_similar`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    redirect: 'manual' // 手动处理重定向
-                })
-                    .then(response => {
-                        // 关闭模态框
-                        modal.hide();
-                        // 处理重定向，刷新页面
-                        window.location.reload();
-                        return;
-                    })
-                    .catch(error => {
-                        // 关闭模态框
-                        modal.hide();
-
-                        // 处理错误
-                        console.error('生成相似题目时发生错误:', error);
-                        alert('请求失败，请稍后重试');
-                    });
+                currentQuestionId = this.getAttribute('data-question-id');
+                document.getElementById('generateCount').value = 3;
+                countModal.show();
             });
+        });
+
+        // 点击"开始生成" → 关闭选择框，显示进度框，发送请求
+        document.getElementById('confirmGenerateBtn').addEventListener('click', function () {
+            const count = parseInt(document.getElementById('generateCount').value) || 3;
+            const numQuestions = Math.max(1, Math.min(10, count));
+
+            countModal.hide();
+            progressModal.show();
+
+            fetch(`/course/question/${currentQuestionId}/generate_similar`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ num_questions: numQuestions }),
+                redirect: 'manual'
+            })
+                .then(response => {
+                    progressModal.hide();
+                    window.location.reload();
+                })
+                .catch(error => {
+                    progressModal.hide();
+                    console.error('生成相似题目时发生错误:', error);
+                    alert('请求失败，请稍后重试');
+                });
         });
     });
 

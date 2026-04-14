@@ -1,5 +1,6 @@
 auto_mix_prep==0.2.0
 chromadb==0.4.13
+dashscope>=1.20.0
 dbutils==3.1.1
 Flask==3.1.1
 google_api_python_client==2.166.0
@@ -83,3 +84,4 @@ torch==1.12.1+cu113
 torchvision==0.13.1+cu113
 reportlab==4.4.2conda
 python-docx==1.2.0
+dashscope==1.25.16

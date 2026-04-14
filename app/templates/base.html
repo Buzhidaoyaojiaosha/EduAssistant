@@ -507,7 +507,7 @@
             {% for category, message in messages %}
             <div class="alert alert-{{ 'success' if category == 'success' else 'warning' }} alert-dismissible fade show"
                 role="alert" style="border-radius: 12px; border: none; box-shadow: var(--shadow-sm);">
-                {{ message }}
+                {{ message | safe }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="关闭"></button>
             </div>
             {% endfor %}
