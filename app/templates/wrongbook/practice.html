@@ -18,6 +18,12 @@
         </div>
     </div>
     <div class="col-auto">
+        {% if original_question_id %}
+        <button type="button" class="btn btn-primary me-2" id="generateSimilarBtn"
+            data-question-id="{{ original_question_id }}">
+            <i class="fas fa-robot me-1"></i>AI生成相似题目
+        </button>
+        {% endif %}
         <a href="{{ url_for('course.view', course_id=course.id) }}" class="btn btn-light">
             <i class="fas fa-arrow-left me-1"></i>返回课程
         </a>
@@ -479,6 +485,108 @@
         var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
             return new bootstrap.Tooltip(tooltipTriggerEl)
         });
+
+        // AI生成相似题目
+        const generateBtn = document.getElementById('generateSimilarBtn');
+        if (generateBtn) {
+            const countModal = new bootstrap.Modal(document.getElementById('generateCountModal'));
+            const progressModal = new bootstrap.Modal(document.getElementById('generateProgressModal'));
+
+            generateBtn.addEventListener('click', function () {
+                document.getElementById('generateCount').value = 3;
+                countModal.show();
+            });
+
+            document.getElementById('confirmGenerateBtn').addEventListener('click', function () {
+                const count = parseInt(document.getElementById('generateCount').value) || 3;
+                const numQuestions = Math.max(1, Math.min(10, count));
+                const questionId = generateBtn.getAttribute('data-question-id');
+
+                countModal.hide();
+                progressModal.show();
+
+                fetch('/wrongbook/generate_similar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        original_question_id: parseInt(questionId),
+                        num_questions: numQuestions
+                    })
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.text().then(text => {
+                                throw new Error('服务器返回错误: ' + response.status);
+                            });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        progressModal.hide();
+                        if (data.success) {
+                            alert(data.message);
+                            window.location.reload();
+                        } else {
+                            alert(data.error || '生成失败');
+                        }
+                    })
+                    .catch(error => {
+                        progressModal.hide();
+                        alert('请求失败: ' + error.message);
+                    });
+            });
+        }
     });
 </script>
+
+<!-- AI生成数量选择模态框 -->
+<div class="modal fade" id="generateCountModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 12px;">
+            <div class="modal-header border-0">
+                <h5 class="modal-title">
+                    <i class="fas fa-robot me-2 text-primary"></i>AI生成相似题目
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted mb-3">请选择要生成的相似题目数量：</p>
+                <div class="d-flex align-items-center gap-3">
+                    <label for="generateCount" class="form-label mb-0 fw-semibold">生成数量</label>
+                    <input type="number" class="form-control" id="generateCount" value="3" min="1" max="10"
+                        style="width: 100px; border-radius: 8px;">
+                    <span class="text-muted small">（1-10 题）</span>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="confirmGenerateBtn">
+                    <i class="fas fa-magic me-1"></i>开始生成
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- AI生成进度模态框 -->
+<div class="modal fade" id="generateProgressModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static"
+    data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 12px;">
+            <div class="modal-header border-0">
+                <h5 class="modal-title">正在生成相似题目</h5>
+            </div>
+            <div class="modal-body text-center">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">生成中...</span>
+                </div>
+                <p class="mb-0">AI正在分析题目并生成相似题目，请稍候...</p>
+                <div class="progress mt-3">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
+                        style="width: 100%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

@@ -1,7 +1,9 @@
 from flask import Blueprint, request, jsonify, render_template, session, redirect, url_for
-from app.models.NewAdd import AIQuestion,AiQuestionStudentAnswer
+from app.models.NewAdd import AIQuestion,AiQuestionStudentAnswer, Question
 from app.models.learning_data import StudentKnowledgePoint
 from app.models.course import Course
+from app.models.assignment import Assignment
+from app.services.assignment_service import AssignmentService
 from app.utils.llm.deepseek import chat_deepseek
 from datetime import datetime
 
@@ -48,8 +50,9 @@ def practice_questions():
             'answer_record': answer_record
         })
     
-    return render_template('wrongbook/practice.html', 
+    return render_template('wrongbook/practice.html',
                          course=course,
+                         original_question_id=original_question_id,
                          questions_with_answers=questions_with_answers)
 
 
@@ -101,6 +104,59 @@ def ai_check_answer():
             'success': False,
             'error': str(e)
         }), 500
+
+@wrongbook_bp.route('/generate_similar', methods=['POST'])
+def generate_similar():
+    """为原始题目生成更多相似题目（AJAX接口）"""
+    print(f"[generate_similar] 收到请求, session user_id: {session.get('user_id')}")
+
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'error': '未登录'}), 401
+
+    try:
+        data = request.get_json(silent=True) or {}
+        print(f"[generate_similar] 请求数据: {data}")
+
+        original_question_id = data.get('original_question_id')
+        num_questions = int(data.get('num_questions', 3))
+        num_questions = max(1, min(10, num_questions))
+
+        if not original_question_id:
+            return jsonify({'success': False, 'error': '缺少原始题目ID'}), 400
+
+        from peewee import DoesNotExist
+        try:
+            original_question = Question.get_by_id(original_question_id)
+        except DoesNotExist:
+            return jsonify({'success': False, 'error': '原始题目不存在'}), 404
+
+        print(f"[generate_similar] 开始生成, 原始题目: {original_question.question_name}")
+        generated = AssignmentService.generate_similar_questions_with_ai(
+            original_question=original_question,
+            assignment=original_question.assignment,
+            num_questions=num_questions
+        )
+
+        if generated:
+            # 学生主动生成的题目直接标记为已审核，立即可见
+            ai_ids = [q.ai_question_id for q in generated]
+            AIQuestion.update(is_approved=True).where(
+                AIQuestion.ai_question_id.in_(ai_ids)
+            ).execute()
+
+            return jsonify({
+                'success': True,
+                'count': len(generated),
+                'message': f'成功生成 {len(generated)} 道相似题目'
+            })
+        else:
+            return jsonify({'success': False, 'error': '生成失败，请稍后重试'}), 500
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 
 def generate_ai_feedback(question_context, question_answer, student_answer, question_type):
     """

@@ -97,6 +97,7 @@ class KnowledgeBaseService:
                 "course_id": entry.course_id,
                 "course": entry.course,
                 "tags": entry.tags,
+                "word_doc_url": entry.word_doc_url,
                 "full_record": entry,
                 "combined_score": 1.0,
                 "match_types": ["最新添加"]
@@ -157,6 +158,7 @@ class KnowledgeBaseService:
                         "course_id": metadata["course_id"],
                         "course": db_record.course,
                         "tags": metadata["tags"].split(",") if metadata["tags"] else [],
+                        "word_doc_url": db_record.word_doc_url,
                         "full_record": db_record,
                         "score": 1 - (distance if distance is not None else 0)  # 距离转换为相似度分数
                     })
@@ -211,6 +213,7 @@ class KnowledgeBaseService:
                     "course_id": knowledge.course_id,
                     "course": knowledge.course,
                     "tags": knowledge.tags,
+                    "word_doc_url": knowledge.word_doc_url,
                     "full_record": knowledge,
                     "score": keyword_score
                 })
