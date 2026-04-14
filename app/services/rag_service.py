@@ -270,7 +270,7 @@ class RAGService:
         #     )
 
     @staticmethod
-    def delete_chunks_by_source_url(self, source_url):
+    def delete_chunks_by_source_url(source_url):
         """
         根据 source_url 删除向量数据库中 is_chunk 为 true 的记录
         :param source_url: 文件的源 URL
