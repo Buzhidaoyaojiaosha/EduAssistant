@@ -18,6 +18,15 @@ from scripts.create_tables import tables
 db.drop_tables(tables, cascade=True)
 db.create_tables(tables)
 
+# 确保 KnowledgeBase 表包含 word_doc_url 字段（兼容旧数据库）
+try:
+    db.execute_sql(
+        "ALTER TABLE knowledgebase ADD COLUMN IF NOT EXISTS word_doc_url TEXT"
+    )
+    print("已确保 word_doc_url 字段存在")
+except Exception as e:
+    print(f"添加 word_doc_url 字段时出错（可能已存在）: {e}")
+
 from app.services.user_service import UserService
 
 def initialize_system():
