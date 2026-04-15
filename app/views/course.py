@@ -13,6 +13,7 @@ from app.services.knowledge_base_service import KnowledgeBaseService
 from app.models.user import User
 from app.models.course import Course
 from app.services.teaching_preparation_service import TeachingPreparationService
+from app.react.tools.teaching_preparation import generate_study_report, generate_mindmap
 from datetime import datetime
 from peewee import DoesNotExist
 from app.models.knowledge_base import KnowledgeBase
@@ -1506,7 +1507,115 @@ def api_generate_teaching_outline():
     except Exception as e:
         logger.error(f"API生成教学大纲异常: {str(e)}", exc_info=True)
         return jsonify({'error': '服务器内部错误，请稍后重试'}), 500
-    
+
+@course_bp.route('/api/generate_study_report', methods=['POST'])
+def api_generate_study_report():
+    """学生智能指导：生成学习指导报告"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'error': '用户未登录，请先登录'}), 401
+
+        if not request.is_json:
+            return jsonify({'error': '请求格式错误，需要JSON格式'}), 400
+
+        data = request.get_json()
+        if not data or 'course_id' not in data:
+            return jsonify({'error': '缺少必要的参数: course_id'}), 400
+
+        try:
+            course_id = int(data['course_id'])
+        except (ValueError, TypeError):
+            return jsonify({'error': '课程ID格式错误'}), 400
+
+        selected_knowledge_ids = data.get('selected_knowledge_ids', [])
+
+        course = Course.get_by_id(course_id)
+        if not course:
+            return jsonify({'error': '课程不存在'}), 404
+
+        try:
+            result = generate_study_report(course_id, selected_knowledge_ids)
+        except Exception as service_error:
+            logger.error(f"generate_study_report 失败: {str(service_error)}")
+            return jsonify({'error': '学习指导报告生成服务暂时不可用，请稍后重试'}), 500
+
+        if not result:
+            return jsonify({'error': '生成服务返回空结果'}), 500
+
+        if 'error' in result:
+            logger.error(f"生成学习指导报告失败 - 课程ID: {course_id}, 错误: {result['error']}")
+            return jsonify({'error': result['error']}), 500
+
+        required_fields = ['content', 'file_base64', 'filename', 'title', 'download_ready']
+        for field in required_fields:
+            if field not in result:
+                logger.error(f"生成结果缺少必要字段: {field}")
+                return jsonify({'error': f'生成结果不完整，缺少: {field}'}), 500
+
+        return jsonify({
+            'success': True,
+            'content': result['content'],
+            'file_base64': result['file_base64'],
+            'filename': result['filename'],
+            'title': result['title'],
+            'download_ready': result['download_ready'],
+            'file_type': result.get('file_type', 'pdf')
+        }), 200
+
+    except Exception as e:
+        logger.error(f"API生成学习指导报告异常: {str(e)}", exc_info=True)
+        return jsonify({'error': '服务器内部错误，请稍后重试'}), 500
+
+@course_bp.route('/api/generate_mindmap', methods=['POST'])
+def api_generate_mindmap():
+    """学生思维导图：生成知识结构化思维导图"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'error': '用户未登录，请先登录'}), 401
+
+        if not request.is_json:
+            return jsonify({'error': '请求格式错误，需要JSON格式'}), 400
+
+        data = request.get_json()
+        if not data or 'course_id' not in data:
+            return jsonify({'error': '缺少必要的参数: course_id'}), 400
+
+        try:
+            course_id = int(data['course_id'])
+        except (ValueError, TypeError):
+            return jsonify({'error': '课程ID格式错误'}), 400
+
+        selected_knowledge_ids = data.get('selected_knowledge_ids', [])
+
+        course = Course.get_by_id(course_id)
+        if not course:
+            return jsonify({'error': '课程不存在'}), 404
+
+        try:
+            result = generate_mindmap(course_id, selected_knowledge_ids)
+        except Exception as service_error:
+            logger.error(f"generate_mindmap 失败: {str(service_error)}")
+            return jsonify({'error': '思维导图生成服务暂时不可用，请稍后重试'}), 500
+
+        if not result:
+            return jsonify({'error': '生成服务返回空结果'}), 500
+
+        if 'error' in result:
+            return jsonify({'error': result['error']}), 500
+
+        if 'content' not in result:
+            return jsonify({'error': '生成结果不完整'}), 500
+
+        return jsonify({
+            'success': True,
+            'content': result['content'],
+            'title': result.get('title', '思维导图')
+        }), 200
+
+    except Exception as e:
+        logger.error(f"API生成思维导图异常: {str(e)}", exc_info=True)
+        return jsonify({'error': '服务器内部错误，请稍后重试'}), 500
+
 @course_bp.route('/<int:course_id>/generate_assessment', methods=['POST'])
 def generate_assessment(course_id):
     """生成考核题目接口"""

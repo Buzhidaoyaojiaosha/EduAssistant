@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:cdn.jsdelivr.net)",
+      "WebSearch"
+    ]
+  }
+}

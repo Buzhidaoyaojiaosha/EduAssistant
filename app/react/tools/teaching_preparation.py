@@ -588,6 +588,30 @@ def _process_markdown_content(content: str) -> List[Dict]:
                 'text': _clean_text(line[3:]),
                 'content': []
             }
+        elif line.startswith('### '):
+            if current_list and current_section:
+                if 'content' not in current_section:
+                    current_section['content'] = []
+                current_section['content'].extend(current_list)
+                current_list = []
+            if not current_section:
+                current_section = {'type': 'h1', 'text': '', 'content': []}
+            current_section['content'].append({
+                'type': 'h3',
+                'text': _clean_text(line[4:])
+            })
+        elif line.startswith('#### '):
+            if current_list and current_section:
+                if 'content' not in current_section:
+                    current_section['content'] = []
+                current_section['content'].extend(current_list)
+                current_list = []
+            if not current_section:
+                current_section = {'type': 'h1', 'text': '', 'content': []}
+            current_section['content'].append({
+                'type': 'h4',
+                'text': _clean_text(line[5:])
+            })
         # 处理列表项
         elif line.startswith(('- ', '* ', '+ ')):
             current_list.append({
@@ -829,30 +853,48 @@ def _generate_text_fallback(title: str, content: str, course: Course) -> tuple:
 def _generate_pdf_content(title: str, content: str, course: Course) -> tuple:
     """生成格式化的PDF文件并返回base64编码"""
     try:
+        # 移除mermaid代码块（PDF无法渲染图表），替换为文字说明
+        def _replace_mermaid(match):
+            code = match.group(1).strip()
+            for line in code.split('\n'):
+                line = line.strip()
+                if line and not line.startswith(('graph', 'flowchart', 'sequenceDiagram', 'classDiagram', 'stateDiagram', 'erDiagram', 'gantt', 'pie')):
+                    return f'\n[图表：{line[:50]}]\n'
+            return '\n[图表]\n'
+        content = re.sub(r'```mermaid\n([\s\S]*?)```', _replace_mermaid, content)
+
         # 创建内存缓冲区
         buffer = io.BytesIO()
-        
+
         # 生成文件名
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         filename = f"{title}_{timestamp}.pdf"
-        
-        # 注册中文字体
-        try:
-            pdfmetrics.registerFont(UnicodeCIDFont('STSong-Light'))
-            chinese_font = 'STSong-Light'
-        except:
+
+        # 注册中文字体（优先使用微软雅黑，英文显示效果更好）
+        chinese_font = 'Helvetica'
+        font_candidates = [
+            ('MSYH', 'C:/Windows/Fonts/msyh.ttc', 0),       # 微软雅黑 Regular
+            ('SIMHEI', 'C:/Windows/Fonts/simhei.ttf', None),  # 黑体
+            ('WQY', '/usr/share/fonts/truetype/wqy/wqy-microhei.ttc', None),
+        ]
+        for font_name, font_path, subfont_index in font_candidates:
             try:
-                font_path = os.path.join(os.path.dirname(__file__), 'fonts', 'simhei.ttf')
-                if not os.path.exists(font_path):
-                    font_path = 'C:/Windows/Fonts/simhei.ttf'
-                    if not os.path.exists(font_path):
-                        font_path = '/usr/share/fonts/truetype/wqy/wqy-microhei.ttc'
-                
-                pdfmetrics.registerFont(TTFont('ChineseFont', font_path))
-                chinese_font = 'ChineseFont'
-            except Exception as font_error:
-                logger.error(f"字体注册失败: {str(font_error)}")
-                chinese_font = 'Helvetica'
+                if os.path.exists(font_path):
+                    if subfont_index is not None:
+                        pdfmetrics.registerFont(TTFont(font_name, font_path, subfontIndex=subfont_index))
+                    else:
+                        pdfmetrics.registerFont(TTFont(font_name, font_path))
+                    chinese_font = font_name
+                    break
+            except Exception:
+                continue
+
+        if chinese_font == 'Helvetica':
+            try:
+                pdfmetrics.registerFont(UnicodeCIDFont('STSong-Light'))
+                chinese_font = 'STSong-Light'
+            except Exception:
+                pass
         
         # 创建PDF文档
         doc = SimpleDocTemplate(
@@ -919,19 +961,48 @@ def _generate_pdf_content(title: str, content: str, course: Course) -> tuple:
             firstLineIndent=0,
             backColor=colors.HexColor('#f8f9fa')
         )
+
+        # 三级标题样式
+        heading3_style = ParagraphStyle(
+            'Heading3Style',
+            parent=styles['Heading3'],
+            fontSize=13,
+            leading=19,
+            spaceBefore=12,
+            spaceAfter=8,
+            fontName=chinese_font,
+            textColor=colors.HexColor('#2c3e50'),
+            leftIndent=30,
+            firstLineIndent=0
+        )
+
+        # 四级标题样式
+        heading4_style = ParagraphStyle(
+            'Heading4Style',
+            parent=styles['Heading3'],
+            fontSize=12,
+            leading=18,
+            spaceBefore=10,
+            spaceAfter=6,
+            fontName=chinese_font,
+            textColor=colors.HexColor('#555555'),
+            leftIndent=40,
+            firstLineIndent=0
+        )
         
         # 正文样式
         body_style = ParagraphStyle(
             'BodyStyle',
             parent=styles['Normal'],
             fontSize=12,
-            leading=18,
+            leading=20,
             spaceBefore=6,
             spaceAfter=6,
             fontName=chinese_font,
             textColor=colors.HexColor('#2c3e50'),
             alignment=TA_LEFT,
             wordWrap='CJK',
+            splitLongWords=False,
             firstLineIndent=24,
             leftIndent=12
         )
@@ -1016,6 +1087,37 @@ def _generate_pdf_content(title: str, content: str, course: Course) -> tuple:
                         current_list_items.append(
                             Paragraph(item['text'], list_style)
                         )
+                    elif item['type'] == 'h3':
+                        if current_list_items:
+                            story.append(ListFlowable(
+                                current_list_items,
+                                bulletType='bullet',
+                                bulletColor=colors.HexColor('#3498db'),
+                                bulletFontName=chinese_font,
+                                bulletFontSize=8,
+                                leftIndent=40,
+                                bulletDedent=20,
+                                spaceBefore=10,
+                                spaceAfter=10
+                            ))
+                            current_list_items = []
+                        story.append(Spacer(1, 10))
+                        story.append(Paragraph(item['text'], heading3_style))
+                    elif item['type'] == 'h4':
+                        if current_list_items:
+                            story.append(ListFlowable(
+                                current_list_items,
+                                bulletType='bullet',
+                                bulletColor=colors.HexColor('#3498db'),
+                                bulletFontName=chinese_font,
+                                bulletFontSize=8,
+                                leftIndent=40,
+                                bulletDedent=20,
+                                spaceBefore=10,
+                                spaceAfter=10
+                            ))
+                            current_list_items = []
+                        story.append(Paragraph(item['text'], heading4_style))
                     else:  # paragraph
                         if current_list_items:
                             story.append(ListFlowable(
@@ -1135,6 +1237,128 @@ def save_teaching_material_to_kb(course_id: int, title: str, file_base64: str, f
     except Exception as e:
         current_app.logger.error(f"保存教学资料到知识库失败: {str(e)}")
         return {"success": False, "error": str(e)}
+
+def generate_study_report(course_id: int, selected_knowledge_ids: List[int] = None) -> Dict:
+    """生成学生学习总结报告
+
+    Args:
+        course_id (int): 课程ID
+        selected_knowledge_ids (List[int], optional): 选中的知识库ID列表
+
+    Returns:
+        Dict: 包含生成的学习指导报告内容和文件信息
+    """
+    try:
+        course = Course.get_by_id(course_id)
+        if not course:
+            return {"error": "课程不存在"}
+
+        # 1. 获取本课程的知识库资料
+        relevant_docs = _get_selected_knowledge_content(course_id, selected_knowledge_ids)
+
+        # 2. 构造DeepSeek API提示词（学生视角）
+        prompt = f"""
+你是一位专业的学习助手，需要为《{course.name}》课程制作一份学习总结报告。
+
+相关课程资料：
+{relevant_docs}
+
+请根据以上课程资料，生成一份完整的学习总结报告，包含以下内容：
+
+1. 课程核心知识点概述
+2. 重点知识详解（详细解释关键概念和原理）
+3. 难点分析与突破方法
+4. 知识点之间的关联关系
+5. 学习方法建议
+6. 常见易错点提醒
+7. 自测练习题（包含选择题、判断题和简答题）
+
+要求：
+- 语言通俗易懂，适合学生阅读
+- 重点突出，条理清晰
+- 结合课程资料中的具体内容
+- 提供实用的学习策略和记忆技巧
+- 自测题目要有参考答案
+- 知识点关联关系可用mermaid图表呈现（使用flowchart TD语法），注意：节点文字必须用英文双引号包裹，如A["知识点A"]，不要使用裸文字如A[知识点A]，括号等特殊字符必须在引号内
+
+请用中文输出，结构化呈现。
+"""
+
+        messages = [
+            {"role": "system", "content": '你是一位专业的学习助手，擅长为学生制作学习总结报告。当使用mermaid图表时，严格使用flowchart TD语法，所有节点文字必须用英文双引号包裹（如A["文字内容"]），节点ID不能包含括号等特殊字符。'},
+            {"role": "user", "content": prompt}
+        ]
+
+        # 3. 调用DeepSeek API生成内容
+        ai_content = chat_deepseek(messages)
+        if not ai_content:
+            raise ValueError("DeepSeek API返回空响应")
+
+        # 4. 生成PDF文件
+        file_base64, filename = _generate_pdf_content(
+            title=f"《{course.name}》学习总结报告",
+            content=ai_content,
+            course=course
+        )
+
+        return {
+            "content": ai_content,
+            "file_base64": file_base64,
+            "filename": filename,
+            "title": f"《{course.name}》学习总结报告",
+            "download_ready": True,
+            "file_type": "pdf"
+        }
+
+    except Exception as e:
+        logger.error(f"生成学习指导报告失败: {str(e)}")
+        return {"error": f"生成失败: {str(e)}"}
+
+
+def generate_mindmap(course_id: int, selected_knowledge_ids: List[int] = None) -> Dict:
+    """生成思维导图（Markdown格式，供Markmap渲染）
+
+    Args:
+        course_id (int): 课程ID
+        selected_knowledge_ids (List[int], optional): 选中的知识库ID列表
+
+    Returns:
+        Dict: 包含生成的Markdown内容
+    """
+    try:
+        course = Course.get_by_id(course_id)
+        if not course:
+            return {"error": "课程不存在"}
+
+        relevant_docs = _get_selected_knowledge_content(course_id, selected_knowledge_ids)
+
+        prompt = f"""
+你是一位专业的学习助手，擅长将课程内容提炼为结构化的思维导图。
+
+相关课程资料：
+{relevant_docs}
+
+请根据以上课程资料，提炼出结构化的知识体系，严格使用 Markdown 无序列表格式输出（用缩进表示层级关系）。不要包含任何其他解释性文字、标题或代码块标记，只输出纯 Markdown 列表。每个层级使用 2 个空格缩进。最多 4 个层级。
+"""
+
+        messages = [
+            {"role": "system", "content": "你是一位专业的学习助手，擅长将课程内容提炼为结构化的思维导图。只输出纯Markdown无序列表，不要输出任何其他内容。"},
+            {"role": "user", "content": prompt}
+        ]
+
+        ai_content = chat_deepseek(messages)
+        if not ai_content:
+            raise ValueError("DeepSeek API返回空响应")
+
+        return {
+            "content": ai_content,
+            "title": f"《{course.name}》知识思维导图"
+        }
+
+    except Exception as e:
+        logger.error(f"生成思维导图失败: {str(e)}")
+        return {"error": f"生成失败: {str(e)}"}
+
 
 def get_marp_themes() -> List[str]:
     """获取可用的Marp主题列表"""

@@ -513,6 +513,46 @@
         </div>
         {% endif %}
 
+        <!-- 学生AI助手模块 -->
+        {% if is_student %}
+        <div class="card mb-4">
+            <div class="card-header bg-transparent border-0">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle p-2 me-2" style="background: rgba(13, 202, 240, 0.1);">
+                        <i class="fas fa-robot" style="color: #0dcaf0;"></i>
+                    </div>
+                    <h5 class="mb-0">AI 助手</h5>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-3">
+                    <button type="button" class="btn btn-light text-start" id="generateStudyReportBtn">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle p-2 me-3" style="background: rgba(13, 202, 240, 0.1);">
+                                <i class="fas fa-file-alt" style="color: #0dcaf0;"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">智能指导</h6>
+                                <small class="text-muted">AI生成学习指导报告，总结重难点</small>
+                            </div>
+                        </div>
+                    </button>
+                    <button type="button" class="btn btn-light text-start" id="generateMindmapBtn">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle p-2 me-3" style="background: rgba(13, 202, 240, 0.1);">
+                                <i class="fas fa-project-diagram" style="color: #0dcaf0;"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">思维导图</h6>
+                                <small class="text-muted">AI生成知识思维导图</small>
+                            </div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
         <!-- 在右侧学生列表下方添加错题本模块 -->
         {% if is_student %}
         <div class="card mb-4">
@@ -615,6 +655,189 @@
     </div>
 </div>
 
+<!-- 学生知识选择模态框 -->
+<div class="modal fade" id="studentKnowledgeSelectionModal" tabindex="-1"
+    aria-labelledby="studentKnowledgeSelectionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="studentKnowledgeSelectionModalLabel">智能指导</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    请选择要用于生成学习指导报告的知识条目（可多选）
+                </div>
+                <h6><i class="fas fa-lightbulb me-2"></i>选择知识条目</h6>
+                <div id="studentKnowledgeItemsContainer" class="list-group"
+                    style="max-height: 400px; overflow-y: auto;">
+                    <div class="text-center py-4">
+                        <i class="fas fa-spinner fa-spin fa-2x"></i>
+                        <p>加载知识库内容中...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="studentStartGenerationBtn">
+                    <i class="fas fa-play me-1"></i>开始生成
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 学习指导报告生成进度模态框 -->
+<div class="modal fade" id="studentProgressModal" tabindex="-1" aria-labelledby="studentProgressModalLabel"
+    aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="studentProgressModalLabel">正在生成学习指导报告</h5>
+            </div>
+            <div class="modal-body text-center">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">生成中...</span>
+                </div>
+                <p class="mb-0">AI正在分析课程资料并生成学习指导报告，请稍候...</p>
+                <div class="progress mt-3">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
+                        style="width: 100%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 学习指导报告结果模态框 -->
+<div class="modal fade" id="studentResultModal" tabindex="-1" aria-labelledby="studentResultModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="studentResultModalLabel">学习指导报告</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                <div id="studentResultContent">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-primary" id="studentDownloadPdfBtn">
+                    <i class="fas fa-file-pdf me-1"></i>导出 PDF
+                </button>
+                <button type="button" class="btn btn-outline-primary" id="studentDownloadMdBtn">
+                    <i class="fas fa-file-alt me-1"></i>导出 Markdown
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 学生错误提示模态框 -->
+<div class="modal fade" id="studentErrorModal" tabindex="-1" aria-labelledby="studentErrorModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="studentErrorModalLabel">生成失败</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <span id="studentErrorMessage">生成学习指导报告时发生错误，请稍后重试。</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 思维导图知识选择模态框 -->
+<div class="modal fade" id="mindmapKnowledgeSelectionModal" tabindex="-1"
+    aria-labelledby="mindmapKnowledgeSelectionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="mindmapKnowledgeSelectionModalLabel">思维导图</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    请选择要用于生成思维导图的知识条目（可多选）
+                </div>
+                <h6><i class="fas fa-lightbulb me-2"></i>选择知识条目</h6>
+                <div id="mindmapKnowledgeItemsContainer" class="list-group"
+                    style="max-height: 400px; overflow-y: auto;">
+                    <div class="text-center py-4">
+                        <i class="fas fa-spinner fa-spin fa-2x"></i>
+                        <p>加载知识库内容中...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="mindmapStartGenerationBtn">
+                    <i class="fas fa-play me-1"></i>开始生成
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 思维导图生成进度模态框 -->
+<div class="modal fade" id="mindmapProgressModal" tabindex="-1" aria-labelledby="mindmapProgressModalLabel"
+    aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="mindmapProgressModalLabel">正在生成思维导图</h5>
+            </div>
+            <div class="modal-body text-center">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">生成中...</span>
+                </div>
+                <p class="mb-0">AI正在分析课程资料并生成思维导图，请稍候...</p>
+                <div class="progress mt-3">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
+                        style="width: 100%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 思维导图结果模态框 -->
+<div class="modal fade" id="mindmapResultModal" tabindex="-1" aria-labelledby="mindmapResultModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title" id="mindmapResultModalLabel">知识思维导图</h5>
+                    <small class="text-muted" id="mindmapResultSubtitle"></small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" style="max-height: 70vh; overflow: hidden; padding: 0;">
+                <div id="mindmapContainer" style="width: 100%; height: 600px;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-primary" id="mindmapExportSvgBtn">
+                    <i class="fas fa-download me-1"></i>导出 SVG
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- 知识图谱模态框 -->
 <div class="modal fade" id="knowledgeGraphModal" tabindex="-1" aria-labelledby="knowledgeGraphModalLabel"
     aria-hidden="true">
@@ -630,6 +853,428 @@
         </div>
     </div>
 </div>
+
+<!-- 学生智能指导功能JS -->
+{% if is_student %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const studyReportBtn = document.getElementById('generateStudyReportBtn');
+        if (!studyReportBtn) return;
+
+        let studentGeneratedData = null;
+        const courseId = "{{ course.id }}";
+
+        const studentProgressModal = new bootstrap.Modal(document.getElementById('studentProgressModal'));
+        const studentResultModal = new bootstrap.Modal(document.getElementById('studentResultModal'));
+        const studentErrorModal = new bootstrap.Modal(document.getElementById('studentErrorModal'));
+
+        // 智能指导按钮点击事件
+        studyReportBtn.addEventListener('click', function () {
+            const container = document.getElementById('studentKnowledgeItemsContainer');
+            container.innerHTML = '<div class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x"></i><p>加载知识库内容中...</p></div>';
+
+            const selectionModal = new bootstrap.Modal(document.getElementById('studentKnowledgeSelectionModal'));
+            selectionModal.show();
+
+            fetch(`/course/${courseId}/knowledge_entries`)
+                .then(response => response.json())
+                .then(data => {
+                    container.innerHTML = '';
+
+                    if (data.length === 0) {
+                        container.innerHTML = '<div class="alert alert-warning">该课程暂无知识库内容</div>';
+                        return;
+                    }
+
+                    data.forEach(item => {
+                        const listItem = document.createElement('div');
+                        listItem.className = 'list-group-item';
+                        listItem.innerHTML = `
+                            <div class="form-check">
+                                <input class="form-check-input student-knowledge-checkbox"
+                                       type="checkbox"
+                                       value="${item.id}"
+                                       id="student-knowledge-${item.id}">
+                                <label class="form-check-label w-100" for="student-knowledge-${item.id}">
+                                    <h6 class="mb-1">${item.title}</h6>
+                                    <div class="text-muted small">
+                                        ${item.content_preview}
+                                    </div>
+                                    <div class="mt-1">
+                                        <span class="badge bg-secondary">${item.category || '未分类'}</span>
+                                        <span class="badge bg-info">${item.type}</span>
+                                    </div>
+                                </label>
+                            </div>
+                        `;
+                        container.appendChild(listItem);
+                    });
+                })
+                .catch(error => {
+                    console.error('获取知识库失败:', error);
+                    container.innerHTML = '<div class="alert alert-danger">加载知识库内容失败</div>';
+                });
+        });
+
+        // 开始生成按钮事件
+        document.getElementById('studentStartGenerationBtn').addEventListener('click', function () {
+            const selectedIds = Array.from(
+                document.querySelectorAll('.student-knowledge-checkbox:checked')
+            ).map(checkbox => parseInt(checkbox.value));
+
+            const selectionModalEl = document.getElementById('studentKnowledgeSelectionModal');
+            const selModal = bootstrap.Modal.getInstance(selectionModalEl);
+            selModal.hide();
+
+            // 监听选择模态框完全关闭后再打开进度模态框
+            selectionModalEl.addEventListener('hidden.bs.modal', function handler() {
+                selectionModalEl.removeEventListener('hidden.bs.modal', handler);
+                studentProgressModal.show();
+
+                // 调用API生成学习指导报告
+                fetch('/course/api/generate_study_report', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        course_id: parseInt(courseId),
+                        selected_knowledge_ids: selectedIds
+                    }),
+                    credentials: 'same-origin'
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(data => {
+                                throw new Error(data.error || `HTTP Error: ${response.status}`);
+                            });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        studentProgressModal.hide();
+
+                        if (data.error) {
+                            showStudentError(data.error);
+                        } else if (data.success) {
+                            studentGeneratedData = data;
+                            showStudentResult(data);
+                        } else {
+                            showStudentError('响应数据格式错误');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('生成失败:', error);
+                        studentProgressModal.hide();
+
+                        let errorMessage = '生成失败，请重试。';
+                        if (error.message.includes('HTTP Error: 401')) {
+                            errorMessage = '登录已过期，请重新登录。';
+                        } else if (error.message.includes('HTTP Error: 500')) {
+                            errorMessage = '服务器内部错误，请稍后重试。';
+                        } else if (error.message) {
+                            errorMessage = error.message;
+                        }
+                        showStudentError(errorMessage);
+                    });
+            });
+        });
+
+        // 显示学习指导报告结果
+        function showStudentResult(data) {
+            const contentDiv = document.getElementById('studentResultContent');
+            let formattedContent = data.content;
+
+            // mermaid代码块转为带样式的<pre>代码显示（预览中不渲染图表）
+            formattedContent = formattedContent.replace(/```mermaid\n([\s\S]*?)```/g, function (match, code) {
+                return '<pre style="background:#f4f4f4;border:1px solid #ddd;border-radius:6px;padding:12px;overflow-x:auto;font-size:13px;color:#333;"><code>' + code.trim().replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</code></pre>';
+            });
+
+            formattedContent = formattedContent
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+                .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+                .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+                .replace(/^#### (.*$)/gm, '<h4>$1</h4>')
+                .replace(/^\* (.*$)/gm, '<li>$1</li>')
+                .replace(/^(\d+\.) (.*$)/gm, '<li>$2</li>')
+                .replace(/\n\n/g, '</p><p>')
+                .replace(/\n/g, '<br>');
+
+            formattedContent = formattedContent.replace(/(<li>.*<\/li>)/g, function (match) {
+                return '<ul>' + match.replace(/<\/li><li>/g, '</li><li>') + '</ul>';
+            });
+
+            if (!formattedContent.includes('<p>')) {
+                formattedContent = '<p>' + formattedContent + '</p>';
+            }
+
+            contentDiv.innerHTML = `
+                <div class="teaching-outline-content">
+                    <div class="alert alert-success" role="alert">
+                        <i class="fas fa-check-circle me-2"></i>
+                        学习指导报告已成功生成！标题：<strong>${data.title}</strong>
+                    </div>
+                    <div class="card">
+                        <div class="card-body">
+                            ${formattedContent}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            studentGeneratedData = data;
+            studentResultModal.show();
+        }
+
+        // 显示错误信息
+        function showStudentError(message) {
+            const errorMessageElement = document.getElementById('studentErrorMessage');
+            if (errorMessageElement) {
+                errorMessageElement.textContent = message;
+                studentErrorModal.show();
+            } else {
+                alert(message);
+            }
+        }
+
+        // 导出PDF
+        document.getElementById('studentDownloadPdfBtn').addEventListener('click', function () {
+            if (!studentGeneratedData || !studentGeneratedData.file_base64) {
+                showStudentError('文件不存在，请重新生成。');
+                return;
+            }
+
+            try {
+                const byteCharacters = atob(studentGeneratedData.file_base64);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], { type: 'application/pdf' });
+
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = studentGeneratedData.filename || '学习指导报告.pdf';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error('下载失败:', error);
+                showStudentError('PDF下载失败，请重试。');
+            }
+        });
+
+        // 导出Markdown
+        document.getElementById('studentDownloadMdBtn').addEventListener('click', function () {
+            if (!studentGeneratedData || !studentGeneratedData.content) {
+                showStudentError('内容不存在，请重新生成。');
+                return;
+            }
+
+            try {
+                const blob = new Blob([studentGeneratedData.content], { type: 'text/markdown;charset=utf-8' });
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                const baseName = (studentGeneratedData.filename || '学习报告').replace(/\.[^.]+$/, '');
+                link.download = baseName + '.md';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error('下载失败:', error);
+                showStudentError('Markdown下载失败，请重试。');
+            }
+        });
+
+        // ==================== 思维导图功能 ====================
+        const mindmapBtn = document.getElementById('generateMindmapBtn');
+        if (!mindmapBtn) return;
+
+        let mindmapData = null;
+
+        const mindmapProgressModal = new bootstrap.Modal(document.getElementById('mindmapProgressModal'));
+        const mindmapResultModal = new bootstrap.Modal(document.getElementById('mindmapResultModal'));
+
+        // 思维导图按钮点击事件
+        mindmapBtn.addEventListener('click', function () {
+            const container = document.getElementById('mindmapKnowledgeItemsContainer');
+            container.innerHTML = '<div class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x"></i><p>加载知识库内容中...</p></div>';
+
+            const selectionModal = new bootstrap.Modal(document.getElementById('mindmapKnowledgeSelectionModal'));
+            selectionModal.show();
+
+            fetch(`/course/${courseId}/knowledge_entries`)
+                .then(response => response.json())
+                .then(data => {
+                    container.innerHTML = '';
+                    if (data.length === 0) {
+                        container.innerHTML = '<div class="alert alert-warning">该课程暂无知识库内容</div>';
+                        return;
+                    }
+                    data.forEach(item => {
+                        const listItem = document.createElement('div');
+                        listItem.className = 'list-group-item';
+                        listItem.innerHTML = `
+                            <div class="form-check">
+                                <input class="form-check-input mindmap-knowledge-checkbox"
+                                       type="checkbox" value="${item.id}"
+                                       id="mindmap-knowledge-${item.id}">
+                                <label class="form-check-label w-100" for="mindmap-knowledge-${item.id}">
+                                    <h6 class="mb-1">${item.title}</h6>
+                                    <div class="text-muted small">${item.content_preview}</div>
+                                    <div class="mt-1">
+                                        <span class="badge bg-secondary">${item.category || '未分类'}</span>
+                                        <span class="badge bg-info">${item.type}</span>
+                                    </div>
+                                </label>
+                            </div>
+                        `;
+                        container.appendChild(listItem);
+                    });
+                })
+                .catch(error => {
+                    console.error('获取知识库失败:', error);
+                    container.innerHTML = '<div class="alert alert-danger">加载知识库内容失败</div>';
+                });
+        });
+
+        // 思维导图开始生成按钮
+        document.getElementById('mindmapStartGenerationBtn').addEventListener('click', function () {
+            const selectedIds = Array.from(
+                document.querySelectorAll('.mindmap-knowledge-checkbox:checked')
+            ).map(checkbox => parseInt(checkbox.value));
+
+            const selectionModalEl = document.getElementById('mindmapKnowledgeSelectionModal');
+            const selModal = bootstrap.Modal.getInstance(selectionModalEl);
+            selModal.hide();
+
+            selectionModalEl.addEventListener('hidden.bs.modal', function handler() {
+                selectionModalEl.removeEventListener('hidden.bs.modal', handler);
+                mindmapProgressModal.show();
+
+                fetch('/course/api/generate_mindmap', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        course_id: parseInt(courseId),
+                        selected_knowledge_ids: selectedIds
+                    }),
+                    credentials: 'same-origin'
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(data => {
+                                throw new Error(data.error || `HTTP Error: ${response.status}`);
+                            });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        mindmapProgressModal.hide();
+                        if (data.error) {
+                            showStudentError(data.error);
+                        } else if (data.success) {
+                            mindmapData = data;
+                            renderMindmap(data.content, data.title);
+                        } else {
+                            showStudentError('响应数据格式错误');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('生成失败:', error);
+                        mindmapProgressModal.hide();
+                        let msg = '生成失败，请重试。';
+                        if (error.message) msg = error.message;
+                        showStudentError(msg);
+                    });
+            });
+        });
+
+        // 使用Markmap渲染思维导图
+        function renderMindmap(markdown, title) {
+            const container = document.getElementById('mindmapContainer');
+            container.innerHTML = '';
+            document.getElementById('mindmapResultSubtitle').textContent = title || '';
+
+            try {
+                const { Transformer, Markmap } = window.markmap;
+                const transformer = new Transformer();
+                const { root } = transformer.transform(markdown);
+
+                const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                svg.id = 'mindmapSvg';
+                svg.style.width = '100%';
+                svg.style.height = '100%';
+                container.appendChild(svg);
+
+                const mm = Markmap.create(svg, {
+                    maxWidth: 300,
+                    initialExpandLevel: 3,
+                    spacingVertical: 8,
+                    spacingHorizontal: 80,
+                    autoFit: true,
+                    paddingX: 16,
+                }, root);
+
+                mindmapResultModal.show();
+
+                // 模态框显示后重新适配
+                document.getElementById('mindmapResultModal').addEventListener('shown.bs.modal', function () {
+                    mm.fit();
+                }, { once: true });
+            } catch (e) {
+                console.error('Markmap渲染失败:', e);
+                container.innerHTML = '<div class="alert alert-danger p-4 m-4">思维导图渲染失败: ' + e.message + '</div>';
+                mindmapResultModal.show();
+            }
+        }
+
+        // 导出SVG
+        document.getElementById('mindmapExportSvgBtn').addEventListener('click', function () {
+            const svg = document.getElementById('mindmapSvg');
+            if (!svg) {
+                showStudentError('没有可导出的思维导图');
+                return;
+            }
+            try {
+                const svgData = new XMLSerializer().serializeToString(svg);
+                const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = (mindmapData ? mindmapData.title : '思维导图') + '.svg';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error('SVG导出失败:', error);
+                showStudentError('SVG导出失败，请重试。');
+            }
+        });
+    });
+</script>
+{% endif %}
+
+<!-- Markmap思维导图库（学生和教师均可用） -->
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script src="https://cdn.jsdelivr.net/npm/markmap-lib@0.18.12/dist/browser/index.iife.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/markmap-view@0.18.12/dist/browser/index.js"></script>
+
+<!-- Mermaid图表渲染库 -->
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: false, theme: 'default', securityLevel: 'loose' });</script>
 
 <!-- 新增知识点模态框 -->
 {% if is_teacher %}
@@ -1073,14 +1718,14 @@
     .card {
         border: 1px solid var(--primary-soft, #D3E4DA);
         background: var(--card-background);
-        box-shadow: var(--shadow-sm, 0 4px 12px rgba(37,113,74,0.04));
+        box-shadow: var(--shadow-sm, 0 4px 12px rgba(37, 113, 74, 0.04));
         border-radius: var(--radius-lg, 24px);
         transition: all 0.3s ease;
         overflow: hidden;
     }
 
     .card:hover {
-        box-shadow: var(--shadow-md, 0 8px 24px rgba(37,113,74,0.08));
+        box-shadow: var(--shadow-md, 0 8px 24px rgba(37, 113, 74, 0.08));
     }
 
     /* 按钮样式
@@ -2171,6 +2816,11 @@
             // 格式化内容显示
             let formattedContent = data.content;
 
+            // mermaid代码块转为带样式的<pre>代码显示（预览中不渲染图表）
+            formattedContent = formattedContent.replace(/```mermaid\n([\s\S]*?)```/g, function (match, code) {
+                return '<pre style="background:#f4f4f4;border:1px solid #ddd;border-radius:6px;padding:12px;overflow-x:auto;font-size:13px;color:#333;"><code>' + code.trim().replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</code></pre>';
+            });
+
             if (data.material_type === 'syllabus') {
                 // 简单的markdown到HTML转换
                 formattedContent = formattedContent
@@ -2281,6 +2931,7 @@
         // 添加调试信息
         console.log('页面加载完成，课程ID:', courseId);
     });
+
     // 全局变量存储生成的题目数据
     let currentQuestions = [];
     // 全局变量存储选中的知识库ID（用于考核）
