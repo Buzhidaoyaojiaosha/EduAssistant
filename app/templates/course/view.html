@@ -1276,6 +1276,58 @@
 <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 <script>mermaid.initialize({ startOnLoad: false, theme: 'default', securityLevel: 'loose' });</script>
 
+<!-- 知识图谱（学生和教师均可访问） -->
+<script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const modal = document.getElementById("knowledgeGraphModal");
+        const courseId = "{{ course.id }}";
+
+        if (!modal) return;
+
+        modal.addEventListener("shown.bs.modal", function () {
+            const container = document.getElementById("viz");
+            if (!container) return;
+
+            container.innerHTML = "";
+
+            fetch(`/course/${courseId}/view_knowledge_graph`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`请求失败，状态码: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const nodes = new vis.DataSet(data.nodes);
+                    const edges = new vis.DataSet(data.edges);
+
+                    const options = {
+                        nodes: {
+                            shape: "dot",
+                            size: 15,
+                            font: { size: 14, color: "#000" }
+                        },
+                        edges: {
+                            arrows: "to",
+                            font: { align: "top" }
+                        },
+                        physics: {
+                            stabilization: false,
+                            barnesHut: { springLength: 150 }
+                        }
+                    };
+
+                    new vis.Network(container, { nodes, edges }, options);
+                })
+                .catch(error => {
+                    console.error("知识图谱加载失败:", error);
+                    container.innerHTML = "<p class='text-danger'>加载图谱失败，请稍后再试。</p>";
+                });
+        });
+    });
+</script>
+
 <!-- 新增知识点模态框 -->
 {% if is_teacher %}
 <div class="modal fade" id="addKnowledgePointModal" tabindex="-1" aria-labelledby="addKnowledgePointModalLabel"
@@ -2449,8 +2501,6 @@
 </style>
 
 
-<script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
-
 <script>
     function editKnowledgePoint(id, name, description, parentId) {
         document.getElementById('edit_kp_id').value = id;
@@ -2491,54 +2541,6 @@
         modal.show();
     }
 
-    document.addEventListener("DOMContentLoaded", function () {
-        const modal = document.getElementById("knowledgeGraphModal");
-        const courseId = "{{ course.id }}";
-
-        if (!modal) return;
-
-        modal.addEventListener("shown.bs.modal", function () {
-            const container = document.getElementById("viz");
-            if (!container) return;
-
-            // 清空旧内容，避免多次渲染叠加
-            container.innerHTML = "";
-
-            fetch(`/course/${courseId}/view_knowledge_graph`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`请求失败，状态码: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    const nodes = new vis.DataSet(data.nodes);
-                    const edges = new vis.DataSet(data.edges);
-
-                    const options = {
-                        nodes: {
-                            shape: "dot",
-                            size: 15,
-                            font: { size: 14, color: "#000" }
-                        },
-                        edges: {
-                            arrows: "to",
-                            font: { align: "top" }
-                        },
-                        physics: {
-                            stabilization: false,
-                            barnesHut: { springLength: 150 }
-                        }
-                    };
-
-                    new vis.Network(container, { nodes, edges }, options);
-                })
-                .catch(error => {
-                    console.error("知识图谱加载失败:", error);
-                    container.innerHTML = "<p class='text-danger'>加载图谱失败，请稍后再试。</p>";
-                });
-        });
-    });
     document.addEventListener('DOMContentLoaded', function () {
         const generateBtn = document.getElementById('generateTeachingOutlineBtn');
         const progressModal = new bootstrap.Modal(document.getElementById('generateProgressModal'));
