@@ -64,38 +64,6 @@ class RAGService:
         print(text)
         return text
     
-    # 已废弃：改用千问多模态API直接分析视频，不再需要提取音频+语音识别
-    # @staticmethod
-    # def _extract_audio_from_video(file_path: str) -> str:
-    #     """从视频文件中提取音频内容并转为文本。"""
-    #     try:
-    #         video = VideoFileClip(file_path)
-    #         audio = video.audio
-    #         base, _ = os.path.splitext(file_path)
-    #         audio_file_path = base + '.wav'
-    #         audio.write_audiofile(audio_file_path, fps=16000, nbytes=2, codec='pcm_s16le', ffmpeg_params=['-ac', '1'])
-    #         text = RAGService._convert_audio_to_text(audio_file_path)
-    #         return text
-    #     except Exception as e:
-    #         raise ValueError(f"处理视频文件失败: {str(e)}")
-
-    # 已废弃：改用千问多模态API直接分析视频
-    # @staticmethod
-    # def _convert_audio_to_text(audio_file_path: str) -> str:
-    #     """将音频文件转为文本，使用 Google Web Speech API。"""
-    #     import speech_recognition as sr
-    #     recognizer = sr.Recognizer()
-    #     try:
-    #         with sr.AudioFile(audio_file_path) as source:
-    #             audio_data = recognizer.record(source)
-    #             text = recognizer.recognize_google(audio_data, language="zh-CN")
-    #         return text
-    #     except sr.UnknownValueError:
-    #         raise ValueError("无法识别音频内容。")
-    #     except sr.RequestError as e:
-    #         raise ValueError(f"Google API 请求失败: {e}")
-    #     except Exception as e:
-    #         raise ValueError(f"音频转文本失败: {str(e)}")
 
     @staticmethod
     def _extract_knowledge_from_video_via_qwen(file_path: str, title: str):

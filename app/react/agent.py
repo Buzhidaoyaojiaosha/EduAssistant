@@ -1,12 +1,9 @@
 #from vertexai.generative_models import GenerativeModel 
-#from src.tools.serp import search as google_search
-#from src.tools.google import google_search, fetch_page_content
-#from src.tools.google import web_search as google_search
-#from .tools.wiki import search as wiki_search
 #from .tools.bocha import bocha_search
 #from .tools.sql import *
 import app.react.tools.analyze_agent
-import app.react.tools.wiki
+import app.react.tools.bocha
+import app.react.tools.baidu
 #from vertexai.generative_models import Part 
 from app.utils.io import write_to_file
 from app.utils.logging import logger
@@ -24,6 +21,8 @@ from typing import Union
 from typing import List 
 from typing import Dict 
 import json
+import os
+from datetime import datetime
 from app.services.user_service import UserService
 
 from playhouse.shortcuts import model_to_dict
@@ -34,7 +33,20 @@ Observation = Union[str, Exception]
 PROMPT_TEMPLATE_PATH = "./data/input/react-Chinese.txt"
 OUTPUT_TRACE_PATH = "./data/output/trace.txt"
 MAX_EXTERNAL_SEARCH_ACTIONS_PER_ITERATION = 2
-EXTERNAL_SEARCH_TOOL_NAMES = {"google_search", "wikipedia", "bocha_search"}
+EXTERNAL_SEARCH_TOOL_NAMES = {"bocha_search", "baidu_search"}
+
+
+def _daily_trace_path(base_path: str = OUTPUT_TRACE_PATH) -> str:
+    """Build a date-partitioned trace path like trace-YYYY-MM-DD.txt."""
+    directory, filename = os.path.split(base_path)
+    stem, ext = os.path.splitext(filename)
+    date_suffix = datetime.now().strftime("%Y-%m-%d")
+    return os.path.join(directory, f"{stem}-{date_suffix}{ext or '.txt'}")
+
+
+def _write_trace(content: str) -> None:
+    """Write agent trace content to today's partition file."""
+    write_to_file(path=_daily_trace_path(), content=content)
 
 class Choice(BaseModel):
     """
@@ -137,7 +149,7 @@ class Agent:
         """
         if role != "system":
             self.messages.append(Message(role=role, content=content))
-        write_to_file(path=OUTPUT_TRACE_PATH, content=f"{role}: {content}\n")
+        _write_trace(content=f"{role}: {content}\n")
 
     def add_history(self, role: str, content: str) -> None:
         """
@@ -167,7 +179,7 @@ class Agent:
         """
         self.current_iteration += 1
         logger.info(f"Starting iteration {self.current_iteration}")
-        write_to_file(path=OUTPUT_TRACE_PATH, content=f"\n{'='*50}\nIteration {self.current_iteration}\n{'='*50}\n")
+        _write_trace(content=f"\n{'='*50}\nIteration {self.current_iteration}\n{'='*50}\n")
 
         if self.current_iteration > self.max_iterations:
             logger.warning("Reached maximum iterations. Stopping.")

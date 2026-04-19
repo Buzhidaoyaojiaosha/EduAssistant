@@ -16,10 +16,14 @@ class Config:
     # Chroma配置
     CHROMA_PERSIST_DIRECTORY = os.environ.get('CHROMA_PERSIST_DIRECTORY') or 'chroma_db'
 
-    # Google搜索配置
-    GOOGLE_SEARCH_API_KEY = os.environ.get('GOOGLE_SEARCH_API_KEY')
-    GOOGLE_SEARCH_CX = os.environ.get('GOOGLE_SEARCH_CX')
-    GOOGLE_SEARCH_PROXY = os.environ.get('GOOGLE_SEARCH_PROXY') or 'NO_PROXY'
+    BOCHA_API_KEY = os.environ.get('BOCHA_API_KEY')
+    BOCHA_API_URL = os.environ.get('BOCHA_API_URL') or 'https://api.bocha.cn/v1/web-search'
+    BOCHA_SEARCH_COUNT = int(os.environ.get('BOCHA_SEARCH_COUNT') or 10)
+    BOCHA_SEARCH_TIMEOUT = int(os.environ.get('BOCHA_SEARCH_TIMEOUT') or 10)
+    BAIDU_SEARCH_API_URL = os.environ.get('BAIDU_SEARCH_API_URL') or 'https://qianfan.baidubce.com/v2/ai_search/web_search'
+    BAIDU_SEARCH_API_KEY = os.environ.get('BAIDU_SEARCH_API_KEY')
+    BAIDU_SEARCH_TIMEOUT = int(os.environ.get('BAIDU_SEARCH_TIMEOUT') or 10)
+    BAIDU_SEARCH_TOP_K = int(os.environ.get('BAIDU_SEARCH_TOP_K') or 5)
     
     #neo4j配置
     NEO4J_URI = os.environ.get('NEO4J_URI')

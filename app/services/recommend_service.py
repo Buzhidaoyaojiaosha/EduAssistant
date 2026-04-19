@@ -1,4 +1,4 @@
-from app.react.tools.googleSearch import google_search
+from app.react.tools.bocha import bocha_search
 from app.react.tools_register import register_as_tool
 from app.react.agent import run
 # 获取推荐的基本提示词
@@ -61,17 +61,9 @@ class RecommendService:
 
     @register_as_tool(roles=['student', 'teacher'])
     @staticmethod
-    def google_search(query: str):
-        """Google搜索工具，使用Google搜索引擎联网搜索，返回搜索结果
-        Args:
-            query: query to search
-
-        Returns:
-            list: search results
-        """
-        results = google_search(query)
-
-        return results
+    def bocha_search(query: str):
+        """Bocha搜索工具，使用Bocha联网搜索并返回搜索结果。"""
+        return bocha_search(query)
 
 
 if __name__ == '__main__':

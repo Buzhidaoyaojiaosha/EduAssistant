@@ -116,6 +116,21 @@ class CourseService:
             )
         
         return query.order_by(Course.created_at.desc())
+
+    @register_as_tool(roles=["teacher"])
+    @staticmethod
+    def get_courses_by_teacher_id(teacher_id, search_query=None):
+        """根据教师ID获取其所教授课程。
+
+        Args:
+            teacher_id (int): 教师用户ID。
+            search_query (str, optional): 课程名称/代码/描述的模糊查询关键字。
+
+        Returns:
+            list: 课程对象列表（按创建时间倒序）。
+        """
+        query = CourseService.get_courses_by_teacher(teacher_id, search_query)
+        return list(query)
     
     @staticmethod
     def get_all_courses(search_query=None):
