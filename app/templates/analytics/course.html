@@ -628,6 +628,80 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
+    // 更新知识点掌握度函数（放在全局作用域，供onclick调用）
+    function updateKnowledgeMastery() {
+        const courseId = parseInt('{{ course.id }}', 10);
+        const updateProgress = document.getElementById('updateProgress');
+        const updateResult = document.getElementById('updateResult');
+        const resultMessage = document.getElementById('resultMessage');
+
+        updateProgress.style.display = 'block';
+        updateResult.style.display = 'none';
+
+        fetch(`/analytics/course/${courseId}/update_mastery`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                updateProgress.style.display = 'none';
+                updateResult.style.display = 'block';
+
+                if (data.success) {
+                    updateResult.className = 'alert';
+                    updateResult.style.background = 'rgba(25, 135, 84, 0.1)';
+                    updateResult.style.border = 'none';
+                    resultMessage.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle p-2 me-2" style="background: rgba(25, 135, 84, 0.2);">
+                        <i class="fas fa-check" style="color: #198754;"></i>
+                    </div>
+                    <span class="text-success">${data.message}</span>
+                </div>
+            `;
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 3000);
+                } else {
+                    updateResult.className = 'alert';
+                    updateResult.style.background = 'rgba(220, 53, 69, 0.1)';
+                    updateResult.style.border = 'none';
+                    resultMessage.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle p-2 me-2" style="background: rgba(220, 53, 69, 0.2);">
+                        <i class="fas fa-times" style="color: #dc3545;"></i>
+                    </div>
+                    <span class="text-danger">${data.message}</span>
+                </div>
+            `;
+                }
+            })
+            .catch(error => {
+                updateProgress.style.display = 'none';
+                updateResult.style.display = 'block';
+                updateResult.className = 'alert';
+                updateResult.style.background = 'rgba(220, 53, 69, 0.1)';
+                updateResult.style.border = 'none';
+                resultMessage.innerHTML = `
+            <div class="d-flex align-items-center">
+                <div class="rounded-circle p-2 me-2" style="background: rgba(220, 53, 69, 0.2);">
+                    <i class="fas fa-times" style="color: #dc3545;"></i>
+                </div>
+                <span class="text-danger">更新失败，请稍后重试。错误信息：${error.message}</span>
+            </div>
+        `;
+            });
+    }
+
+    // 课程跳转函数（放在全局作用域，供onchange调用）
+    function redirectToCourse(url) {
+        if (url) {
+            window.location.href = url;
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         // 计算总活动数
         let totalActivities = 0;
@@ -775,79 +849,6 @@
                 });
         });
 
-        // 更新知识点掌握度函数
-        function updateKnowledgeMastery() {
-            const courseId = parseInt('{{ course.id }}', 10);
-            const updateProgress = document.getElementById('updateProgress');
-            const updateResult = document.getElementById('updateResult');
-            const resultMessage = document.getElementById('resultMessage');
-
-            updateProgress.style.display = 'block';
-            updateResult.style.display = 'none';
-
-            fetch(`/analytics/course/${courseId}/update_mastery`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            })
-                .then(response => response.json())
-                .then(data => {
-                    updateProgress.style.display = 'none';
-                    updateResult.style.display = 'block';
-
-                    if (data.success) {
-                        updateResult.className = 'alert';
-                        updateResult.style.background = 'rgba(25, 135, 84, 0.1)';
-                        updateResult.style.border = 'none';
-                        resultMessage.innerHTML = `
-                    <div class="d-flex align-items-center">
-                        <div class="rounded-circle p-2 me-2" style="background: rgba(25, 135, 84, 0.2);">
-                            <i class="fas fa-check" style="color: #198754;"></i>
-                        </div>
-                        <span class="text-success">${data.message}</span>
-                    </div>
-                `;
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 3000);
-                    } else {
-                        updateResult.className = 'alert';
-                        updateResult.style.background = 'rgba(220, 53, 69, 0.1)';
-                        updateResult.style.border = 'none';
-                        resultMessage.innerHTML = `
-                    <div class="d-flex align-items-center">
-                        <div class="rounded-circle p-2 me-2" style="background: rgba(220, 53, 69, 0.2);">
-                            <i class="fas fa-times" style="color: #dc3545;"></i>
-                        </div>
-                        <span class="text-danger">${data.message}</span>
-                    </div>
-                `;
-                    }
-                })
-                .catch(error => {
-                    updateProgress.style.display = 'none';
-                    updateResult.style.display = 'block';
-                    updateResult.className = 'alert';
-                    updateResult.style.background = 'rgba(220, 53, 69, 0.1)';
-                    updateResult.style.border = 'none';
-                    resultMessage.innerHTML = `
-                <div class="d-flex align-items-center">
-                    <div class="rounded-circle p-2 me-2" style="background: rgba(220, 53, 69, 0.2);">
-                        <i class="fas fa-times" style="color: #dc3545;"></i>
-                    </div>
-                    <span class="text-danger">更新失败，请稍后重试。错误信息：${error.message}</span>
-                </div>
-            `;
-                });
-        }
-
-        // 课程跳转函数
-        function redirectToCourse(url) {
-            if (url) {
-                window.location.href = url;
-            }
-        }
     });
 </script>
 {% endblock %}

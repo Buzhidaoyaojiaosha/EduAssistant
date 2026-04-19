@@ -223,7 +223,7 @@ class NeuralCDMService:
                     )
                     
                     # 检查作业状态和分数
-                    if student_assignment.final_score is None:
+                    if student_assignment.final_score is None or student_assignment.total_score is None or student_assignment.total_score == 0:
                         no_score += 1
                         continue
                     
