@@ -4,6 +4,7 @@ from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.providers.deepseek import DeepSeekProvider
 from pydantic_ai.providers.openai import OpenAIProvider
 from dataclasses import dataclass
+from datetime import datetime
 
 
 import os
@@ -21,6 +22,31 @@ from app.utils.io import write_to_file
 
 
 OUTPUT_TRACE_PATH = "./data/analytics/trace.txt"
+TRACE_PREVIEW_ROWS = 5
+
+
+def _daily_trace_path(base_path: str = OUTPUT_TRACE_PATH) -> str:
+    """Build a date-partitioned trace path like trace-YYYY-MM-DD.txt."""
+    directory, filename = os.path.split(base_path)
+    stem, ext = os.path.splitext(filename)
+    date_suffix = datetime.now().strftime("%Y-%m-%d")
+    return os.path.join(directory, f"{stem}-{date_suffix}{ext or '.txt'}")
+
+
+def _write_trace(content: str) -> None:
+    """Write analytics trace content to today's partition file."""
+    write_to_file(_daily_trace_path(), content)
+
+
+def _summarize_query_result(result, preview_rows: int = TRACE_PREVIEW_ROWS) -> str:
+    """Summarize result to avoid large trace files: keep shape and a small preview."""
+    if isinstance(result, pd.DataFrame):
+        head_text = result.head(preview_rows).to_string()
+        return f"shape={result.shape}\nhead({preview_rows}):\n{head_text}"
+    if isinstance(result, pd.Series):
+        head_text = result.head(preview_rows).to_string()
+        return f"shape={result.shape}\nhead({preview_rows}):\n{head_text}"
+    return str(result)
 
 
 
@@ -78,25 +104,27 @@ async def df_query(ctx: RunContext[Deps], query: str) -> str:
     """
 
     # Print the query for debugging purposes and fun :)
-    write_to_file(OUTPUT_TRACE_PATH, f'Running query: `{query}`\n')
+    _write_trace(f'Running query: `{query}`\n')
     try:
         # Execute the query using `pd.eval` and return the result as a string (must be serializable).
-        write_to_file(OUTPUT_TRACE_PATH, f"Query result: \n{str(pd.eval(query, target=ctx.deps.df))}\n")
-        return str(pd.eval(query, target=ctx.deps.df))
+        query_result = pd.eval(query, target=ctx.deps.df)
+        summary = _summarize_query_result(query_result)
+        _write_trace(f"Query result: \n{summary}\n")
+        return str(query_result)
     except Exception as e:
         #  On error, raise a `ModelRetry` exception with feedback for the agent.
-        write_to_file(OUTPUT_TRACE_PATH, f"Query error: {e}\n")
+        _write_trace(f"Query error: {e}\n")
         raise ModelRetry(f'query: `{query}` is not a valid query. Reason: `{e}`') from e
 
 
 def ask_agent(question, df):
     """Function to ask questions to the agent and display the response"""
     deps = Deps(df=df)
-    write_to_file(OUTPUT_TRACE_PATH, f"Question: {question}\n")
+    _write_trace(f"Question: {question}\n")
     result = agent.run_sync(question, deps=deps)
     #print(f"Answer: {response.new_messages()[-1].content}")
-    write_to_file(OUTPUT_TRACE_PATH, f"Answer: {result.data}\n")
-    write_to_file(OUTPUT_TRACE_PATH, '-'*50 + '\n')
+    _write_trace(f"Answer: {result.data}\n")
+    _write_trace('-'*50 + '\n')
     return result.data
 
 

@@ -33,6 +33,8 @@ Observation = Union[str, Exception]
 
 PROMPT_TEMPLATE_PATH = "./data/input/react-Chinese.txt"
 OUTPUT_TRACE_PATH = "./data/output/trace.txt"
+MAX_EXTERNAL_SEARCH_ACTIONS_PER_ITERATION = 2
+EXTERNAL_SEARCH_TOOL_NAMES = {"google_search", "wikipedia", "bocha_search"}
 
 class Choice(BaseModel):
     """
@@ -207,11 +209,20 @@ class Agent:
             
             if "action" in parsed_response:
                 actions = parsed_response["action"]
+                external_search_calls = 0
                 for action in actions:
                     tool_name = action["name"]
                     if not tool_name or tool_name == "none":
                         logger.info("No action needed. Proceeding to final answer.")
                     else:
+                        if tool_name in EXTERNAL_SEARCH_TOOL_NAMES:
+                            external_search_calls += 1
+                            if external_search_calls > MAX_EXTERNAL_SEARCH_ACTIONS_PER_ITERATION:
+                                self.trace(
+                                    "system",
+                                    f"Skipped {tool_name}: external search limit ({MAX_EXTERNAL_SEARCH_ACTIONS_PER_ITERATION}) reached in this iteration"
+                                )
+                                continue
                         self.trace("assistant", f"Action: Using {tool_name} tool")
                         self.act(tool_name, action.get("input", self.query))
                 # 处理完所有action后，再进行思考
