@@ -1,16 +1,22 @@
 /**
  * TaskManager - 跨页面持久化AI生成任务管理器
  *
- * 使用 localStorage 保存任务状态，sessionStorage 保存结果数据。
- * 页面切换时自动重新发起被中断的 fetch 请求。
+ * 后端任务队列模式:
+ *   POST 提交任务 → 返回 task_id
+ *   GET  轮询状态 → 返回 running / completed / error
+ *
+ * 使用 localStorage 保存任务元数据，sessionStorage 保存结果数据。
+ * 页面切换后继续轮询同一个 task_id，任务在服务器后台持续运行。
  */
 (function () {
     'use strict';
 
-    var STORAGE_KEY = 'edu_running_tasks';
+    var STORAGE_KEY = 'edu_tasks';
     var RESULT_PREFIX = 'edu_result_';
     var PENDING_RESULT_KEY = 'edu_pending_result';
+    var POLL_INTERVAL = 2000; // 2秒轮询一次
     var TASK_EXPIRY_MS = 30 * 60 * 1000; // 30分钟过期
+    var _pollTimers = {}; // 当前页面的轮询定时器
 
     // ======================== localStorage 工具 ========================
 
@@ -41,47 +47,50 @@
         delete tasks[id];
         saveTasks(tasks);
         try { sessionStorage.removeItem(RESULT_PREFIX + id); } catch (e) { /* ignore */ }
+        if (_pollTimers[id]) {
+            clearInterval(_pollTimers[id]);
+            delete _pollTimers[id];
+        }
     }
 
-    // ======================== 任务创建 ========================
+    // ======================== 提交任务 ========================
 
     /**
-     * 启动一个新的后台任务
+     * 提交一个新的后台任务
      * @param {string} taskType       - teaching_outline | study_report | mindmap | assessment
-     * @param {string} endpoint       - API URL
-     * @param {object} requestBody    - POST body (会被 JSON.stringify)
-     * @param {string} label          - 浮动按钮上显示的文字
+     * @param {string} endpoint       - POST API URL
+     * @param {object} requestBody    - POST body
+     * @param {string} label          - 浮动按钮显示文字
      * @param {string|number} courseId
-     * @returns {string} taskId
+     * @param {function} onComplete   - 任务完成时的回调 (resultData)
+     * @param {function} onError      - 任务失败时的回调 (errorMessage)
+     * @returns {string} taskId (本地生成的，不是后端的)
      */
-    window.TaskManager_startTask = function (taskType, endpoint, requestBody, label, courseId) {
-        var taskId = 'task_' + Date.now();
+    window.TaskManager_startTask = function (taskType, endpoint, requestBody, label, courseId, onComplete, onError, statusEndpoint) {
+        var localId = 'task_' + Date.now();
+        // statusEndpoint 可选：轮询状态的URL前缀，默认 /course/api/task/
+        var statusBase = statusEndpoint || '/course/api/task/';
         var entry = {
-            id: taskId,
+            localId: localId,
+            serverTaskId: null,
             label: label,
             courseId: String(courseId),
-            status: 'running',
-            endpoint: endpoint,
-            requestBody: JSON.stringify(requestBody),
+            status: 'submitting',
             taskType: taskType,
+            statusBase: statusBase,
             timestamp: Date.now()
         };
-        setTask(taskId, entry);
+        setTask(localId, entry);
         renderBar();
-        fireFetch(taskId, entry);
-        return taskId;
-    };
 
-    // ======================== Fetch 执行 ========================
-
-    function fireFetch(taskId, entry) {
-        fetch(entry.endpoint, {
+        // 提交 POST 请求
+        fetch(endpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest'
             },
-            body: entry.requestBody,
+            body: JSON.stringify(requestBody),
             credentials: 'same-origin'
         })
         .then(function (response) {
@@ -93,83 +102,163 @@
             return response.json();
         })
         .then(function (data) {
-            if (data.error) {
-                onTaskError(taskId, data.error);
-            } else {
-                onTaskComplete(taskId, data);
+            if (data.task_id) {
+                // 保存回调函数（仅当前页面有效）
+                entry.serverTaskId = data.task_id;
+                entry.status = 'running';
+                entry.timestamp = Date.now();
+                setTask(localId, entry);
+                renderBar();
+                startPolling(localId, onComplete, onError);
+            } else if (data.error) {
+                entry.status = 'error';
+                entry.error = data.error;
+                setTask(localId, entry);
+                renderBar();
+                if (onError) onError(data.error);
             }
         })
         .catch(function (error) {
-            var msg = '生成失败，请重试。';
-            if (error.message) msg = error.message;
-            onTaskError(taskId, msg);
+            entry.status = 'error';
+            entry.error = error.message || '提交任务失败';
+            setTask(localId, entry);
+            renderBar();
+            if (onError) onError(entry.error);
         });
-    }
 
-    function onTaskComplete(taskId, data) {
-        var task = getTask(taskId);
-        if (!task) return; // 用户已取消
-        task.status = 'completed';
-        task.timestamp = Date.now();
-        setTask(taskId, task);
-        // 结果存入 sessionStorage
-        try {
-            sessionStorage.setItem(RESULT_PREFIX + taskId, JSON.stringify(data));
-        } catch (e) {
-            console.warn('sessionStorage 写入失败，结果可能过大', e);
+        return localId;
+    };
+
+    // ======================== 轮询 ========================
+
+    function startPolling(localId, onComplete, onError) {
+        // 先清除旧的定时器
+        if (_pollTimers[localId]) {
+            clearInterval(_pollTimers[localId]);
         }
-        renderBar();
+
+        _pollTimers[localId] = setInterval(function () {
+            pollOnce(localId, onComplete, onError);
+        }, POLL_INTERVAL);
     }
 
-    function onTaskError(taskId, errorMsg) {
-        var task = getTask(taskId);
-        if (!task) return;
-        task.status = 'error';
-        task.error = errorMsg;
-        task.timestamp = Date.now();
-        setTask(taskId, task);
-        renderBar();
+    function pollOnce(localId, onComplete, onError) {
+        var entry = getTask(localId);
+        if (!entry || !entry.serverTaskId) {
+            // 任务被删除
+            if (_pollTimers[localId]) {
+                clearInterval(_pollTimers[localId]);
+                delete _pollTimers[localId];
+            }
+            return;
+        }
+
+        fetch((entry.statusBase || '/course/api/task/') + entry.serverTaskId + '/status', {
+            credentials: 'same-origin'
+        })
+        .then(function (response) {
+            if (!response.ok) {
+                if (response.status === 404) {
+                    throw new Error('任务不存在或已过期');
+                }
+                throw new Error('HTTP Error: ' + response.status);
+            }
+            return response.json();
+        })
+        .then(function (data) {
+            if (data.status === 'completed') {
+                // 完成
+                if (_pollTimers[localId]) {
+                    clearInterval(_pollTimers[localId]);
+                    delete _pollTimers[localId];
+                }
+                entry.status = 'completed';
+                entry.timestamp = Date.now();
+                setTask(localId, entry);
+                // 结果存入 sessionStorage
+                try {
+                    sessionStorage.setItem(RESULT_PREFIX + localId, JSON.stringify(data.result));
+                } catch (e) {
+                    console.warn('sessionStorage 写入失败', e);
+                }
+                renderBar();
+                if (onComplete) onComplete(data.result);
+            } else if (data.status === 'error') {
+                // 失败
+                if (_pollTimers[localId]) {
+                    clearInterval(_pollTimers[localId]);
+                    delete _pollTimers[localId];
+                }
+                entry.status = 'error';
+                entry.error = data.error || '生成失败';
+                entry.timestamp = Date.now();
+                setTask(localId, entry);
+                renderBar();
+                if (onError) onError(entry.error);
+            }
+            // running → 继续轮询
+        })
+        .catch(function (error) {
+            // 轮询出错（网络问题等），继续重试
+            console.warn('任务轮询出错:', error.message);
+        });
     }
 
     // ======================== 任务操作 ========================
 
     /** 用户点击完成的任务 → 导航到课程页并展示结果 */
-    window.TaskManager_navigateToResult = function (taskId) {
-        var task = getTask(taskId);
-        if (!task) return;
-        sessionStorage.setItem(PENDING_RESULT_KEY, taskId);
-        window.location.href = '/course/' + task.courseId;
+    window.TaskManager_navigateToResult = function (localId) {
+        var entry = getTask(localId);
+        if (!entry) return;
+        sessionStorage.setItem(PENDING_RESULT_KEY, localId);
+        window.location.href = '/course/' + entry.courseId;
     };
 
     /** 取消/删除任务 */
-    window.TaskManager_dismissTask = function (taskId) {
-        removeTask(taskId);
+    window.TaskManager_dismissTask = function (localId) {
+        removeTask(localId);
         renderBar();
     };
 
     /** 重试失败的任务 */
-    window.TaskManager_retryTask = function (taskId) {
-        var task = getTask(taskId);
-        if (!task) return;
-        task.status = 'running';
-        task.error = null;
-        task.timestamp = Date.now();
-        setTask(taskId, task);
+    window.TaskManager_retryTask = function (localId) {
+        // 暂不支持重试（需要保存原始请求参数）
+        removeTask(localId);
         renderBar();
-        fireFetch(taskId, task);
     };
 
     /** 检查是否有等待展示的结果 (供 view.html 调用) */
     window.TaskManager_checkPendingResult = function () {
-        var taskId = sessionStorage.getItem(PENDING_RESULT_KEY);
-        if (!taskId) return null;
+        var localId = sessionStorage.getItem(PENDING_RESULT_KEY);
+        if (!localId) return null;
         sessionStorage.removeItem(PENDING_RESULT_KEY);
-        var raw = sessionStorage.getItem(RESULT_PREFIX + taskId);
+        var raw = sessionStorage.getItem(RESULT_PREFIX + localId);
         if (!raw) return null;
-        var task = getTask(taskId);
-        if (!task) return null;
-        // 返回 { taskType, data }
-        return { taskType: task.taskType, data: JSON.parse(raw) };
+        var entry = getTask(localId);
+        if (!entry) return null;
+        // 清理任务
+        removeTask(localId);
+        return { taskType: entry.taskType, data: JSON.parse(raw) };
+    };
+
+    /** 给 view.html 轮询用：检查本地任务是否完成 */
+    window.TaskManager_isTaskDone = function (localId) {
+        var entry = getTask(localId);
+        if (!entry) return 'not_found';
+        return entry.status; // 'submitting' | 'running' | 'completed' | 'error'
+    };
+
+    /** 给 view.html 获取结果用 */
+    window.TaskManager_getResult = function (localId) {
+        var raw = sessionStorage.getItem(RESULT_PREFIX + localId);
+        if (!raw) return null;
+        return JSON.parse(raw);
+    };
+
+    /** 给 view.html 获取错误用 */
+    window.TaskManager_getError = function (localId) {
+        var entry = getTask(localId);
+        return entry ? entry.error : '任务不存在';
     };
 
     // ======================== 浮动条渲染 ========================
@@ -180,7 +269,7 @@
 
     function renderBar() {
         var bar = getBarEl();
-        if (!bar) return; // 当前页面没有浮动条（如登录页）
+        if (!bar) return;
 
         // 清理过期任务
         var tasks = getTasks();
@@ -200,7 +289,6 @@
             return;
         }
 
-        // 重新读取（可能被 removeTask 修改过）
         tasks = getTasks();
         bar.style.display = 'flex';
         bar.innerHTML = '';
@@ -209,7 +297,7 @@
             var t = tasks[id];
             var btn = document.createElement('div');
 
-            if (t.status === 'running') {
+            if (t.status === 'submitting' || t.status === 'running') {
                 btn.className = 'minimized-task-btn';
                 btn.innerHTML =
                     '<span class="spinner-border text-primary" role="status"></span>' +
@@ -246,7 +334,7 @@
 
                 btn.addEventListener('click', function (e) {
                     if (e.target.classList.contains('close-task')) return;
-                    window.TaskManager_retryTask(id);
+                    window.TaskManager_dismissTask(id);
                 });
                 btn.querySelector('.close-task').addEventListener('click', function (e) {
                     e.stopPropagation();
@@ -268,18 +356,17 @@
         return d.innerHTML;
     }
 
-    // ======================== 页面加载时自动恢复 ========================
+    // ======================== 页面加载时恢复轮询 ========================
 
     document.addEventListener('DOMContentLoaded', function () {
-        // 1. 对所有 running 状态的任务重新发起 fetch
         var tasks = getTasks();
         Object.keys(tasks).forEach(function (id) {
             var t = tasks[id];
-            if (t.status === 'running') {
-                fireFetch(id, t);
+            if (t.status === 'running' && t.serverTaskId) {
+                // 继续轮询（当前页面没有回调，所以只更新状态和浮动条）
+                startPolling(id, null, null);
             }
         });
-        // 2. 渲染浮动条
         renderBar();
     });
 

@@ -1,4 +1,5 @@
 import traceback
+import threading
 
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session, jsonify
 from peewee import JOIN
@@ -32,6 +33,7 @@ logger = logging.getLogger(__name__)
 
 from flask import current_app, jsonify, request
 from app.services.question_generator_service import QuestionGeneratorService
+from app.services.task_manager import create_task, update_task, get_task, cleanup_expired_tasks
 
 course_bp = Blueprint('course', __name__, url_prefix='/course')
 
@@ -1434,76 +1436,52 @@ def get_knowledge_entries(course_id):
 @course_bp.route('/api/generate_teaching_outline', methods=['POST'])
 def api_generate_teaching_outline():
     try:
-        # 检查用户是否登录
         if 'user_id' not in session:
             return jsonify({'error': '用户未登录，请先登录'}), 401
-        
-        # 检查请求内容类型
+
         if not request.is_json:
             return jsonify({'error': '请求格式错误，需要JSON格式'}), 400
-        
-        # 获取请求数据
-        data = request.get_json()
-        course_id = data['course_id']
-        material_type = data.get('material_type', 'syllabus')  # 新增：大纲或PPT
-        selected_knowledge_ids = data.get('selected_knowledge_ids', [])
 
-        if not data:
-            return jsonify({'error': '请求数据为空'}), 400
-            
-        if 'course_id' not in data:
+        data = request.get_json()
+        if not data or 'course_id' not in data:
             return jsonify({'error': '缺少必要的参数: course_id'}), 400
-        
-        # 验证course_id格式
+
         try:
-            course_id = int(course_id)
+            course_id = int(data['course_id'])
         except (ValueError, TypeError):
             return jsonify({'error': '课程ID格式错误'}), 400
-        
-        # 验证课程存在
+
+        material_type = data.get('material_type', 'syllabus')
+        selected_knowledge_ids = data.get('selected_knowledge_ids', [])
+
         course = Course.get_by_id(course_id)
         if not course:
             return jsonify({'error': '课程不存在'}), 404
-        
-        # 调用教学准备服务生成大纲（传递选中的知识库ID）
-        try:
-            result = TeachingPreparationService.generate_outline(
-                course_id, 
-                material_type=material_type,  # 传递材料类型
-                selected_knowledge_ids=selected_knowledge_ids
-            )
-            
-        except Exception as service_error:
-            logger.error(f"TeachingPreparationService.generate_outline 失败: {str(service_error)}")
-            return jsonify({'error': '教学大纲生成服务暂时不可用，请稍后重试'}), 500
-        
-        # 检查生成结果
-        if not result:
-            return jsonify({'error': '生成服务返回空结果'}), 500
-            
-        if 'error' in result:
-            logger.error(f"生成教学大纲失败 - 课程ID: {course_id}, 错误: {result['error']}")
-            return jsonify({'error': result['error']}), 500
-        
-        # 验证返回数据的完整性
-        required_fields = ['content', 'file_base64', 'filename', 'title', 'download_ready']
-        for field in required_fields:
-            if field not in result:
-                logger.error(f"生成结果缺少必要字段: {field}")
-                return jsonify({'error': f'生成结果不完整，缺少: {field}'}), 500
-        
-        # 返回成功结果
-        return jsonify({
-            'success': True,
-            'content': result['content'],
-            'file_base64': result['file_base64'],  # 统一字段名
-            'filename': result['filename'],
-            'title': result['title'],
-            'download_ready': result['download_ready'],
-            'material_type': result.get('material_type', 'syllabus'),  # 新增
-            'file_type': result.get('file_type', 'pdf')  # 新增
-        }), 200
-        
+
+        task_id = create_task()
+
+        def _run():
+            try:
+                result = TeachingPreparationService.generate_outline(
+                    course_id,
+                    material_type=material_type,
+                    selected_knowledge_ids=selected_knowledge_ids
+                )
+                if not result:
+                    update_task(task_id, 'error', error='生成服务返回空结果')
+                elif 'error' in result:
+                    update_task(task_id, 'error', error=result['error'])
+                else:
+                    update_task(task_id, 'completed', result=result)
+            except Exception as e:
+                logger.error(f"后台生成教学大纲失败: {e}", exc_info=True)
+                update_task(task_id, 'error', error='教学大纲生成失败，请稍后重试')
+
+        t = threading.Thread(target=_run, daemon=True)
+        t.start()
+
+        return jsonify({'task_id': task_id}), 202
+
     except Exception as e:
         logger.error(f"API生成教学大纲异常: {str(e)}", exc_info=True)
         return jsonify({'error': '服务器内部错误，请稍后重试'}), 500
@@ -1533,34 +1511,25 @@ def api_generate_study_report():
         if not course:
             return jsonify({'error': '课程不存在'}), 404
 
-        try:
-            result = generate_study_report(course_id, selected_knowledge_ids)
-        except Exception as service_error:
-            logger.error(f"generate_study_report 失败: {str(service_error)}")
-            return jsonify({'error': '学习指导报告生成服务暂时不可用，请稍后重试'}), 500
+        task_id = create_task()
 
-        if not result:
-            return jsonify({'error': '生成服务返回空结果'}), 500
+        def _run():
+            try:
+                result = generate_study_report(course_id, selected_knowledge_ids)
+                if not result:
+                    update_task(task_id, 'error', error='生成服务返回空结果')
+                elif 'error' in result:
+                    update_task(task_id, 'error', error=result['error'])
+                else:
+                    update_task(task_id, 'completed', result=result)
+            except Exception as e:
+                logger.error(f"后台生成学习指导报告失败: {e}", exc_info=True)
+                update_task(task_id, 'error', error='学习指导报告生成失败，请稍后重试')
 
-        if 'error' in result:
-            logger.error(f"生成学习指导报告失败 - 课程ID: {course_id}, 错误: {result['error']}")
-            return jsonify({'error': result['error']}), 500
+        t = threading.Thread(target=_run, daemon=True)
+        t.start()
 
-        required_fields = ['content', 'file_base64', 'filename', 'title', 'download_ready']
-        for field in required_fields:
-            if field not in result:
-                logger.error(f"生成结果缺少必要字段: {field}")
-                return jsonify({'error': f'生成结果不完整，缺少: {field}'}), 500
-
-        return jsonify({
-            'success': True,
-            'content': result['content'],
-            'file_base64': result['file_base64'],
-            'filename': result['filename'],
-            'title': result['title'],
-            'download_ready': result['download_ready'],
-            'file_type': result.get('file_type', 'pdf')
-        }), 200
+        return jsonify({'task_id': task_id}), 202
 
     except Exception as e:
         logger.error(f"API生成学习指导报告异常: {str(e)}", exc_info=True)
@@ -1591,26 +1560,27 @@ def api_generate_mindmap():
         if not course:
             return jsonify({'error': '课程不存在'}), 404
 
-        try:
-            result = generate_mindmap(course_id, selected_knowledge_ids)
-        except Exception as service_error:
-            logger.error(f"generate_mindmap 失败: {str(service_error)}")
-            return jsonify({'error': '思维导图生成服务暂时不可用，请稍后重试'}), 500
+        task_id = create_task()
 
-        if not result:
-            return jsonify({'error': '生成服务返回空结果'}), 500
+        def _run():
+            try:
+                result = generate_mindmap(course_id, selected_knowledge_ids)
+                if not result:
+                    update_task(task_id, 'error', error='生成服务返回空结果')
+                elif 'error' in result:
+                    update_task(task_id, 'error', error=result['error'])
+                elif 'content' not in result:
+                    update_task(task_id, 'error', error='生成结果不完整')
+                else:
+                    update_task(task_id, 'completed', result=result)
+            except Exception as e:
+                logger.error(f"后台生成思维导图失败: {e}", exc_info=True)
+                update_task(task_id, 'error', error='思维导图生成失败，请稍后重试')
 
-        if 'error' in result:
-            return jsonify({'error': result['error']}), 500
+        t = threading.Thread(target=_run, daemon=True)
+        t.start()
 
-        if 'content' not in result:
-            return jsonify({'error': '生成结果不完整'}), 500
-
-        return jsonify({
-            'success': True,
-            'content': result['content'],
-            'title': result.get('title', '思维导图')
-        }), 200
+        return jsonify({'task_id': task_id}), 202
 
     except Exception as e:
         logger.error(f"API生成思维导图异常: {str(e)}", exc_info=True)
@@ -1621,26 +1591,47 @@ def generate_assessment(course_id):
     """生成考核题目接口"""
     try:
         data = request.get_json()
-        question_settings = data.get('question_settings', {})  # 获取题目设置
+        question_settings = data.get('question_settings', {})
         selected_knowledge_ids = data.get('selected_knowledge_ids', [])
-        
-        # 调用生成函数，传递题目设置
-        questions = QuestionGeneratorService.generate_questions_with_ai(
-            course_id, 
-            question_settings,
-            selected_knowledge_ids=selected_knowledge_ids
-        )
-        
-        return jsonify({
-            'success': True,
-            'questions': questions
-        })
+
+        task_id = create_task()
+
+        def _run():
+            try:
+                questions = QuestionGeneratorService.generate_questions_with_ai(
+                    course_id,
+                    question_settings,
+                    selected_knowledge_ids=selected_knowledge_ids
+                )
+                update_task(task_id, 'completed', result={'questions': questions})
+            except Exception as e:
+                logger.error(f"后台生成考核题目失败: {e}", exc_info=True)
+                update_task(task_id, 'error', error='考核题目生成失败，请稍后重试')
+
+        t = threading.Thread(target=_run, daemon=True)
+        t.start()
+
+        return jsonify({'task_id': task_id}), 202
+
     except Exception as e:
-        current_app.logger.error(f"生成考核题目失败: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        logger.error(f"生成考核题目失败: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+
+@course_bp.route('/api/task/<task_id>/status', methods=['GET'])
+def task_status(task_id):
+    """轮询任务状态"""
+    cleanup_expired_tasks()
+    task = get_task(task_id)
+    if not task:
+        return jsonify({'status': 'not_found', 'error': '任务不存在或已过期'}), 404
+
+    resp = {'status': task['status']}
+    if task['status'] == 'completed':
+        resp['result'] = task['result']
+    elif task['status'] == 'error':
+        resp['error'] = task.get('error', '未知错误')
+    return jsonify(resp), 200
 
 
 @course_bp.route('/<int:course_id>/assignments', methods=['GET'])
@@ -1851,7 +1842,7 @@ def edit_assignment(assignment_id):
     
 @course_bp.route('/question/<int:question_id>/generate_similar', methods=['POST'])
 def generate_similar_questions(question_id):
-    """为指定题目生成相似题目"""
+    """为指定题目生成相似题目（异步任务）"""
     if 'user_id' not in session:
         return jsonify({'success': False, 'error': '用户未登录'}), 401
 
@@ -1872,27 +1863,33 @@ def generate_similar_questions(question_id):
         num_questions = int(data.get('num_questions', 3))
         num_questions = max(1, min(10, num_questions))
 
-        # 调用生成函数
-        generated_questions = AssignmentService.generate_similar_questions_with_ai(
-            original_question=question,
-            assignment=question.assignment,
-            num_questions=num_questions
-        )
-        
-        if generated_questions:
-            flash(f'成功生成 {len(generated_questions)}道相似题目', 'success')
-        else:
-            flash(f'生成相似题目失败，请检查题目内容', 'danger')
+        assignment_id = question.assignment.id
 
-        return redirect(url_for('course.view_assignment', assignment_id=question.assignment.id))
-            
+        task_id = create_task()
+        def _run():
+            try:
+                generated_questions = AssignmentService.generate_similar_questions_with_ai(
+                    original_question=question,
+                    assignment=question.assignment,
+                    num_questions=num_questions
+                )
+                if generated_questions:
+                    update_task(task_id, 'completed', result={
+                        'count': len(generated_questions),
+                        'assignment_id': assignment_id
+                    })
+                else:
+                    update_task(task_id, 'error', error='生成相似题目失败，请检查题目内容')
+            except Exception as e:
+                update_task(task_id, 'error', error='生成相似题目失败，请检查题目内容')
+        t = threading.Thread(target=_run, daemon=True)
+        t.start()
+        return jsonify({'task_id': task_id}), 202
+
     except DoesNotExist:
-        flash(f'生成相似题目失败，题目不存在', 'danger')
-        return redirect(url_for('course.view_assignment', assignment_id=question.assignment.id))
-        
+        return jsonify({'success': False, 'error': '题目不存在'}), 404
     except Exception as e:
-        flash(f'生成相似题目失败，请检查题目内容', 'danger')
-        return redirect(url_for('course.view_assignment', assignment_id=question.assignment.id))
+        return jsonify({'success': False, 'error': '生成相似题目失败，请检查题目内容'}), 500
 
 # 添加保存教学资料的路由
 @course_bp.route('/save_teaching_material', methods=['POST'])

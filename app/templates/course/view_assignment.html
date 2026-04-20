@@ -746,6 +746,10 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="generateProgressModalLabel">正在生成相似题目</h5>
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="minimizeGenerateModal()"
+                    title="最小化" style="border-radius:8px;">
+                    <i class="fas fa-minus"></i>
+                </button>
             </div>
             <div class="modal-body text-center">
                 <div class="spinner-border text-primary mb-3" role="status">
@@ -1400,31 +1404,41 @@
             });
         });
 
+        var similarTaskId = null;
+        window.minimizeGenerateModal = function() {
+            var m = bootstrap.Modal.getInstance(document.getElementById('generateProgressModal'));
+            if (m) m.hide();
+        };
+
         // 点击"开始生成" → 关闭选择框，显示进度框，发送请求
         document.getElementById('confirmGenerateBtn').addEventListener('click', function () {
-            const count = parseInt(document.getElementById('generateCount').value) || 3;
-            const numQuestions = Math.max(1, Math.min(10, count));
+            var count = parseInt(document.getElementById('generateCount').value) || 3;
+            var numQuestions = Math.max(1, Math.min(10, count));
 
             countModal.hide();
             progressModal.show();
 
-            fetch(`/course/question/${currentQuestionId}/generate_similar`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ num_questions: numQuestions }),
-                redirect: 'manual'
-            })
-                .then(response => {
-                    progressModal.hide();
+            var courseId = '{{ assignment.course.id }}';
+            similarTaskId = TaskManager_startTask(
+                'similar_questions',
+                '/course/question/' + currentQuestionId + '/generate_similar',
+                { num_questions: numQuestions },
+                '正在生成相似题目',
+                courseId,
+                function onComplete(result) {
+                    var m = bootstrap.Modal.getInstance(document.getElementById('generateProgressModal'));
+                    if (m) m.hide();
+                    TaskManager_dismissTask(similarTaskId);
+                    alert('成功生成 ' + result.count + ' 道相似题目');
                     window.location.reload();
-                })
-                .catch(error => {
-                    progressModal.hide();
-                    console.error('生成相似题目时发生错误:', error);
-                    alert('请求失败，请稍后重试');
-                });
+                },
+                function onError(err) {
+                    var m = bootstrap.Modal.getInstance(document.getElementById('generateProgressModal'));
+                    if (m) m.hide();
+                    TaskManager_dismissTask(similarTaskId);
+                    alert(err || '生成相似题目失败，请检查题目内容');
+                }
+            );
         });
     });
 

@@ -497,6 +497,12 @@
                 countModal.show();
             });
 
+            var similarTaskId = null;
+            window.minimizeGenerateModal = function() {
+                var m = bootstrap.Modal.getInstance(document.getElementById('generateProgressModal'));
+                if (m) m.hide();
+            };
+
             document.getElementById('confirmGenerateBtn').addEventListener('click', function () {
                 const count = parseInt(document.getElementById('generateCount').value) || 3;
                 const numQuestions = Math.max(1, Math.min(10, count));
@@ -505,35 +511,27 @@
                 countModal.hide();
                 progressModal.show();
 
-                fetch('/wrongbook/generate_similar', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        original_question_id: parseInt(questionId),
-                        num_questions: numQuestions
-                    })
-                })
-                    .then(response => {
-                        if (!response.ok) {
-                            return response.text().then(text => {
-                                throw new Error('服务器返回错误: ' + response.status);
-                            });
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        progressModal.hide();
-                        if (data.success) {
-                            alert(data.message);
-                            window.location.reload();
-                        } else {
-                            alert(data.error || '生成失败');
-                        }
-                    })
-                    .catch(error => {
-                        progressModal.hide();
-                        alert('请求失败: ' + error.message);
-                    });
+                similarTaskId = TaskManager_startTask(
+                    'similar_questions',
+                    '/wrongbook/generate_similar',
+                    { original_question_id: parseInt(questionId), num_questions: numQuestions },
+                    '正在生成相似题目',
+                    '',
+                    function onComplete(result) {
+                        var m = bootstrap.Modal.getInstance(document.getElementById('generateProgressModal'));
+                        if (m) m.hide();
+                        TaskManager_dismissTask(similarTaskId);
+                        alert(result.message || '生成成功');
+                        window.location.reload();
+                    },
+                    function onError(err) {
+                        var m = bootstrap.Modal.getInstance(document.getElementById('generateProgressModal'));
+                        if (m) m.hide();
+                        TaskManager_dismissTask(similarTaskId);
+                        alert(err || '生成失败');
+                    },
+                    '/wrongbook/api/task/'
+                );
             });
         }
     });
@@ -575,6 +573,10 @@
         <div class="modal-content" style="border-radius: 12px;">
             <div class="modal-header border-0">
                 <h5 class="modal-title">正在生成相似题目</h5>
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="minimizeGenerateModal()"
+                    title="最小化" style="border-radius:8px;">
+                    <i class="fas fa-minus"></i>
+                </button>
             </div>
             <div class="modal-body text-center">
                 <div class="spinner-border text-primary mb-3" role="status">

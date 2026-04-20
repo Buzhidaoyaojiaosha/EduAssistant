@@ -695,8 +695,9 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="studentProgressModalLabel">正在生成学习指导报告</h5>
-                <button type="button" class="btn-minimize" title="最小化" onclick="window._minStudyReport()">
-                    <i class="fas fa-window-minimize"></i>
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window._minStudyReport()"
+                    title="最小化" style="border-radius:8px;">
+                    <i class="fas fa-minus"></i>
                 </button>
             </div>
             <div class="modal-body text-center">
@@ -801,8 +802,9 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="mindmapProgressModalLabel">正在生成思维导图</h5>
-                <button type="button" class="btn-minimize" title="最小化" onclick="window._minMindmap()">
-                    <i class="fas fa-window-minimize"></i>
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window._minMindmap()"
+                    title="最小化" style="border-radius:8px;">
+                    <i class="fas fa-minus"></i>
                 </button>
             </div>
             <div class="modal-body text-center">
@@ -942,35 +944,25 @@
                 selectionModalEl.removeEventListener('hidden.bs.modal', handler);
                 studentProgressModal.show();
 
-                // 使用 TaskManager 启动任务（跨页面持久化）
+                // 使用 TaskManager 启动后台任务（跨页面持久化）
                 var studyTaskId = TaskManager_startTask(
                     'study_report',
                     '/course/api/generate_study_report',
                     { course_id: parseInt(courseId), selected_knowledge_ids: selectedIds },
                     '正在生成学习指导报告',
-                    courseId
-                );
-
-                // 轮询检查任务完成状态
-                var studyCheck = setInterval(function () {
-                    var task = JSON.parse(localStorage.getItem('edu_running_tasks') || '{}')[studyTaskId];
-                    if (!task || task.status === 'completed') {
-                        clearInterval(studyCheck);
+                    courseId,
+                    function onComplete(result) {
                         studentProgressModal.hide();
-                        var raw = sessionStorage.getItem('edu_result_' + studyTaskId);
-                        if (raw) {
-                            var data = JSON.parse(raw);
-                            studentGeneratedData = data;
-                            showStudentResult(data);
-                            TaskManager_dismissTask(studyTaskId);
-                        }
-                    } else if (task.status === 'error') {
-                        clearInterval(studyCheck);
+                        studentGeneratedData = result;
+                        showStudentResult(result);
+                        TaskManager_dismissTask(studyTaskId);
+                    },
+                    function onError(err) {
                         studentProgressModal.hide();
-                        showStudentError(task.error || '生成失败，请重试。');
+                        showStudentError(err || '生成失败，请重试。');
                         TaskManager_dismissTask(studyTaskId);
                     }
-                }, 1000);
+                );
             });
         });
 
@@ -1163,28 +1155,19 @@
                     '/course/api/generate_mindmap',
                     { course_id: parseInt(courseId), selected_knowledge_ids: selectedIds },
                     '正在生成思维导图',
-                    courseId
-                );
-
-                var mindmapCheck = setInterval(function () {
-                    var task = JSON.parse(localStorage.getItem('edu_running_tasks') || '{}')[mindmapTaskId];
-                    if (!task || task.status === 'completed') {
-                        clearInterval(mindmapCheck);
+                    courseId,
+                    function onComplete(result) {
                         mindmapProgressModal.hide();
-                        var raw = sessionStorage.getItem('edu_result_' + mindmapTaskId);
-                        if (raw) {
-                            var data = JSON.parse(raw);
-                            mindmapData = data;
-                            renderMindmap(data.content, data.title);
-                            TaskManager_dismissTask(mindmapTaskId);
-                        }
-                    } else if (task.status === 'error') {
-                        clearInterval(mindmapCheck);
+                        mindmapData = result;
+                        renderMindmap(result.content, result.title);
+                        TaskManager_dismissTask(mindmapTaskId);
+                    },
+                    function onError(err) {
                         mindmapProgressModal.hide();
-                        showStudentError(task.error || '生成失败，请重试。');
+                        showStudentError(err || '生成失败，请重试。');
                         TaskManager_dismissTask(mindmapTaskId);
                     }
-                }, 1000);
+                );
             });
         });
 
@@ -1475,8 +1458,9 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="generateProgressModalLabel">正在生成备课资料</h5>
-                <button type="button" class="btn-minimize" title="最小化" onclick="window._minTeachingOutline()">
-                    <i class="fas fa-window-minimize"></i>
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window._minTeachingOutline()"
+                    title="最小化" style="border-radius:8px;">
+                    <i class="fas fa-minus"></i>
                 </button>
             </div>
             <div class="modal-body text-center">
@@ -1652,8 +1636,9 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="generateAssessmentProgressModalLabel">正在生成考核内容</h5>
-                <button type="button" class="btn-minimize" title="最小化" onclick="window._minAssessment()">
-                    <i class="fas fa-window-minimize"></i>
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window._minAssessment()"
+                    title="最小化" style="border-radius:8px;">
+                    <i class="fas fa-minus"></i>
                 </button>
             </div>
             <div class="modal-body text-center">
@@ -2339,22 +2324,6 @@
         border-radius: 3px;
     }
 
-    /* 进度模态框最小化按钮 */
-    .modal .btn-minimize {
-        background: none;
-        border: none;
-        font-size: 1.1rem;
-        color: #6c757d;
-        padding: 0 4px;
-        cursor: pointer;
-        line-height: 1;
-        transition: color 0.2s;
-    }
-
-    .modal .btn-minimize:hover {
-        color: var(--primary, #25714A);
-    }
-
     /* 考核内容模态框样式 */
     #assessmentModal .modal-content {
         border: none;
@@ -2655,37 +2624,27 @@
         function generateTeachingMaterial(selectedIds, materialType) {
             const courseId = "{{ course.id }}";
 
-            // 使用 TaskManager 启动任务（跨页面持久化）
+            // 使用 TaskManager 启动后台任务（跨页面持久化）
             var teachingTaskId = TaskManager_startTask(
                 'teaching_outline',
                 '/course/api/generate_teaching_outline',
                 { course_id: parseInt(courseId), selected_knowledge_ids: selectedIds, material_type: materialType },
                 '正在生成备课资料',
-                courseId
-            );
-
-            // 轮询检查任务完成状态
-            var teachingCheck = setInterval(function () {
-                var task = JSON.parse(localStorage.getItem('edu_running_tasks') || '{}')[teachingTaskId];
-                if (!task || task.status === 'completed') {
-                    clearInterval(teachingCheck);
+                courseId,
+                function onComplete(result) {
                     const progressModal = bootstrap.Modal.getInstance(document.getElementById('generateProgressModal'));
                     if (progressModal) progressModal.hide();
-                    var raw = sessionStorage.getItem('edu_result_' + teachingTaskId);
-                    if (raw) {
-                        var data = JSON.parse(raw);
-                        generatedData = data;
-                        showResult(data);
-                        TaskManager_dismissTask(teachingTaskId);
-                    }
-                } else if (task.status === 'error') {
-                    clearInterval(teachingCheck);
+                    generatedData = result;
+                    showResult(result);
+                    TaskManager_dismissTask(teachingTaskId);
+                },
+                function onError(err) {
                     const progressModal = bootstrap.Modal.getInstance(document.getElementById('generateProgressModal'));
                     if (progressModal) progressModal.hide();
-                    showError(task.error || '生成失败，请重试。');
+                    showError(err || '生成失败，请重试。');
                     TaskManager_dismissTask(teachingTaskId);
                 }
-            }, 1000);
+            );
         }
         // 保存至知识库按钮事件
         document.getElementById('saveToKnowledgeBtn').addEventListener('click', function () {
@@ -3036,30 +2995,21 @@
             '/course/' + courseId + '/generate_assessment',
             { question_settings: questionSettings, selected_knowledge_ids: selectedIds },
             '正在生成考核内容',
-            courseId
-        );
-
-        var assessCheck = setInterval(function () {
-            var task = JSON.parse(localStorage.getItem('edu_running_tasks') || '{}')[assessTaskId];
-            if (!task || task.status === 'completed') {
-                clearInterval(assessCheck);
+            courseId,
+            function onComplete(result) {
                 const progressModal = bootstrap.Modal.getInstance(document.getElementById('generateAssessmentProgressModal'));
                 if (progressModal) progressModal.hide();
-                var raw = sessionStorage.getItem('edu_result_' + assessTaskId);
-                if (raw) {
-                    var data = JSON.parse(raw);
-                    currentQuestions = data.questions;
-                    showAssessmentQuestions(data.questions);
-                    TaskManager_dismissTask(assessTaskId);
-                }
-            } else if (task.status === 'error') {
-                clearInterval(assessCheck);
+                currentQuestions = result.questions;
+                showAssessmentQuestions(result.questions);
+                TaskManager_dismissTask(assessTaskId);
+            },
+            function onError(err) {
                 const progressModal = bootstrap.Modal.getInstance(document.getElementById('generateAssessmentProgressModal'));
                 if (progressModal) progressModal.hide();
-                showError(task.error || '生成考核题目失败，请重试。');
+                showError(err || '生成考核题目失败，请重试。');
                 TaskManager_dismissTask(assessTaskId);
             }
-        }, 1000);
+        );
     }
 
     // 显示生成的题目
