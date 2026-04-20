@@ -695,6 +695,9 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="studentProgressModalLabel">正在生成学习指导报告</h5>
+                <button type="button" class="btn-minimize" title="最小化" onclick="window._minStudyReport()">
+                    <i class="fas fa-window-minimize"></i>
+                </button>
             </div>
             <div class="modal-body text-center">
                 <div class="spinner-border text-primary mb-3" role="status">
@@ -798,6 +801,9 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="mindmapProgressModalLabel">正在生成思维导图</h5>
+                <button type="button" class="btn-minimize" title="最小化" onclick="window._minMindmap()">
+                    <i class="fas fa-window-minimize"></i>
+                </button>
             </div>
             <div class="modal-body text-center">
                 <div class="spinner-border text-primary mb-3" role="status">
@@ -868,6 +874,11 @@
         const studentResultModal = new bootstrap.Modal(document.getElementById('studentResultModal'));
         const studentErrorModal = new bootstrap.Modal(document.getElementById('studentErrorModal'));
 
+        // 最小化学习指导进度模态框
+        window._minStudyReport = function () {
+            studentProgressModal.hide();
+        };
+
         // 智能指导按钮点击事件
         studyReportBtn.addEventListener('click', function () {
             const container = document.getElementById('studentKnowledgeItemsContainer');
@@ -931,58 +942,40 @@
                 selectionModalEl.removeEventListener('hidden.bs.modal', handler);
                 studentProgressModal.show();
 
-                // 调用API生成学习指导报告
-                fetch('/course/api/generate_study_report', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    body: JSON.stringify({
-                        course_id: parseInt(courseId),
-                        selected_knowledge_ids: selectedIds
-                    }),
-                    credentials: 'same-origin'
-                })
-                    .then(response => {
-                        if (!response.ok) {
-                            return response.json().then(data => {
-                                throw new Error(data.error || `HTTP Error: ${response.status}`);
-                            });
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        studentProgressModal.hide();
+                // 使用 TaskManager 启动任务（跨页面持久化）
+                var studyTaskId = TaskManager_startTask(
+                    'study_report',
+                    '/course/api/generate_study_report',
+                    { course_id: parseInt(courseId), selected_knowledge_ids: selectedIds },
+                    '正在生成学习指导报告',
+                    courseId
+                );
 
-                        if (data.error) {
-                            showStudentError(data.error);
-                        } else if (data.success) {
+                // 轮询检查任务完成状态
+                var studyCheck = setInterval(function () {
+                    var task = JSON.parse(localStorage.getItem('edu_running_tasks') || '{}')[studyTaskId];
+                    if (!task || task.status === 'completed') {
+                        clearInterval(studyCheck);
+                        studentProgressModal.hide();
+                        var raw = sessionStorage.getItem('edu_result_' + studyTaskId);
+                        if (raw) {
+                            var data = JSON.parse(raw);
                             studentGeneratedData = data;
                             showStudentResult(data);
-                        } else {
-                            showStudentError('响应数据格式错误');
+                            TaskManager_dismissTask(studyTaskId);
                         }
-                    })
-                    .catch(error => {
-                        console.error('生成失败:', error);
+                    } else if (task.status === 'error') {
+                        clearInterval(studyCheck);
                         studentProgressModal.hide();
-
-                        let errorMessage = '生成失败，请重试。';
-                        if (error.message.includes('HTTP Error: 401')) {
-                            errorMessage = '登录已过期，请重新登录。';
-                        } else if (error.message.includes('HTTP Error: 500')) {
-                            errorMessage = '服务器内部错误，请稍后重试。';
-                        } else if (error.message) {
-                            errorMessage = error.message;
-                        }
-                        showStudentError(errorMessage);
-                    });
+                        showStudentError(task.error || '生成失败，请重试。');
+                        TaskManager_dismissTask(studyTaskId);
+                    }
+                }, 1000);
             });
         });
 
         // 显示学习指导报告结果
-        function showStudentResult(data) {
+        window.showStudentResult = function (data) {
             const contentDiv = document.getElementById('studentResultContent');
             let formattedContent = data.content;
 
@@ -1103,6 +1096,11 @@
         const mindmapProgressModal = new bootstrap.Modal(document.getElementById('mindmapProgressModal'));
         const mindmapResultModal = new bootstrap.Modal(document.getElementById('mindmapResultModal'));
 
+        // 最小化思维导图进度模态框
+        window._minMindmap = function () {
+            mindmapProgressModal.hide();
+        };
+
         // 思维导图按钮点击事件
         mindmapBtn.addEventListener('click', function () {
             const container = document.getElementById('mindmapKnowledgeItemsContainer');
@@ -1160,49 +1158,38 @@
                 selectionModalEl.removeEventListener('hidden.bs.modal', handler);
                 mindmapProgressModal.show();
 
-                fetch('/course/api/generate_mindmap', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    body: JSON.stringify({
-                        course_id: parseInt(courseId),
-                        selected_knowledge_ids: selectedIds
-                    }),
-                    credentials: 'same-origin'
-                })
-                    .then(response => {
-                        if (!response.ok) {
-                            return response.json().then(data => {
-                                throw new Error(data.error || `HTTP Error: ${response.status}`);
-                            });
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
+                var mindmapTaskId = TaskManager_startTask(
+                    'mindmap',
+                    '/course/api/generate_mindmap',
+                    { course_id: parseInt(courseId), selected_knowledge_ids: selectedIds },
+                    '正在生成思维导图',
+                    courseId
+                );
+
+                var mindmapCheck = setInterval(function () {
+                    var task = JSON.parse(localStorage.getItem('edu_running_tasks') || '{}')[mindmapTaskId];
+                    if (!task || task.status === 'completed') {
+                        clearInterval(mindmapCheck);
                         mindmapProgressModal.hide();
-                        if (data.error) {
-                            showStudentError(data.error);
-                        } else if (data.success) {
+                        var raw = sessionStorage.getItem('edu_result_' + mindmapTaskId);
+                        if (raw) {
+                            var data = JSON.parse(raw);
                             mindmapData = data;
                             renderMindmap(data.content, data.title);
-                        } else {
-                            showStudentError('响应数据格式错误');
+                            TaskManager_dismissTask(mindmapTaskId);
                         }
-                    })
-                    .catch(error => {
-                        console.error('生成失败:', error);
+                    } else if (task.status === 'error') {
+                        clearInterval(mindmapCheck);
                         mindmapProgressModal.hide();
-                        let msg = '生成失败，请重试。';
-                        if (error.message) msg = error.message;
-                        showStudentError(msg);
-                    });
+                        showStudentError(task.error || '生成失败，请重试。');
+                        TaskManager_dismissTask(mindmapTaskId);
+                    }
+                }, 1000);
             });
         });
 
         // 使用Markmap渲染思维导图
-        function renderMindmap(markdown, title) {
+        window.renderMindmap = function (markdown, title) {
             const container = document.getElementById('mindmapContainer');
             container.innerHTML = '';
             document.getElementById('mindmapResultSubtitle').textContent = title || '';
@@ -1488,6 +1475,9 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="generateProgressModalLabel">正在生成备课资料</h5>
+                <button type="button" class="btn-minimize" title="最小化" onclick="window._minTeachingOutline()">
+                    <i class="fas fa-window-minimize"></i>
+                </button>
             </div>
             <div class="modal-body text-center">
                 <div class="spinner-border text-primary mb-3" role="status">
@@ -1662,6 +1652,9 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="generateAssessmentProgressModalLabel">正在生成考核内容</h5>
+                <button type="button" class="btn-minimize" title="最小化" onclick="window._minAssessment()">
+                    <i class="fas fa-window-minimize"></i>
+                </button>
             </div>
             <div class="modal-body text-center">
                 <div class="spinner-border text-primary mb-3" role="status">
@@ -2346,6 +2339,22 @@
         border-radius: 3px;
     }
 
+    /* 进度模态框最小化按钮 */
+    .modal .btn-minimize {
+        background: none;
+        border: none;
+        font-size: 1.1rem;
+        color: #6c757d;
+        padding: 0 4px;
+        cursor: pointer;
+        line-height: 1;
+        transition: color 0.2s;
+    }
+
+    .modal .btn-minimize:hover {
+        color: var(--primary, #25714A);
+    }
+
     /* 考核内容模态框样式 */
     #assessmentModal .modal-content {
         border: none;
@@ -2561,6 +2570,12 @@
         // 全局变量存储选中的知识库ID
         let selectedKnowledgeIds = [];
 
+        // 最小化备课进度模态框
+        window._minTeachingOutline = function () {
+            const progressModal = bootstrap.Modal.getInstance(document.getElementById('generateProgressModal'));
+            if (progressModal) progressModal.hide();
+        };
+
         // 生成教学大纲按钮点击事件
         document.getElementById('generateTeachingOutlineBtn').addEventListener('click', function () {
             const courseId = "{{ course.id }}";
@@ -2639,72 +2654,38 @@
         // 生成教学大纲函数
         function generateTeachingMaterial(selectedIds, materialType) {
             const courseId = "{{ course.id }}";
-            const btn = document.getElementById('generateTeachingOutlineBtn');
 
-            // 发送生成请求
-            fetch('/course/api/generate_teaching_outline', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: JSON.stringify({
-                    course_id: parseInt(courseId),
-                    selected_knowledge_ids: selectedIds,
-                    material_type: materialType
-                }),
-                credentials: 'same-origin'
-            })
-                .then(response => {
-                    if (!response.ok) {
-                        return response.json().then(data => {
-                            throw new Error(data.error || `HTTP Error: ${response.status}`);
-                        });
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    // 隐藏进度模态框
+            // 使用 TaskManager 启动任务（跨页面持久化）
+            var teachingTaskId = TaskManager_startTask(
+                'teaching_outline',
+                '/course/api/generate_teaching_outline',
+                { course_id: parseInt(courseId), selected_knowledge_ids: selectedIds, material_type: materialType },
+                '正在生成备课资料',
+                courseId
+            );
+
+            // 轮询检查任务完成状态
+            var teachingCheck = setInterval(function () {
+                var task = JSON.parse(localStorage.getItem('edu_running_tasks') || '{}')[teachingTaskId];
+                if (!task || task.status === 'completed') {
+                    clearInterval(teachingCheck);
                     const progressModal = bootstrap.Modal.getInstance(document.getElementById('generateProgressModal'));
-                    progressModal.hide();
-
-                    if (data.error) {
-                        showError(data.error);
-                    } else if (data.success) {
+                    if (progressModal) progressModal.hide();
+                    var raw = sessionStorage.getItem('edu_result_' + teachingTaskId);
+                    if (raw) {
+                        var data = JSON.parse(raw);
                         generatedData = data;
                         showResult(data);
-                    } else {
-                        showError('响应数据格式错误');
+                        TaskManager_dismissTask(teachingTaskId);
                     }
-                })
-                .catch(error => {
-                    console.error('生成失败:', error);
-
-                    // 隐藏进度模态框
+                } else if (task.status === 'error') {
+                    clearInterval(teachingCheck);
                     const progressModal = bootstrap.Modal.getInstance(document.getElementById('generateProgressModal'));
-                    progressModal.hide();
-
-                    // 错误处理
-                    let errorMessage = '生成失败，请重试。';
-                    if (error.name === 'TypeError' && error.message.includes('fetch')) {
-                        errorMessage = '网络连接失败，请检查网络后重试。';
-                    } else if (error.message.includes('HTTP Error: 401')) {
-                        errorMessage = '登录已过期，请重新登录。';
-                        setTimeout(() => {
-                            window.location.href = '/login';
-                        }, 2000);
-                    } else if (error.message.includes('HTTP Error: 403')) {
-                        errorMessage = '没有权限执行此操作。';
-                    } else if (error.message.includes('HTTP Error: 404')) {
-                        errorMessage = '课程不存在或已被删除。';
-                    } else if (error.message.includes('HTTP Error: 500')) {
-                        errorMessage = '服务器内部错误，请稍后重试。';
-                    } else if (error.message) {
-                        errorMessage = error.message;
-                    }
-
-                    showError(errorMessage);
-                });
+                    if (progressModal) progressModal.hide();
+                    showError(task.error || '生成失败，请重试。');
+                    TaskManager_dismissTask(teachingTaskId);
+                }
+            }, 1000);
         }
         // 保存至知识库按钮事件
         document.getElementById('saveToKnowledgeBtn').addEventListener('click', function () {
@@ -2815,7 +2796,7 @@
         });
 
         // 显示生成结果
-        function showResult(data) {
+        window.showResult = function (data) {
             const contentDiv = document.getElementById('generateResultContent');
             // 格式化内容显示
             let formattedContent = data.content;
@@ -2941,6 +2922,12 @@
     // 全局变量存储选中的知识库ID（用于考核）
     let selectedAssessmentKnowledgeIds = [];
 
+    // 最小化考核进度模态框
+    window._minAssessment = function () {
+        const progressModal = bootstrap.Modal.getInstance(document.getElementById('generateAssessmentProgressModal'));
+        if (progressModal) progressModal.hide();
+    };
+
     // 生成考核内容按钮点击事件
     document.getElementById('generateAssessmentBtn').addEventListener('click', function () {
         const courseId = "{{ course.id }}";
@@ -3043,71 +3030,36 @@
     // 生成考核内容函数
     function generateAssessmentQuestions(selectedIds, questionSettings) {
         const courseId = "{{ course.id }}";
-        const btn = document.getElementById('generateAssessmentBtn');
-        // 发送生成请求
-        fetch(`/course/${courseId}/generate_assessment`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: JSON.stringify({
-                question_settings: questionSettings,  // 传递题目设置
-                selected_knowledge_ids: selectedIds
-            }),
-            credentials: 'same-origin'
-        })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(data => {
-                        throw new Error(data.error || `HTTP Error: ${response.status}`);
-                    });
-                }
-                return response.json();
-            })
-            .then(data => {
-                // 隐藏进度模态框
-                const progressModal = bootstrap.Modal.getInstance(document.getElementById('generateAssessmentProgressModal'));
-                progressModal.hide();
 
-                if (data.error) {
-                    showError(data.error);
-                } else if (data.success) {
-                    // 保存题目数据到全局变量
+        var assessTaskId = TaskManager_startTask(
+            'assessment',
+            '/course/' + courseId + '/generate_assessment',
+            { question_settings: questionSettings, selected_knowledge_ids: selectedIds },
+            '正在生成考核内容',
+            courseId
+        );
+
+        var assessCheck = setInterval(function () {
+            var task = JSON.parse(localStorage.getItem('edu_running_tasks') || '{}')[assessTaskId];
+            if (!task || task.status === 'completed') {
+                clearInterval(assessCheck);
+                const progressModal = bootstrap.Modal.getInstance(document.getElementById('generateAssessmentProgressModal'));
+                if (progressModal) progressModal.hide();
+                var raw = sessionStorage.getItem('edu_result_' + assessTaskId);
+                if (raw) {
+                    var data = JSON.parse(raw);
                     currentQuestions = data.questions;
                     showAssessmentQuestions(data.questions);
-                } else {
-                    showError('响应数据格式错误');
+                    TaskManager_dismissTask(assessTaskId);
                 }
-            })
-            .catch(error => {
-                console.error('生成考核题目失败:', error);
-
-                // 隐藏进度模态框
+            } else if (task.status === 'error') {
+                clearInterval(assessCheck);
                 const progressModal = bootstrap.Modal.getInstance(document.getElementById('generateAssessmentProgressModal'));
-                progressModal.hide();
-
-                // 错误处理
-                let errorMessage = '生成考核题目失败，请重试。';
-                if (error.name === 'TypeError' && error.message.includes('fetch')) {
-                    errorMessage = '网络连接失败，请检查网络后重试。';
-                } else if (error.message.includes('HTTP Error: 401')) {
-                    errorMessage = '登录已过期，请重新登录。';
-                    setTimeout(() => {
-                        window.location.href = '/login';
-                    }, 2000);
-                } else if (error.message.includes('HTTP Error: 403')) {
-                    errorMessage = '没有权限执行此操作。';
-                } else if (error.message.includes('HTTP Error: 404')) {
-                    errorMessage = '课程不存在或已被删除。';
-                } else if (error.message.includes('HTTP Error: 500')) {
-                    errorMessage = '服务器内部错误，请稍后重试。';
-                } else if (error.message) {
-                    errorMessage = error.message;
-                }
-
-                showError(errorMessage);
-            });
+                if (progressModal) progressModal.hide();
+                showError(task.error || '生成考核题目失败，请重试。');
+                TaskManager_dismissTask(assessTaskId);
+            }
+        }, 1000);
     }
 
     // 显示生成的题目
@@ -3327,4 +3279,41 @@
 
 </script>
 {% endif %}
+
+<!-- 跨页面任务完成结果恢复 -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var pending = null;
+    try { pending = TaskManager_checkPendingResult(); } catch(e) { return; }
+    if (!pending) return;
+
+    var data = pending.data;
+    switch (pending.taskType) {
+        case 'teaching_outline':
+            if (typeof showResult === 'function') {
+                showResult(data);
+            }
+            break;
+        case 'study_report':
+            if (typeof showStudentResult === 'function') {
+                showStudentResult(data);
+            }
+            break;
+        case 'mindmap':
+            if (typeof renderMindmap === 'function') {
+                renderMindmap(data.content, data.title);
+            }
+            break;
+        case 'assessment':
+            if (typeof showAssessmentQuestions === 'function') {
+                if (data.questions) {
+                    currentQuestions = data.questions;
+                    showAssessmentQuestions(data.questions);
+                }
+            }
+            break;
+    }
+});
+</script>
+
 {% endblock %}

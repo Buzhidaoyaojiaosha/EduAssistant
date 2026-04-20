@@ -410,6 +410,88 @@
             }
         }
     </style>
+
+    <!-- 最小化任务浮动条样式 -->
+    <style>
+        .minimized-tasks-bar {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1050;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: flex-end;
+        }
+
+        .minimized-task-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border-radius: 12px;
+            border: 1px solid var(--primary-soft, #D3E4DA);
+            background: #fff;
+            box-shadow: 0 4px 16px rgba(37, 113, 74, 0.15);
+            cursor: default;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #333;
+            transition: all 0.2s ease;
+            animation: taskSlideIn 0.3s ease-out;
+        }
+
+        .minimized-task-btn:hover {
+            box-shadow: 0 6px 24px rgba(37, 113, 74, 0.25);
+            transform: translateY(-2px);
+        }
+
+        .minimized-task-btn .spinner-border {
+            width: 1rem;
+            height: 1rem;
+            border-width: 2px;
+        }
+
+        .minimized-task-btn .close-task {
+            background: none;
+            border: none;
+            color: #999;
+            font-size: 1rem;
+            line-height: 1;
+            padding: 0 0 0 4px;
+            cursor: pointer;
+        }
+
+        .minimized-task-btn .close-task:hover {
+            color: #dc3545;
+        }
+
+        .minimized-task-btn.minimized-completed {
+            border-color: #28a745;
+            background: #f0fff4;
+            cursor: pointer;
+        }
+
+        .minimized-task-btn.minimized-completed:hover {
+            box-shadow: 0 6px 24px rgba(40, 167, 69, 0.3);
+        }
+
+        .minimized-task-btn.minimized-error {
+            border-color: #dc3545;
+            background: #fff5f5;
+            cursor: pointer;
+        }
+
+        .minimized-task-btn.minimized-error:hover {
+            box-shadow: 0 6px 24px rgba(220, 53, 69, 0.3);
+        }
+
+        @keyframes taskSlideIn {
+            from { opacity: 0; transform: translateX(40px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+    </style>
+
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     {% endblock %}
     {% block extra_css %}{% endblock %}
@@ -534,6 +616,10 @@
         });
     </script>
     {% block extra_js %}{% endblock %}
+
+    <!-- 最小化任务浮动条（全局，跨页面持久） -->
+    <div class="minimized-tasks-bar" id="minimizedTasksBar"></div>
+    <script src="{{ url_for('static', filename='js/task-persistence.js') }}"></script>
 </body>
 
 </html>
