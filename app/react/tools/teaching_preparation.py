@@ -259,7 +259,46 @@ def _remove_slides(prs, remove_first=5, remove_last=1):
     except Exception as e:
         logger.error(f"删除PPT幻灯片失败: {str(e)}")
         return prs
-    
+
+def _remove_blank_slides(prs):
+    """删除PPT中的空白页（没有任何文字内容且没有图片的幻灯片）"""
+    try:
+        slides_to_remove = []
+        for i, slide in enumerate(prs.slides):
+            has_content = False
+            for shape in slide.shapes:
+                if hasattr(shape, 'text') and shape.text.strip():
+                    has_content = True
+                    break
+                if shape.has_table:
+                    for row in shape.table.rows:
+                        for cell in row.cells:
+                            if cell.text.strip():
+                                has_content = True
+                                break
+                        if has_content:
+                            break
+                if shape.shape_type == 13:  # MSO_SHAPE_TYPE.PICTURE
+                    has_content = True
+                    break
+            if not has_content:
+                slides_to_remove.append(i)
+
+        if not slides_to_remove:
+            return prs
+
+        xml_slides = prs.slides._sldIdLst
+        slides_list = list(xml_slides)
+        for idx in sorted(slides_to_remove, reverse=True):
+            if idx < len(slides_list):
+                xml_slides.remove(slides_list[idx])
+
+        logger.info(f"已删除{len(slides_to_remove)}页空白幻灯片")
+        return prs
+    except Exception as e:
+        logger.error(f"删除空白页失败: {str(e)}")
+        return prs
+
 def _generate_marp_ppt(title: str, markdown_content: str, course: Course) -> tuple:
     """使用Marp生成美观的PPT文件并返回base64编码
     
@@ -340,7 +379,8 @@ def _generate_marp_ppt(title: str, markdown_content: str, course: Course) -> tup
                         # 打开PPT并删除指定页
                         prs = Presentation(pptx_path)
                         prs = _remove_slides(prs, remove_first=5, remove_last=1)
-                    
+                        prs = _remove_blank_slides(prs)
+
                         # 保存修改后的PPT
                         modified_pptx_path = os.path.join(temp_dir, f"modified_{pptx_filename}")
                         prs.save(modified_pptx_path)
@@ -683,9 +723,13 @@ def _generate_simple_ppt_content(title: str, content: str, course: Course) -> tu
         subtitle = slide.placeholders[1]
         subtitle.text = f"课程: {course.name}\n教师: {getattr(course.teacher, 'name', '未指定') if hasattr(course, 'teacher') else '未指定'}\n生成时间: {datetime.now().strftime('%Y年%m月%d日')}"
         
-        # 解析Markdown内容生成幻灯片
+        # 解析Markdown内容生成幻灯片，过滤空白页
         slides_content = _parse_markdown_to_slides(content)
-        
+        slides_content = [
+            s for s in slides_content
+            if s.get('title', '').strip() or (s.get('content') and any(c.strip() for c in s['content']))
+        ]
+
         for slide_data in slides_content:
             # 添加内容幻灯片
             slide_layout = prs.slide_layouts[1]  # 标题和内容布局
@@ -707,6 +751,9 @@ def _generate_simple_ppt_content(title: str, content: str, course: Course) -> tu
                     p.level = 0
                     p.font.size = Pt(18)
         
+        # 再次检查并删除空白页（防止布局占位符导致空白页残留）
+        prs = _remove_blank_slides(prs)
+
         # 保存到临时文件并转换为base64
         with tempfile.NamedTemporaryFile(delete=False, suffix='.pptx') as tmp_file:
             ppt_path = tmp_file.name

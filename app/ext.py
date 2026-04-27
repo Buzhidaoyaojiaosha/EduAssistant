@@ -27,8 +27,8 @@ def initialize_extensions():
             self.client = OpenAI(api_key=api_key,base_url=os.getenv("OPENAI_API_BASE"))
             self.model = model
 
-        def __call__(self, texts):
-            response = self.client.embeddings.create(input=texts, model=self.model)
+        def __call__(self, input):
+            response = self.client.embeddings.create(input=input, model=self.model)
             return [item.embedding for item in response.data]
 
     global embedding_fn

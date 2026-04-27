@@ -1,6 +1,8 @@
 import os
+import re
 import json
 import asyncio
+import logging
 from typing import List, Dict
 from PyPDF2 import PdfReader
 from flask import current_app
@@ -10,9 +12,10 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from app.ext import embedding_fn
 from app.react.tools_register import register_as_tool
 from docx import Document
-from moviepy import VideoFileClip
 import dashscope
 from dashscope import MultiModalConversation
+
+logger = logging.getLogger(__name__)
 
 
 
@@ -124,7 +127,7 @@ class RAGService:
             content = content[:-3]
         content = content.strip()
 
-        steps = json.loads(content)
+        steps = RAGService._parse_json_response(content)
 
         # 构建纯文本（用于 ChromaDB 向量库存储）
         plain_text_parts = []
@@ -145,6 +148,48 @@ class RAGService:
             doc.add_paragraph("")
 
         return plain_text, doc
+
+    @staticmethod
+    def _parse_json_response(content: str) -> list:
+        """解析模型返回的 JSON，对格式错误有容错处理。"""
+        # 方式1：直接解析
+        try:
+            return json.loads(content)
+        except json.JSONDecodeError:
+            pass
+
+        # 方式2：尝试用正则提取 JSON 数组
+        match = re.search(r'\[.*\]', content, re.DOTALL)
+        if match:
+            try:
+                return json.loads(match.group())
+            except json.JSONDecodeError:
+                pass
+
+        # 方式3：尝试修复常见的 JSON 问题后再解析
+        try:
+            fixed = RAGService._repair_json_array(content)
+            return json.loads(fixed)
+        except json.JSONDecodeError:
+            pass
+
+        logger.error(f"无法解析模型返回的 JSON，原始内容:\n{content}")
+        raise ValueError("模型返回的内容格式有误，无法解析为 JSON，请重试。")
+
+    @staticmethod
+    def _repair_json_array(text: str) -> str:
+        """尝试修复常见的 JSON 格式问题。"""
+        # 提取最外层 [...] 之间的内容（非贪婪，取最后一个 ] 结束的完整数组）
+        start = text.find('[')
+        end = text.rfind(']')
+        if start == -1 or end == -1 or end <= start:
+            return text
+        inner = text[start + 1:end]
+        # 按 }{ 分割对象边界，尝试修正
+        # 移除 tail 逗号后接 ] 的问题
+        inner = re.sub(r',\s*$', '', inner.strip())
+        inner = re.sub(r',\s*\]', ']', inner)
+        return '[' + inner + ']'
 
     @staticmethod
     def split_text(text: str, chunk_size: int = 500, chunk_overlap: int = 50) -> List[str]:
