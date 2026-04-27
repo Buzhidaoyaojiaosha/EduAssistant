@@ -466,6 +466,174 @@
         border-bottom-left-radius: 4px;
     }
 
+    /* markdown 渲染样式 — 全部覆盖，防止 Bootstrap 默认样式干扰 */
+    .msg-assistant h1,
+    .msg-assistant h2,
+    .msg-assistant h3,
+    .msg-assistant h4,
+    .msg-assistant h5,
+    .msg-assistant h6 {
+        color: var(--dark, #103B24);
+        margin: 0.6em 0 0.3em;
+        line-height: 1.4;
+        font-weight: 700;
+    }
+
+    .msg-assistant h1 { font-size: 1.2rem !important; }
+    .msg-assistant h2 { font-size: 1.1rem !important; }
+    .msg-assistant h3 { font-size: 1rem !important; }
+    .msg-assistant h4 { font-size: 0.95rem !important; }
+    .msg-assistant h5 { font-size: 0.92rem !important; }
+    .msg-assistant h6 { font-size: 0.9rem !important; }
+
+    .msg-assistant p {
+        margin: 0.4em 0;
+        line-height: 1.7;
+        font-size: inherit;
+    }
+
+    .msg-assistant big { font-size: inherit; }
+    .msg-assistant small { font-size: inherit; }
+
+    .msg-assistant ul,
+    .msg-assistant ol {
+        padding-left: 1.4em;
+        margin: 0.4em 0;
+    }
+
+    .msg-assistant li {
+        margin-bottom: 0.25em;
+    }
+
+    .msg-assistant strong {
+        font-weight: 600;
+    }
+
+    .msg-assistant code {
+        background: #f0f4f1;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.85em;
+        font-family: Consolas, Monaco, monospace;
+    }
+
+    .msg-assistant pre {
+        background: #f0f4f1;
+        padding: 12px;
+        border-radius: 8px;
+        overflow-x: auto;
+        margin: 0.5em 0;
+    }
+
+    .msg-assistant pre code {
+        background: none;
+        padding: 0;
+    }
+
+    .msg-assistant blockquote {
+        border-left: 3px solid var(--primary, #25714A);
+        padding: 0.4em 1em;
+        margin: 0.5em 0;
+        color: var(--text-secondary, #5B7064);
+        background: #f8faf9;
+        border-radius: 0 6px 6px 0;
+    }
+
+    .msg-assistant table {
+        border-collapse: collapse;
+        margin: 0.5em 0;
+        width: 100%;
+    }
+
+    .msg-assistant th,
+    .msg-assistant td {
+        border: 1px solid #e8ede9;
+        padding: 6px 10px;
+        text-align: left;
+    }
+
+    .msg-assistant th {
+        background: #f0f4f1;
+        font-weight: 600;
+    }
+
+    /* 状态面板 */
+    .status-panel {
+        padding: 10px 16px !important;
+    }
+
+    .status-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.85rem;
+        color: var(--text-secondary, #5B7064);
+    }
+
+    .status-icon {
+        font-size: 0.9rem;
+    }
+
+    .status-icon.spinning {
+        animation: spin 1.5s linear infinite;
+        display: inline-block;
+    }
+
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    .status-text {
+        flex: 1;
+    }
+
+    .status-toggle {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: var(--text-secondary, #5B7064);
+        font-size: 0.75rem;
+        padding: 2px 6px;
+        border-radius: 4px;
+        transition: background 0.15s;
+    }
+
+    .status-toggle:hover {
+        background: var(--primary-light, #E3EFE8);
+    }
+
+    .status-steps {
+        display: none;
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid #e8ede9;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+    .status-steps.open {
+        display: block;
+    }
+
+    .status-step {
+        font-size: 0.8rem;
+        color: var(--text-secondary, #5B7064);
+        padding: 3px 0;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .status-step.done {
+        color: var(--primary, #25714A);
+    }
+
+    .status-step.active {
+        color: var(--dark, #103B24);
+        font-weight: 500;
+    }
+
     .typing-dots {
         display: inline-flex;
         gap: 4px;
@@ -600,6 +768,8 @@
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
 <script>
+    marked.setOptions({ breaks: true, gfm: true });
+
     (function () {
         var currentChatId = null;
 
@@ -638,9 +808,9 @@
 
             var div = document.createElement('div');
             div.className = 'msg msg-' + role;
-            if (typeof marked !== 'undefined' && marked.parse) {
+            if (role === 'assistant' && typeof marked !== 'undefined' && marked.parse) {
                 try {
-                    div.innerHTML = marked.parse(text.replace(/\n/g, '<br>'));
+                    div.innerHTML = marked.parse(text);
                 } catch (e) {
                     div.textContent = text;
                 }
@@ -704,41 +874,152 @@
                 .catch(function (err) { console.error('createChat:', err); return null; });
         }
 
+        function createStatusPanel() {
+            var div = document.createElement('div');
+            div.className = 'msg msg-assistant status-panel';
+            div.id = 'typing-indicator';
+            div.innerHTML =
+                '<div class="status-header">' +
+                    '<span class="status-icon spinning" id="status-icon">⏳</span>' +
+                    '<span class="status-text" id="status-text">正在思考...</span>' +
+                    '<button class="status-toggle" id="status-toggle" title="展开">▾</button>' +
+                '</div>' +
+                '<div class="status-steps" id="status-steps"></div>';
+
+            div.querySelector('#status-toggle').addEventListener('click', function () {
+                var steps = document.getElementById('status-steps');
+                var btn = document.getElementById('status-toggle');
+                if (steps.classList.contains('open')) {
+                    steps.classList.remove('open');
+                    btn.textContent = '▾';
+                } else {
+                    steps.classList.add('open');
+                    btn.textContent = '▴';
+                }
+            });
+            return div;
+        }
+
+        function updateStatus(message) {
+            var el = document.getElementById('status-text');
+            if (el) el.textContent = message;
+        }
+
+        var lastStepMsg = '';
+
+        function addStatusStep(message, isActive) {
+            var steps = document.getElementById('status-steps');
+            if (!steps) return;
+
+            // 跳过与上一步完全相同的消息，避免重复显示
+            if (message === lastStepMsg) return;
+            lastStepMsg = message;
+
+            var prev = steps.querySelectorAll('.status-step.active');
+            for (var i = 0; i < prev.length; i++) {
+                prev[i].classList.remove('active');
+                prev[i].classList.add('done');
+            }
+
+            var step = document.createElement('div');
+            step.className = 'status-step' + (isActive ? ' active' : ' done');
+            step.textContent = (isActive ? '⟳ ' : '✓ ') + message;
+            steps.appendChild(step);
+            steps.scrollTop = steps.scrollHeight;
+
+            if (!steps.classList.contains('open') && steps.children.length > 1) {
+                steps.classList.add('open');
+                var btn = document.getElementById('status-toggle');
+                if (btn) btn.textContent = '▴';
+            }
+        }
+
         function sendMsg(text) {
             if (!currentChatId) return;
             addMsg('user', text);
 
-            var tip = document.createElement('div');
-            tip.className = 'msg msg-assistant';
-            tip.id = 'typing-indicator';
-            tip.innerHTML = '正在思考 <span class="typing-dots"><span></span><span></span><span></span></span>';
-            $('chat-messages').appendChild(tip);
+            lastStepMsg = '';
+            var panel = createStatusPanel();
+            document.getElementById('chat-messages').appendChild(panel);
             scrollBottom();
 
-            fetch('/ai-assistant/chats/' + currentChatId + '/messages', {
+            fetch('/ai-assistant/chats/' + currentChatId + '/messages/stream', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ message: text })
             })
-                .then(function (r) { return r.json(); })
-                .then(function (data) {
-                    var t = $('typing-indicator');
-                    if (t) t.remove();
-                    addMsg('assistant', data.ai_message.content);
-
-                    // 更新侧边栏标题
-                    var item = document.querySelector('.history-item[data-chat-id="' + currentChatId + '"]');
-                    if (item) {
-                        var span = item.querySelector('.h-title');
-                        if (span) {
-                            var title = data.user_message.content.substring(0, 30);
-                            if (data.user_message.content.length > 30) title += '\u2026';
-                            span.textContent = title;
-                        }
+                .then(function (response) {
+                    if (!response.ok) {
+                        return response.json().then(function (d) { throw new Error(d.error); });
                     }
+                    var reader = response.body.getReader();
+                    var decoder = new TextDecoder();
+                    var buffer = '';
+
+                    function read() {
+                        reader.read().then(function (result) {
+                            if (result.done) {
+                                var t = document.getElementById('typing-indicator');
+                                if (t) t.remove();
+                                return;
+                            }
+
+                            buffer += decoder.decode(result.value, { stream: true });
+                            var lines = buffer.split('\n');
+                            buffer = lines.pop();
+
+                            var currentEvent = '';
+                            for (var i = 0; i < lines.length; i++) {
+                                var line = lines[i];
+                                if (line.startsWith('event: ')) {
+                                    currentEvent = line.slice(7).trim();
+                                } else if (line.startsWith('data: ')) {
+                                    var data;
+                                    try { data = JSON.parse(line.slice(6)); } catch (e) { continue; }
+
+                                    if (currentEvent === 'thinking') {
+                                        updateStatus(data.message);
+                                        addStatusStep(data.message, false);
+                                    } else if (currentEvent === 'tool') {
+                                        updateStatus(data.message);
+                                        addStatusStep(data.message, true);
+                                    } else if (currentEvent === 'generating') {
+                                        updateStatus('正在生成回答...');
+                                        addStatusStep('正在生成回答...', true);
+                                    } else if (currentEvent === 'result') {
+                                        var t = document.getElementById('typing-indicator');
+                                        if (t) t.remove();
+                                        addMsg('assistant', data.content);
+
+                                        var item = document.querySelector('.history-item[data-chat-id="' + currentChatId + '"]');
+                                        if (item) {
+                                            var span = item.querySelector('.h-title');
+                                            if (span) {
+                                                var title = text.substring(0, 30);
+                                                if (text.length > 30) title += '…';
+                                                span.textContent = title;
+                                            }
+                                        }
+                                    } else if (currentEvent === 'error') {
+                                        var t2 = document.getElementById('typing-indicator');
+                                        if (t2) t2.remove();
+                                        addMsg('assistant', '出错了，请重试。');
+                                        console.error('SSE error:', data.message);
+                                    }
+                                }
+                            }
+                            read();
+                        }).catch(function (err) {
+                            var t = document.getElementById('typing-indicator');
+                            if (t) t.remove();
+                            addMsg('assistant', '发送出错，请重试。');
+                            console.error('sendMsg:', err);
+                        });
+                    }
+                    read();
                 })
                 .catch(function (err) {
-                    var t = $('typing-indicator');
+                    var t = document.getElementById('typing-indicator');
                     if (t) t.remove();
                     addMsg('assistant', '发送出错，请重试。');
                     console.error('sendMsg:', err);

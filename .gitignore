@@ -195,3 +195,4 @@ node_modules/
 
 
 uploads/
+.claude/settings.local.json

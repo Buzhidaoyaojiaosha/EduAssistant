@@ -1,7 +1,8 @@
-from flask import Blueprint, render_template, session, redirect, url_for, request, jsonify, flash
+from flask import Blueprint, render_template, session, redirect, url_for, request, jsonify, flash, Response, stream_with_context
 from app.models.user import User
 from app.models.chat import Chat, ChatMessage
 from app.react.agent import run
+from app.react.langgraph_adapter import stream_langgraph
 from app.ext import db
 import json
 
@@ -126,7 +127,7 @@ def send_message(chat_id):
 
             # 调用AI模型生成回复
             # TODO: 选择权限最高的角色
-            ai_response = run(data['message'], user.roles[0].role.name, history_messages)
+            ai_response = run(data['message'], user.roles[0].role.name, history_messages, chat_id, user.id)
             
             # 记录AI回复
             ai_message = ChatMessage.create(
@@ -155,6 +156,74 @@ def send_message(chat_id):
         })
     except Exception as e:
         print(f'处理消息时发生错误: {str(e)}')
+        return jsonify({'error': f'处理消息时发生错误: {str(e)}'}), 500
+
+@ai_assistant_bp.route('/chats/<int:chat_id>/messages/stream', methods=['POST'])
+def send_message_stream(chat_id):
+    """发送新消息并通过 SSE 流式获取AI回复的中间状态"""
+    if 'user_id' not in session:
+        return jsonify({'error': '未登录'}), 401
+
+    user_id = session['user_id']
+    user = User.get_by_id(user_id)
+    data = request.get_json()
+
+    if not data or 'message' not in data:
+        return jsonify({'error': '消息不能为空'}), 400
+
+    try:
+        chat = Chat.get_or_none(Chat.id == chat_id, Chat.user == user)
+        if not chat:
+            return jsonify({'error': '聊天不存在或无权访问'}), 404
+
+        # 先保存用户消息
+        user_message = ChatMessage.create(
+            chat=chat,
+            role=ChatMessage.ROLE_USER,
+            content=data['message']
+        )
+        history_messages = list(
+            ChatMessage.select().where(ChatMessage.chat == chat).order_by(ChatMessage.timestamp)
+        )
+
+        role_name = user.roles[0].role.name
+
+        def generate():
+            ai_response = ""
+            try:
+                for event in stream_langgraph(data['message'], role_name, history_messages, chat_id, user.id):
+                    step = event.get("step")
+                    if step == "result":
+                        ai_response = event.get("content", "")
+                    sse_data = json.dumps(event, ensure_ascii=False)
+                    yield f"event: {step}\ndata: {sse_data}\n\n"
+
+                # 流结束后保存 AI 回复
+                if ai_response:
+                    with db.atomic():
+                        ChatMessage.create(
+                            chat=chat,
+                            role=ChatMessage.ROLE_ASSISTANT,
+                            content=ai_response
+                        )
+                        if chat.title == "新会话":
+                            chat.title = data['message'][:30] + ('...' if len(data['message']) > 30 else '')
+                            chat.save()
+
+            except Exception as e:
+                error_event = json.dumps({"step": "error", "message": str(e)}, ensure_ascii=False)
+                yield f"event: error\ndata: {error_event}\n\n"
+
+        return Response(
+            stream_with_context(generate()),
+            mimetype='text/event-stream',
+            headers={
+                'Cache-Control': 'no-cache',
+                'X-Accel-Buffering': 'no',
+            },
+        )
+
+    except Exception as e:
         return jsonify({'error': f'处理消息时发生错误: {str(e)}'}), 500
 
 @ai_assistant_bp.route('/chats/<int:chat_id>', methods=['DELETE'])

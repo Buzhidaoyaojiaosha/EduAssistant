@@ -7,4 +7,4 @@ if __name__ == '__main__':
     # print("注册的蓝图:")
     # for rule in app.url_map.iter_rules():
     #     print(f"路由: {rule}, 端点: {rule.endpoint}")
-    app.run(debug=True)
+    app.run(debug=True, threaded=True)
