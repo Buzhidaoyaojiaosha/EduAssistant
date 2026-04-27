@@ -1,5 +1,5 @@
 from app.models.knowledge_base import KnowledgeBase
-from app.ext import knowledge_base_collection,rag_chunk_collection
+from app.ext import knowledge_base_collection, rag_chunk_collection, embedding_fn
 import uuid
 import oss2
 from pathlib import Path
@@ -220,7 +220,67 @@ class KnowledgeBaseService:
         except Exception as e:
             print(f"Keyword search error: {str(e)}")
 
-        # 3. 融合两种搜索结果
+        # 3. 搜索文档切片向量数据库 (rag_chunk_collection)
+        chunk_results = []
+        try:
+            if course_id:
+                chunk_where = {
+                    "$and": [
+                        {"is_chunk": True},
+                        {"course_id": int(course_id)}
+                    ]
+                }
+            else:
+                chunk_where = {"is_chunk": True}
+
+            chunk_embedding = embedding_fn([query])
+            chunk_search = rag_chunk_collection.query(
+                query_embeddings=chunk_embedding,
+                n_results=limit * 2,
+                where=chunk_where
+            )
+
+            if len(chunk_search["ids"]) > 0 and len(chunk_search["ids"][0]) > 0:
+                # 收集唯一的 source_file 及其最佳距离
+                source_file_best = {}
+                for i in range(len(chunk_search["ids"][0])):
+                    metadata = chunk_search["metadatas"][0][i]
+                    source_file = metadata.get("source_file", "")
+                    distance = chunk_search["distances"][0][i] if "distances" in chunk_search else None
+
+                    if source_file and source_file != "None":
+                        if source_file not in source_file_best or (
+                            distance is not None and distance < source_file_best[source_file]
+                        ):
+                            source_file_best[source_file] = distance
+
+                # 通过 source_file 匹配父级知识条目 (source_file == content)
+                if source_file_best:
+                    parent_entries = KnowledgeBase.select().where(
+                        KnowledgeBase.content.in_(list(source_file_best.keys())),
+                        KnowledgeBase.is_chunk == False
+                    )
+                    for entry in parent_entries:
+                        distance = source_file_best.get(entry.content)
+                        chunk_results.append({
+                            "id": entry.id,
+                            "vector_id": entry.vector_id,
+                            "title": entry.title,
+                            "type": entry.type,
+                            "content": entry.content,
+                            "vector_distance": distance,
+                            "category": entry.category,
+                            "course_id": entry.course_id,
+                            "course": entry.course,
+                            "tags": entry.tags,
+                            "word_doc_url": entry.word_doc_url,
+                            "full_record": entry,
+                            "score": 1 - (distance if distance is not None else 0)
+                        })
+        except Exception as e:
+            print(f"Chunk search error: {str(e)}")
+
+        # 4. 融合搜索结果
         all_results = {}
         
         # 添加向量搜索结果
@@ -244,7 +304,22 @@ class KnowledgeBaseService:
                     "combined_score": result["score"] * keyword_weight
                 }
 
-        # 4. 按融合分数排序并限制结果数量
+        # 添加文档切片搜索结果（仅当父条目未被其他搜索命中时加入）
+        for result in chunk_results:
+            if result["id"] not in all_results:
+                all_results[result["id"]] = {
+                    **result,
+                    "combined_score": result["score"],
+                    "match_types": ["文档内容匹配"]
+                }
+            else:
+                # 已存在的结果：取最高分
+                existing = all_results[result["id"]]
+                existing["combined_score"] = max(existing["combined_score"], result["score"])
+                if "文档内容匹配" not in existing.get("match_types", []):
+                    existing.setdefault("match_types", []).append("文档内容匹配")
+
+        # 5. 按融合分数排序并限制结果数量
         sorted_results = sorted(
             all_results.values(), 
             key=lambda x: x["combined_score"], 
@@ -287,17 +362,17 @@ class KnowledgeBaseService:
             except Exception as e:
                 print(f"Fuzzy search error: {str(e)}")
         
-        # 5. 添加额外的元数据并返回
+        # 6. 添加额外的元数据并返回
         final_results = []
         for result in sorted_results:
-            # 计算匹配类型标签
+            # 计算匹配类型标签（追加模式，不覆盖已有标签）
             if "match_types" not in result:
-                match_types = []
-                if result.get("vector_distance") is not None:
-                    match_types.append("语义匹配")
-                if "score" in result and result["score"] > 0:
-                    match_types.append("关键词匹配")
-                result["match_types"] = match_types
+                result["match_types"] = []
+            match_types = result["match_types"]
+            if result.get("vector_distance") is not None and "语义匹配" not in match_types:
+                match_types.append("语义匹配")
+            if "score" in result and result["score"] > 0 and "关键词匹配" not in match_types:
+                match_types.append("关键词匹配")
             
             # 确保分数在0-1之间
             result["combined_score"] = min(1.0, max(0.0, result["combined_score"]))
